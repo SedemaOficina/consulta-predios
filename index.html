@@ -3,334 +3,303 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sistema de Consulta de Predios | SEDEMA</title>
+    <title>Consulta de Predios | SEDEMA</title>
     
     <!-- FUENTES OFICIALES -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     
     <!-- LEAFLET Y HERRAMIENTAS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-    <!-- Scripts -->
+    
+    <!-- LIBRERÍAS JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-    <!-- Librería vital para detectar si un punto cae dentro de un polígono -->
+    <!-- Librería para detectar si el punto cae en el polígono (Vital) -->
     <script src="https://unpkg.com/@mapbox/leaflet-pip@latest/leaflet-pip.js"></script>
-    <!-- AJAX para carga de archivos -->
+    <!-- Librería para carga fácil de archivos -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
 
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-    <!-- 1. ENCABEZADO INSTITUCIONAL (LIMPIO) -->
+    <!-- 1. ENCABEZADO (SOLO LOGO) -->
     <header class="gob-header">
         <div class="logo-container">
-            <!-- Solo tu logo aquí -->
-            <img src="logo-sedema.png" alt="Gobierno CDMX - SEDEMA" class="logo-img">
-            <div class="pleca-vertical"></div>
-            <div class="titulos-header">
-                <h1>SECRETARÍA DEL MEDIO AMBIENTE</h1>
-                <h2>Sistema de Ordenamiento Ecológico y Vigilancia</h2>
-            </div>
+            <img src="logo-sedema.png" alt="SEDEMA CDMX" class="logo-img">
         </div>
     </header>
 
-    <!-- 2. CONTENEDOR PRINCIPAL (Flexbox: Panel Izquierda + Mapa Derecha) -->
-    <div class="main-container">
-        
-        <!-- PANEL LATERAL DE CONTROL (SIEMPRE VISIBLE EN PC) -->
-        <aside class="sidebar">
-            
-            <div class="sidebar-content">
-                <!-- Título del Panel -->
-                <div class="panel-section">
-                    <h3 class="panel-title">🛡️ Validación de Predios</h3>
-                    <p class="panel-text">Herramienta oficial para prevenir fraudes en la compra-venta de terrenos en Suelo de Conservación.</p>
-                </div>
+    <!-- 2. MAPA (Ocupa toda la pantalla debajo del header) -->
+    <div id="map"></div>
 
-                <!-- PASO 1: BUSCADOR -->
-                <div class="panel-section highlight-section">
-                    <label class="step-label">1. ¿DÓNDE ESTÁ EL TERRENO?</label>
-                    
-                    <button id="btn-gps" class="btn-gps-full">
-                        <span style="font-size:18px; margin-right:5px;">📍</span> Usar mi ubicación actual
-                    </button>
-                    
-                    <div style="text-align:center; margin: 10px 0; font-size:12px; color:#666;">— O ESCRIBE LA DIRECCIÓN —</div>
+    <!-- 3. CONTROLES FLOTANTES -->
+    
+    <!-- Botón GPS -->
+    <button id="btn-gps" class="btn-floating btn-gps" title="Ubicarme">
+        📍
+    </button>
 
-                    <div class="search-box">
-                        <input type="text" id="input-busqueda" placeholder="Ej: Calle, Colonia o Coordenadas...">
-                        <button id="btn-buscar">BUSCAR</button>
-                    </div>
-                </div>
-
-                <!-- PASO 2: SIMBOLOGÍA Y ESTADO -->
-                <div class="panel-section">
-                    <label class="step-label">2. INTERPRETA EL MAPA</label>
-                    <p class="panel-text small">Haz clic en cualquier zona coloreada para ver las reglas.</p>
-                    
-                    <div class="legend-row">
-                        <span class="dot guinda"></span>
-                        <div>
-                            <strong>ZONA ROJA (Restringida)</strong>
-                            <span class="legend-desc">Suelo de Conservación. Prohibida la urbanización.</span>
-                        </div>
-                    </div>
-                    <div class="legend-row">
-                        <span class="dot azul"></span>
-                        <div>
-                            <strong>ZONA AZUL (Zonificación)</strong>
-                            <span class="legend-desc">Reglas específicas del PGOEDF (Uso de suelo).</span>
-                        </div>
-                    </div>
-                    <div class="legend-row">
-                        <span class="dot verde"></span>
-                        <div>
-                            <strong>ZONA VERDE (ANP)</strong>
-                            <span class="legend-desc">Área Natural Protegida Federal o Local.</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- INFO DE RESULTADO (AQUÍ APARECERÁ EL DIAGNÓSTICO) -->
-                <div id="resultado-panel" class="panel-section result-box" style="display:none;">
-                    <h4 id="res-titulo">RESULTADO DE CONSULTA</h4>
-                    <p id="res-desc">Seleccione un punto en el mapa...</p>
-                    <div id="res-acciones"></div>
-                </div>
-
-                <!-- BOTÓN IMPRIMIR -->
-                <div class="panel-footer">
-                    <button onclick="window.print()" class="btn-print">🖨️ Imprimir Reporte</button>
-                </div>
-            </div>
-        </aside>
-
-        <!-- MAPA -->
-        <div id="map"></div>
-        
+    <!-- Panel de Leyenda (Abajo) -->
+    <div class="legend-panel">
+        <div class="legend-item">
+            <span class="color-box box-sc"></span> Suelo de Conservación (Restringido)
+        </div>
+        <div class="legend-item">
+            <span class="color-box box-zo"></span> Zonificación (Límites PGOEDF)
+        </div>
     </div>
 
+    <!-- SCRIPT DE LÓGICA -->
     <script>
         // =====================================================
-        // BASE DE DATOS DE REGLAS (PGOEDF)
+        // 1. BASE DE DATOS: TABLA DE USOS (PGOEDF)
         // =====================================================
         const reglasPGOEDF = {
             "Forestal de Conservación": {
                 codigo: "FC",
-                permitido: ["Reforestación", "Vigilancia", "Ecoturismo"],
-                prohibido: ["VIVIENDA", "Agricultura", "Ganadería", "Apertura de calles"]
+                desc: "Zona boscosa de alto valor. Prioridad: Recarga de acuíferos.",
+                permitido: ["Reforestación", "Vigilancia Ambiental", "Ecoturismo (Senderos)", "Investigación"],
+                prohibido: ["VIVIENDA", "Agricultura", "Ganadería", "Apertura de caminos", "Tala"]
             },
             "Forestal de Conservación Especial": {
                 codigo: "FCE",
-                permitido: ["Turismo sustentable", "Viveros", "Apicultura"],
-                prohibido: ["NUEVOS ASENTAMIENTOS", "Industria", "Minería"]
+                desc: "Bosque con manejo sustentable.",
+                permitido: ["Turismo sustentable", "Viveros", "Apicultura", "Cultivo de hongos"],
+                prohibido: ["NUEVOS ASENTAMIENTOS", "Industria", "Minería", "Cambio de uso a urbano"]
             },
             "Forestal de Protección": {
                 codigo: "FP",
-                permitido: ["Obras conservación", "Reforestación"],
-                prohibido: ["Urbanización", "Tiraderos", "Pastoreo"]
+                desc: "Zona de transición que requiere restauración.",
+                permitido: ["Obras conservación suelo", "Reforestación"],
+                prohibido: ["Urbanización", "Tiraderos de basura", "Pastoreo extensivo"]
+            },
+            "Forestal de Protección Especial": {
+                codigo: "FPE",
+                desc: "Áreas naturales que requieren frenar deterioro.",
+                permitido: ["Agroforestería", "Pastoreo controlado", "Manejo vida silvestre"],
+                prohibido: ["Crecimiento urbano", "Quemas agrícolas", "Agroquímicos"]
             },
             "Agroforestal": {
                 codigo: "AF",
-                permitido: ["Cultivos", "Frutales", "Leña doméstica"],
+                desc: "Zona mixta bosque-cultivo.",
+                permitido: ["Cultivos tradicionales", "Frutales", "Leña doméstica", "Turismo rural"],
                 prohibido: ["Fraccionamientos", "Industria", "Tala rasa"]
+            },
+            "Agroforestal Especial": {
+                codigo: "AFE",
+                desc: "Zona agrícola con manchones de bosque.",
+                permitido: ["Cultivos anuales", "Hortalizas", "Invernaderos"],
+                prohibido: ["Nuevas construcciones urbanas", "Minería"]
             },
             "Agroecológica": {
                 codigo: "AE",
-                permitido: ["Agricultura", "Venta productos"],
-                prohibido: ["Uso Habitacional", "Centros comerciales"]
+                desc: "Zona agrícola productiva (Nopal, Hortalizas).",
+                permitido: ["Agricultura intensiva", "Venta productos agrícolas"],
+                prohibido: ["Cambio a uso habitacional", "Centros comerciales", "Industria"]
             },
             "Agroecológica Especial": {
                 codigo: "AEE",
-                permitido: ["Chinampas", "Turismo canales"],
-                prohibido: ["Relleno canales", "Construcción casas"]
+                desc: "Zona de Humedales y Chinampas.",
+                permitido: ["Agricultura chinampera", "Turismo en canales", "Pesca"],
+                prohibido: ["Relleno de canales", "Construcción de casas", "Drenaje"]
             }
         };
 
-        function getReglas(nombre) {
-            if(!nombre) return null;
-            for(let key in reglasPGOEDF) {
-                if(nombre.toUpperCase().includes(key.toUpperCase())) return reglasPGOEDF[key];
+        // Función para buscar reglas aunque el nombre en el SHP varíe un poco
+        function obtenerReglas(nombre) {
+            if (!nombre) return null;
+            for (let key in reglasPGOEDF) {
+                if (nombre.toUpperCase().includes(key.toUpperCase())) return reglasPGOEDF[key];
             }
-            return { codigo: "SC", permitido: ["Consulta a SEDEMA"], prohibido: ["Uso Urbano no autorizado"] };
+            // Default si no encuentra match exacto pero está en la capa
+            return {
+                codigo: "SC",
+                desc: "Suelo de Conservación Regulado.",
+                permitido: ["Consulta a la autoridad"],
+                prohibido: ["Urbanización no autorizada"]
+            };
         }
 
         // =====================================================
-        // INICIALIZACIÓN DEL MAPA
+        // 2. CONFIGURACIÓN DEL MAPA
         // =====================================================
-        var map = L.map('map', { zoomControl: false }).setView([19.30, -99.15], 11);
+        // Centrado en CDMX Sur
+        var map = L.map('map', { zoomControl: false }).setView([19.25, -99.10], 11);
         L.control.zoom({ position: 'topright' }).addTo(map);
 
-        // Capas Base
-        var mapaBase = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: 'CARTO' });
-        var mapaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri' });
-        map.addLayer(mapaSatelite); // Satélite por defecto
+        // Mapa Base Satelital (Mejor para ver predios reales)
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles © Esri'
+        }).addTo(map);
+        // Mapa de calles superpuesto (transparente) para ver nombres
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
+            opacity: 0.8,
+            attribution: '© CARTO'
+        }).addTo(map);
 
-        var baseMaps = { "Satélite (Recomendado)": mapaSatelite, "Mapa Callejero": mapaBase };
+        // Capa para búsqueda de direcciones
+        L.Control.geocoder({
+            defaultMarkGeocode: false,
+            placeholder: "Buscar dirección...",
+            position: 'topleft'
+        }).on('markgeocode', function(e) {
+            var latlng = e.geocode.center;
+            map.setView(latlng, 16);
+            mostrarDiagnostico(latlng, "Ubicación Buscada");
+        }).addTo(map);
+
+
+        // =====================================================
+        // 3. CARGA DE TUS CAPAS (GEOJSON)
+        // =====================================================
         
-        // Grupos de Capas (Layers)
-        var layerSuelo = L.featureGroup().addTo(map); // Grupo Rojo
-        var layerZoni = L.featureGroup().addTo(map);  // Grupo Azul
-        var layerANP = L.featureGroup().addTo(map);   // Grupo Verde
+        // Variables globales para las capas
+        var layerSuelo, layerZoni;
 
-        L.control.layers(baseMaps, {
-            "🔴 Suelo de Conservación": layerSuelo,
-            "🔵 Zonificación (Reglas)": layerZoni,
-            "🟢 Áreas Protegidas": layerANP
-        }, { position: 'topright', collapsed: false }).addTo(map);
-
-
-        // =====================================================
-        // CARGA DE DATOS (GEOJSON)
-        // =====================================================
-
-        // 1. SUELO DE CONSERVACIÓN (ROJO)
+        // A) SUELO DE CONSERVACIÓN (Fondo Rojo - Alerta)
         fetch('suelo-de-conservacion-2020.geojson')
             .then(r => r.json())
             .then(data => {
-                L.geoJSON(data, {
-                    style: { color: '#C0392B', fillColor: '#C0392B', fillOpacity: 0.2, weight: 2 },
-                    onEachFeature: function(feature, layer) {
-                        layer.bindPopup(crearPopup("PELIGRO", "SUELO DE CONSERVACIÓN", "Zona restringida. No compres sin validar.", "rojo"));
-                    }
-                }).addTo(layerSuelo);
+                layerSuelo = L.geoJSON(data, {
+                    style: {
+                        color: '#C0392B',       // Rojo Institucional
+                        weight: 0,              // Sin borde (el borde lo da la zonificación)
+                        fillColor: '#C0392B',
+                        fillOpacity: 0.2        // Suave para ver el satélite
+                    },
+                    interactive: false // No clicable, solo visual de fondo
+                }).addTo(map);
             });
 
-        // 2. ZONIFICACIÓN (AZUL - Reglas)
+        // B) ZONIFICACIÓN (Líneas y Reglas) - ESTA ES LA QUE MANDA EL CLIC
         fetch('zoonificación_pgoedf_2000.geojson')
             .then(r => r.json())
             .then(data => {
-                L.geoJSON(data, {
-                    style: { color: '#2980b9', weight: 1, fillOpacity: 0.05 }, // Casi transparente
+                layerZoni = L.geoJSON(data, {
+                    style: {
+                        color: '#ffffff',       // Borde blanco fino para separar zonas
+                        weight: 1,
+                        fillColor: '#0984e3',   // Un azul que se mezcla con el rojo de fondo
+                        fillOpacity: 0.1        // Muy transparente
+                    },
                     onEachFeature: function(feature, layer) {
-                        var p = feature.properties;
-                        var nombre = p.DESCRIPCIO || p.ZONA || "Zona Regulada";
-                        var reglas = getReglas(nombre);
-                        
-                        var html = `
-                            <div style="font-family:Roboto;">
-                                <h4 style="color:#2980b9; margin:0;">ZONIFICACIÓN: ${reglas.codigo}</h4>
-                                <p><strong>${nombre}</strong></p>
-                                <div style="background:#ffebee; padding:5px; margin:5px 0; border-left:3px solid red;">
-                                    <small style="color:red">🚫 PROHIBIDO: ${reglas.prohibido.join(", ")}</small>
-                                </div>
-                                <div style="background:#e8f5e9; padding:5px; border-left:3px solid green;">
-                                    <small style="color:green">✅ PERMITIDO: ${reglas.permitido.join(", ")}</small>
-                                </div>
-                            </div>
-                        `;
-                        layer.bindPopup(html, {maxWidth: 300});
+                        // Al dar clic en un polígono específico
+                        layer.on('click', function(e) {
+                            L.DomEvent.stopPropagation(e); // Que no dispare el clic del mapa
+                            mostrarDiagnostico(e.latlng, feature.properties);
+                        });
                     }
-                }).addTo(layerZoni);
+                }).addTo(map);
             })
-            .catch(e => console.log("Falta archivo zonificación"));
-
-        // 3. ANP (VERDE)
-        fetch('anp.geojson').then(r => r.json()).then(data => {
-            L.geoJSON(data, {
-                style: { color: '#27ae60', fillColor: '#27ae60', fillOpacity: 0.3, weight: 1 },
-                onEachFeature: (f, l) => l.bindPopup(crearPopup("ÁREA PROTEGIDA", "ANP FEDERAL/LOCAL", "Propiedad de la Nación. Delito invadir.", "verde"))
-            }).addTo(layerANP);
-        }).catch(e => console.log("Falta archivo ANP"));
+            .catch(err => console.error("Error cargando zonificación:", err));
 
 
         // =====================================================
-        // LÓGICA DE INTERACCIÓN (EL CEREBRO)
+        // 4. LÓGICA DE DIAGNÓSTICO (POPUPS)
         // =====================================================
 
-        // Generador de HTML para Popups simples
-        function crearPopup(titulo, subtitulo, texto, tipo) {
-            let color = tipo === "rojo" ? "#C0392B" : (tipo === "verde" ? "#27ae60" : "#2980b9");
-            return `
-                <div style="text-align:center; font-family:Roboto;">
-                    <div style="background:${color}; color:white; padding:5px;"><b>${titulo}</b></div>
-                    <div style="padding:10px;">
-                        <strong>${subtitulo}</strong><br>
-                        <small>${texto}</small>
+        function mostrarDiagnostico(latlng, data) {
+            var html = "";
+            var esSueloConservacion = false;
+
+            // 1. Si data viene del clic en la capa Zonificación
+            if (data && (data.ZONA || data.DESCRIPCIO || data.TIPO)) {
+                esSueloConservacion = true;
+                // Buscar el nombre de la zona en tus atributos
+                var nombreZona = data.ZONA || data.DESCRIPCIO || data.TIPO || "Zona Regulada";
+                var uga = data.UGA || data.CLAVE || "S/D";
+                var reglas = obtenerReglas(nombreZona);
+
+                // Armar HTML del Popup
+                var listaProhibido = reglas.prohibido.map(i => `<li>${i}</li>`).join("");
+                var listaPermitido = reglas.permitido.map(i => `<li>${i}</li>`).join("");
+
+                html = `
+                    <div class="popup-container">
+                        <div class="popup-header warning">
+                            🚫 SUELO DE CONSERVACIÓN
+                        </div>
+                        <div class="popup-body">
+                            <h4 class="zone-title">${nombreZona}</h4>
+                            <span class="badge">UGA: ${uga}</span>
+                            <p class="zone-desc">${reglas.desc}</p>
+                            
+                            <div class="rules-box no">
+                                <strong>PROHIBIDO (Delito):</strong>
+                                <ul>${listaProhibido}</ul>
+                            </div>
+                            <div class="rules-box yes">
+                                <strong>PERMITIDO:</strong>
+                                <ul>${listaPermitido}</ul>
+                            </div>
+                            <div class="legal-note">Fuente: PGOEDF 2000</div>
+                        </div>
                     </div>
-                </div>
-            `;
-        }
-
-        // DETECTAR CLIC EN CUALQUIER PARTE DEL MAPA
-        map.on('click', function(e) {
-            // 1. Revisar si cayó en Suelo de Conservación (Usando leaflet-pip para precisión)
-            var latlng = e.latlng;
-            var enSueloConservacion = false;
-            
-            // Buscamos en las capas cargadas
-            layerSuelo.eachLayer(function(layer) {
-                // Leaflet-pip necesita el geojson interno
-                if (layer.feature && leafletPip.pointInLayer(latlng, layer).length > 0) {
-                    enSueloConservacion = true;
-                } else if (layer.getLayers) { // Si es un grupo
-                     layer.getLayers().forEach(l => {
-                         if(leafletPip.pointInLayer(latlng, l).length > 0) enSueloConservacion = true;
-                     });
-                }
-            });
-
-            if (!enSueloConservacion) {
-                // SI NO CAE EN EL ROJO -> ES SUELO URBANO (GRIS)
-                L.popup()
-                    .setLatLng(latlng)
-                    .setContent(crearPopup("SUELO URBANO", "Zona Habitacional / Mixta", "Esta zona NO está clasificada como Conservación en nuestros registros. Consulta SEDUVI.", "azul"))
-                    .openOn(map);
-                
-                actualizarPanelLateral("SUELO URBANO", "Fuera de la zona de restricción ambiental.", "azul");
-            } else {
-                actualizarPanelLateral("⚠️ SUELO DE CONSERVACIÓN", "Atención: Zona sujeta a restricciones ambientales estrictas.", "rojo");
-            }
-        });
-
-        // ACTUALIZAR EL PANEL LATERAL (FEEDBACK VISUAL)
-        function actualizarPanelLateral(titulo, desc, color) {
-            var panel = document.getElementById('resultado-panel');
-            var txtTitulo = document.getElementById('res-titulo');
-            var txtDesc = document.getElementById('res-desc');
-            
-            panel.style.display = 'block';
-            txtTitulo.innerText = titulo;
-            txtDesc.innerText = desc;
-            
-            panel.className = 'panel-section result-box'; // Reset
-            if(color === 'rojo') panel.classList.add('alert-roja');
-            if(color === 'verde') panel.classList.add('alert-verde');
-            if(color === 'azul') panel.classList.add('alert-azul');
-        }
-
-        // FUNCIONALIDAD DE BOTONES
-        document.getElementById('btn-buscar').addEventListener('click', function() {
-            var query = document.getElementById('input-busqueda').value;
-            if(!query) return;
-            
-            // Geocoding simple
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}+CDMX&limit=1`)
-                .then(r => r.json())
-                .then(d => {
-                    if(d.length > 0) {
-                        var lat = d[0].lat;
-                        var lon = d[0].lon;
-                        map.setView([lat, lon], 16);
-                        L.marker([lat, lon]).addTo(map).bindPopup("Ubicación Buscada").openPopup();
-                        // Simular clic para validar
-                        map.fireEvent('click', {latlng: L.latLng(lat, lon)});
-                    } else {
-                        alert("No se encontró la dirección. Intenta ser más específico.");
+                `;
+            } 
+            // 2. Si es un punto genérico (ej. GPS o Búsqueda), verificamos con PIP
+            else {
+                // Verificar geométricamente si cae en la capa Zonificación
+                var found = false;
+                if (layerZoni) {
+                    var results = leafletPip.pointInLayer(latlng, layerZoni);
+                    if (results.length > 0) {
+                        // ¡Encontramos el polígono! Re-ejecutamos con los datos correctos
+                        mostrarDiagnostico(latlng, results[0].feature.properties);
+                        return;
                     }
-                });
+                }
+
+                // Si no cae en ninguna capa -> Es Suelo Urbano
+                html = `
+                    <div class="popup-container">
+                        <div class="popup-header safe">
+                            ✅ SUELO URBANO
+                        </div>
+                        <div class="popup-body">
+                            <p>Esta ubicación se encuentra fuera de la zonificación de conservación ecológica registrada.</p>
+                            <small>Verifica el uso habitacional en SEDUVI.</small>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Mostrar el Popup
+            L.popup({maxWidth: 320})
+                .setLatLng(latlng)
+                .setContent(html)
+                .openOn(map);
+        }
+
+        // Clic en el mapa (para zonas donde no hay polígonos)
+        map.on('click', function(e) {
+            mostrarDiagnostico(e.latlng, null);
         });
 
+        // =====================================================
+        // 5. GPS
+        // =====================================================
         document.getElementById('btn-gps').addEventListener('click', function() {
-            map.locate({setView: true, maxZoom: 16});
+            var btn = this;
+            btn.innerHTML = "⌛";
+            map.locate({setView: true, maxZoom: 16, enableHighAccuracy: true});
         });
 
         map.on('locationfound', function(e) {
-            L.circleMarker(e.latlng).addTo(map).bindPopup("Tu ubicación").openPopup();
-            map.fireEvent('click', {latlng: e.latlng});
+            document.getElementById('btn-gps').innerHTML = "📍";
+            // Marcador de usuario
+            L.circleMarker(e.latlng, {
+                radius: 8, fillColor: "#2980b9", color: "white", weight: 2, fillOpacity: 1
+            }).addTo(map);
+            // Lanzar diagnóstico
+            mostrarDiagnostico(e.latlng, null);
+        });
+
+        map.on('locationerror', function() {
+            alert("No pudimos acceder a tu ubicación. Revisa los permisos.");
+            document.getElementById('btn-gps').innerHTML = "📍";
         });
 
     </script>
