@@ -25,7 +25,7 @@ h1, h2, h3, .btn-block, .btn-search {
     font-family: 'Cabin', sans-serif;
 }
 
-/* --- HEADER SIMPLIFICADO --- */
+/* --- HEADER --- */
 .gob-header {
     background: white;
     height: 70px;
@@ -39,7 +39,7 @@ h1, h2, h3, .btn-block, .btn-search {
 }
 
 .header-inner { display: flex; align-items: center; gap: 10px; }
-.logo-cdmx { height: 40px; width: auto; }
+.logo-cdmx { height: 45px; width: auto; }
 .vertical-line { width: 1px; height: 30px; background: var(--guinda); }
 
 .dependency-name h1 {
@@ -50,29 +50,29 @@ h1, h2, h3, .btn-block, .btn-search {
 }
 
 .emergency-text {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: bold;
     color: var(--rojo-alerta);
     background: #fceceb;
-    padding: 5px 10px;
+    padding: 6px 12px;
     border-radius: 20px;
+    border: 1px solid #f5c6cb;
 }
 
-/* --- LAYOUT --- */
+/* --- MAPA Y CONTENEDOR --- */
 .layout-container {
     position: relative;
     flex-grow: 1;
     width: 100%;
 }
-
 #map { width: 100%; height: 100%; z-index: 1; }
 
-/* --- TARJETA PRINCIPAL (Panel de Control) --- */
+/* --- TARJETA FLOTANTE --- */
 .info-card {
     position: absolute;
     top: 20px;
     left: 20px;
-    width: 380px; /* Más ancha para que sea cómoda */
+    width: 380px;
     background: white;
     border-radius: 10px;
     box-shadow: 0 5px 20px rgba(0,0,0,0.25);
@@ -88,64 +88,34 @@ h1, h2, h3, .btn-block, .btn-search {
     padding: 15px 20px;
     border-radius: 10px 10px 0 0;
 }
+.card-header h2 { color: white; margin: 0; font-size: 18px; text-transform: uppercase; }
+.card-header p { color: #ffd8a8; margin: 5px 0 0 0; font-size: 13px; }
 
-.card-header h2 {
-    color: white; margin: 0; font-size: 18px; text-transform: uppercase;
-}
-.card-header p {
-    color: #ffd8a8; /* Dorado muy claro */
-    margin: 5px 0 0 0; font-size: 13px;
-}
+.card-body { padding: 20px; overflow-y: auto; }
 
-.card-body {
-    padding: 20px;
-    overflow-y: auto;
-}
-
-/* SECCIONES DE ACCIÓN */
+/* --- ELEMENTOS DE ACCIÓN --- */
 .action-section { margin-bottom: 20px; }
 .action-section label {
-    display: block;
-    font-weight: 700;
-    font-size: 14px;
-    margin-bottom: 8px;
-    color: var(--guinda);
+    display: block; font-weight: 700; font-size: 14px; margin-bottom: 8px; color: var(--guinda);
 }
 
-/* BOTÓN GIGANTE GPS */
+/* BOTÓN GPS */
 .btn-block {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    padding: 15px;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 3px 0 rgba(0,0,0,0.1);
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; padding: 15px;
+    border: none; border-radius: 8px;
+    font-size: 16px; font-weight: bold;
+    cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,0.1);
     transition: transform 0.1s;
 }
 .btn-block:active { transform: translateY(2px); box-shadow: none; }
+.btn-guinda { background-color: var(--guinda); color: white; border: 1px solid #7a1a38; }
 
-.btn-guinda {
-    background-color: var(--guinda);
-    color: white;
-    border: 1px solid #7a1a38;
-}
-.status-text {
-    font-size: 12px; margin-top: 5px; text-align: center; min-height: 15px; font-weight: 500;
-}
+.status-text { font-size: 12px; margin-top: 5px; text-align: center; min-height: 18px; font-weight: 500; }
 
-/* SEPARADOR "O" */
+/* DIVISOR */
 .divider-text {
-    text-align: center;
-    font-size: 12px;
-    color: #999;
-    font-weight: bold;
-    margin: 10px 0 20px 0;
-    position: relative;
+    text-align: center; font-size: 12px; color: #999; font-weight: bold; margin: 10px 0 20px 0; position: relative;
 }
 .divider-text::before, .divider-text::after {
     content: ""; position: absolute; top: 50%; width: 40%; height: 1px; background: #eee;
@@ -153,41 +123,23 @@ h1, h2, h3, .btn-block, .btn-search {
 .divider-text::before { left: 0; }
 .divider-text::after { right: 0; }
 
-/* INPUT DE BÚSQUEDA GRANDE */
-.search-wrapper {
-    display: flex;
-    gap: 0;
-}
+/* INPUT BÚSQUEDA */
+.search-wrapper { display: flex; gap: 0; }
 .search-wrapper input {
-    flex-grow: 1;
-    padding: 15px;
-    font-size: 16px;
-    border: 2px solid #ddd;
-    border-right: none;
-    border-radius: 8px 0 0 8px;
-    outline: none;
+    flex-grow: 1; padding: 15px; font-size: 16px;
+    border: 2px solid #ddd; border-right: none; border-radius: 8px 0 0 8px; outline: none;
 }
 .search-wrapper input:focus { border-color: var(--dorado); }
 
 .btn-search {
-    background: var(--dorado);
-    color: white;
-    border: none;
-    padding: 0 20px;
-    font-size: 20px;
-    border-radius: 0 8px 8px 0;
-    cursor: pointer;
+    background: var(--dorado); color: white; border: none;
+    padding: 0 20px; font-size: 20px; border-radius: 0 8px 8px 0; cursor: pointer;
 }
 
 .hint-text { font-size: 11px; color: #777; margin-top: 5px; font-style: italic; }
 
 /* SIMBOLOGÍA */
-.results-area {
-    background: #f9f9f9;
-    padding: 15px;
-    border-radius: 8px;
-    border: 1px solid #eee;
-}
+.results-area { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; }
 .results-area h3 { margin: 0 0 10px 0; font-size: 14px; color: #333; }
 
 .legend-item { display: flex; gap: 10px; margin-bottom: 12px; }
@@ -198,52 +150,34 @@ h1, h2, h3, .btn-block, .btn-search {
 .guinda-fill { background: var(--guinda); }
 .verde-fill { background: #027a35; }
 
-.alert-item {
-    background: #fdeded; padding: 8px; border-radius: 4px; border-left: 3px solid var(--rojo-alerta);
-}
+.alert-item { background: #fdeded; padding: 8px; border-radius: 4px; border-left: 3px solid var(--rojo-alerta); }
 
+/* UX MÓVIL */
 .mobile-toggle {
-    display: none; /* Solo en celular */
-    background: #eee;
-    text-align: center;
-    padding: 10px;
-    font-size: 12px;
-    font-weight: bold;
-    color: #555;
-    cursor: pointer;
-    border-top: 1px solid #ddd;
+    display: none; background: #eee; text-align: center;
+    padding: 12px; font-size: 13px; font-weight: bold; color: #555;
+    cursor: pointer; border-top: 1px solid #ddd;
 }
 
-/* SELECTOR DE CAPAS DE LEAFLET (Hacerlo visible) */
+/* LEAFLET LAYERS */
 .leaflet-control-layers {
-    border: 2px solid white !important;
-    border-radius: 8px !important;
+    border: 2px solid white !important; border-radius: 8px !important;
     box-shadow: 0 4px 10px rgba(0,0,0,0.3) !important;
 }
-.leaflet-control-layers-toggle {
-    width: 44px !important; height: 44px !important; /* Más grande para el dedo */
-}
-.leaflet-control-layers-expanded {
-    padding: 15px !important; font-size: 14px !important;
-}
+.leaflet-control-layers-toggle { width: 44px !important; height: 44px !important; }
+.leaflet-control-layers-expanded { padding: 15px !important; font-size: 14px !important; }
 
-/* RESPONSIVO (MÓVIL) */
+/* RESPONSIVO */
 @media (max-width: 600px) {
     .info-card {
         top: auto; bottom: 0; left: 0; right: 0;
-        width: 100%;
-        border-radius: 20px 20px 0 0;
-        max-height: 75vh;
-        z-index: 9999;
+        width: 100%; border-radius: 20px 20px 0 0;
+        max-height: 80vh; z-index: 9999;
     }
-    
     .mobile-toggle { display: block; }
     
-    /* Clase para colapsar la tarjeta y ver el mapa */
-    .info-card.collapsed {
-        transform: translateY(calc(100% - 50px)); /* Solo deja ver el botón toggle */
-    }
-
-    .header-right { display: none; } /* Ocultar texto de emergencia si falta espacio */
-    .dependency-name h1 { display: none; } /* Solo logo en celular pequeño */
+    .info-card.collapsed { transform: translateY(calc(100% - 48px)); }
+    
+    .header-right { display: none; }
+    .dependency-name h1 { display: none; }
 }
