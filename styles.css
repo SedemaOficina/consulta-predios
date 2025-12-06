@@ -1,6 +1,3 @@
-/* =========================================
-   VARIABLES INSTITUCIONALES
-   ========================================= */
 :root {
     --guinda: #9d2148;
     --dorado: #b28e5c;
@@ -8,97 +5,69 @@
     --bg-seccion: #f4f4f4;
 }
 
-body {
-    margin: 0; font-family: 'Roboto', sans-serif; color: var(--gris);
-    overflow-y: auto; overflow-x: hidden;
-}
-
+body { margin: 0; font-family: 'Roboto', sans-serif; color: var(--gris); overflow-y: auto; overflow-x: hidden; }
 h1, h2, h3, button { font-family: 'Cabin', sans-serif; }
 
-/* HEADER */
+/* HEADER WEB */
 .gob-header {
-    background: white; height: 70px; display: flex; align-items: center; 
-    justify-content: space-between; padding: 0 20px;
+    background: white; height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
     border-bottom: 4px solid var(--guinda); position: sticky; top: 0; z-index: 3000;
 }
 .header-inner { display: flex; align-items: center; gap: 15px; }
 .logo-cdmx { height: 45px; }
 .vertical-line { width: 1px; height: 35px; background: var(--guinda); }
 .dependency-name h1 { font-size: 13px; color: var(--guinda); margin: 0; }
+.btn-link { text-decoration: none; color: var(--guinda); font-weight: bold; font-size: 12px; border: 1px solid var(--guinda); padding: 5px 10px; border-radius: 4px; }
 
-/* MAPA */
-.map-section { position: relative; height: 90vh; width: 100%; }
+/* MAPA Y TARJETA */
+.map-section { position: relative; height: 85vh; width: 100%; }
 #map { width: 100%; height: 100%; z-index: 1; }
 
-/* TARJETA FLOTANTE */
 .info-card {
-    position: absolute; top: 20px; left: 20px; width: 350px;
-    background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 1000;
+    position: absolute; top: 20px; left: 20px; width: 360px;
+    background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 1000;
     max-height: 80vh; overflow-y: auto; display: flex; flex-direction: column;
 }
 .card-header { background: var(--guinda); padding: 15px; color: white; border-radius: 8px 8px 0 0; }
-.card-header h2 { margin: 0; font-size: 16px; text-transform: uppercase; }
+.card-header h2 { margin: 0; font-size: 18px; text-transform: uppercase; }
 .card-body { padding: 15px; }
 
-/* BOTONES Y INPUTS */
+/* BOTONES */
 .btn-block { width: 100%; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px;}
 .btn-guinda { background: var(--guinda); color: white; }
-.btn-print { background: var(--dorado); color: white; margin-top: 10px; }
-
-.search-wrapper { display: flex; margin-top: 15px; margin-bottom: 15px; }
+.btn-print { background: var(--dorado); color: white; margin-top: 15px; }
+.search-wrapper { display: flex; margin: 15px 0; }
 .search-wrapper input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px 0 0 5px; outline: none; }
 .btn-search { padding: 0 15px; background: var(--dorado); border: none; color: white; border-radius: 0 5px 5px 0; cursor: pointer; }
 
-/* SIMBOLOGÍA */
-.legend-item { display: flex; gap: 10px; margin-bottom: 10px; font-size: 12px; }
-.color-box { width: 20px; height: 20px; border-radius: 3px; flex-shrink: 0; }
-.guinda-fill { background: var(--guinda); }
-.azul-fill { background: #3498db; }
-.verde-fill { background: #027a35; }
+/* LEYENDA */
+.legend-item { display: flex; gap: 10px; margin-bottom: 8px; font-size: 12px; align-items: center; }
+.color-box { width: 20px; height: 20px; border-radius: 3px; flex-shrink: 0; border: 1px solid #ccc; }
+.guinda-fill { background: var(--guinda); opacity: 0.5; }
+.azul-fill { background: #3498db; opacity: 0.5; }
+.verde-fill { background: #027a35; opacity: 0.5; }
 
-/* CONTENEDOR DE IMPRESIÓN (Oculto normalmente) */
-#print-header { display: none; }
+/* SECCIÓN EDUCACIÓN */
+.info-section { background: var(--bg-seccion); padding: 40px 20px; text-align: center; }
+.grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px; }
+.service-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+.service-card .icon { font-size: 30px; }
 
-/* RESPONSIVO MÓVIL */
-.mobile-toggle { display: none; background: #eee; text-align: center; padding: 10px; font-size: 12px; cursor: pointer; }
+/* IMPRESIÓN */
+#print-header, .print-warning { display: none; }
+.mobile-toggle { display: none; background: #eee; text-align: center; padding: 10px; font-weight: bold; font-size: 12px; cursor: pointer; }
 
 @media (max-width: 600px) {
-    .map-section { height: 75vh; }
-    .info-card { position: absolute; bottom: 0; top: auto; width: 100%; border-radius: 15px 15px 0 0; max-height: 50vh; left: 0; }
+    .map-section { height: 70vh; }
+    .info-card { top: auto; bottom: 0; left: 0; width: 100%; border-radius: 15px 15px 0 0; max-height: 50vh; }
     .info-card.collapsed { height: 40px; overflow: hidden; }
     .mobile-toggle { display: block; }
-    .dependency-name { display: none; }
+    .header-right, .dependency-name { display: none; }
 }
 
-/* =========================================
-   ESTILOS DE IMPRESIÓN (FICHA TÉCNICA)
-   ========================================= */
 @media print {
-    /* Ocultar todo lo que no sirve en papel */
-    .info-card, .leaflet-control-zoom, .leaflet-control-layers, .mobile-toggle, .btn-gps, footer, .info-section {
-        display: none !important;
-    }
-    
-    /* Mostrar Header de Impresión */
-    #print-header {
-        display: block !important;
-        text-align: center;
-        margin-bottom: 20px;
-        border-bottom: 2px solid var(--guinda);
-        padding-bottom: 10px;
-    }
-    
-    /* Mapa en toda la hoja */
-    .gob-header { display: none; } /* Ocultar header web */
-    .map-section { height: 600px; border: 2px solid #000; }
-    
-    body { overflow: visible; background: white; }
-    
-    /* Ajustes para que se vea profesional */
-    .print-title { font-size: 24px; color: var(--guinda); font-family: 'Cabin', sans-serif; font-weight: bold; }
-    .print-date { font-size: 12px; color: #666; }
-    .print-warning { 
-        margin-top: 20px; padding: 15px; border: 1px solid #000; font-size: 14px; 
-        background: #eee !important; -webkit-print-color-adjust: exact; 
-    }
+    .info-card, .leaflet-control-zoom, .leaflet-control-layers, .gob-header, .mobile-toggle, .info-section, .btn-link { display: none !important; }
+    #print-header { display: block; }
+    .print-warning { display: block; margin-top: 20px; font-size: 12px; padding: 10px; border: 1px solid #000; background: #eee; }
+    .map-section { height: 500px; border: 2px solid #000; }
 }
