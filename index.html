@@ -13,7 +13,8 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-    
+    <!-- Librería para detectar si un punto está dentro del polígono (Point in Polygon) -->
+<script src="https://unpkg.com/@mapbox/leaflet-pip@latest/leaflet-pip.js"></script>
     <!-- ESTILOS -->
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -104,131 +105,161 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
 
     <script>
-        // 1. INICIALIZAR MAPA (Centrado en CDMX Sur)
-        var map = L.map('map', { zoomControl: false }).setView([19.25, -99.15], 11);
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        // --- 1. CONFIGURACIÓN DEL MAPA ---
+        var map = L.map('map', { zoomControl: false }).setView([19.30, -99.15], 11);
+        L.control.zoom({ position: 'topright' }).addTo(map);
 
-        // 2. CAPAS BASE (Satélite por defecto para ver si hay árboles/casas)
-        var mapaGris = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© CARTO' });
-        var mapaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles © Esri' });
-        var mapaCalles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' });
+        // Mapas Base
+        var mapaBase = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: 'CARTO' }).addTo(map);
+        var mapaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri' });
+        
+        L.control.layers({ "Mapa Claro": mapaBase, "Satélite": mapaSatelite }).addTo(map);
 
-        map.addLayer(mapaSatelite); // Inicia con Satélite
+        // Variables para guardar las capas y poder consultarlas después
+        var capaSueloConservacion;
+        var capaZonificacion;
 
-        var baseMaps = { "Satélite (Bosque)": mapaSatelite, "Mapa Claro": mapaGris, "Callejero": mapaCalles };
-        L.control.layers(baseMaps, null, { position: 'topright', collapsed: false }).addTo(map);
+        // --- 2. CAPAS DE INFORMACIÓN ---
 
-        // ============================================================
-        // 3. CARGAR TUS CAPAS REALES
-        // ============================================================
+        // ESTILOS
+        var estiloSC = { color: '#9d2148', fillColor: '#9d2148', weight: 1, fillOpacity: 0.3 };
+        var estiloZonif = { color: '#2980b9', weight: 1, fillOpacity: 0 }; // Invisible por defecto, solo para consulta
 
-        // ESTILO ROJO/GUINDA (Suelo de Conservación)
-        var styleSueloConservacion = {
-            color: '#9d2148',       // Borde Guinda
-            fillColor: '#9d2148',   // Relleno Guinda
-            weight: 1,
-            opacity: 1,
-            fillOpacity: 0.5
-        };
-
-        // ESTILO VERDE (ANP / Bosques)
-        var styleANP = {
-            color: '#027a35',
-            fillColor: '#027a35',
-            weight: 1,
-            opacity: 1,
-            fillOpacity: 0.5
-        };
-
-        // FUNCIÓN POPUP (Qué sale al dar clic)
-        function popupStyle(feature, layer, titulo) {
-            // Intenta buscar el nombre en varias columnas comunes
-            var props = feature.properties;
-            var nombre = props.NOMBRE || props.Nombre || props.ZONA || props.COLONIA || "Zona Regulada";
-            
-            var html = `
-                <div style="text-align:center; min-width:200px;">
-                    <h3 style="color:${titulo === 'ANP' ? '#027a35' : '#9d2148'}; margin-top:0;">⚠️ ATENCIÓN</h3>
-                    <strong>${nombre}</strong><br>
-                    <p style="font-size:12px; margin:5px 0;">Este predio se encuentra clasificado como:</p>
-                    <div style="background:${titulo === 'ANP' ? '#027a35' : '#9d2148'}; color:white; padding:5px; border-radius:4px; font-weight:bold; font-size:11px;">
-                        ${titulo === 'ANP' ? 'ÁREA NATURAL PROTEGIDA' : 'SUELO DE CONSERVACIÓN'}
-                    </div>
-                    <p style="font-size:11px; margin-top:5px;">Verifica con SEDEMA antes de cualquier transacción.</p>
-                </div>
-            `;
-            layer.bindPopup(html);
-        }
-
-        // --- CARGA DEL ARCHIVO PRINCIPAL ---
+        // CARGAR SUELO DE CONSERVACIÓN (ROJO)
         fetch('suelo-de-conservacion-2020.geojson')
-            .then(response => {
-                if(!response.ok) throw new Error("No se encontró el archivo");
-                return response.json();
-            })
+            .then(r => r.json())
             .then(data => {
-                L.geoJSON(data, {
-                    style: styleSueloConservacion,
+                capaSueloConservacion = L.geoJSON(data, {
+                    style: estiloSC,
                     onEachFeature: function(feature, layer) {
-                        popupStyle(feature, layer, 'SUELO DE CONSERVACIÓN');
+                        // Si le dan clic directo al polígono rojo
+                        layer.on('click', function(e) {
+                            L.DomEvent.stopPropagation(e); // Evita que el clic pase al mapa de fondo
+                            mostrarAlertaRoja(e.latlng, feature.properties);
+                        });
                     }
                 }).addTo(map);
-                console.log("Capa Suelo Conservación cargada con éxito.");
-            })
-            .catch(err => {
-                console.error("Error cargando capa:", err);
-                // Si falla, no hace nada visual, solo lo marca en consola (F12)
             });
 
-        // --- CARGA DEL ARCHIVO SECUNDARIO (Bosques/ANP) ---
-        // Nota: Si aún no tienes este archivo unido, no pasará nada, solo no cargará.
-        // Nómbralo 'anp.geojson' en tu GitHub para que funcione.
-        fetch('anp.geojson')
-            .then(res => res.json())
+        // CARGAR ZONIFICACIÓN POE (TU ARCHIVO RENOMBRADO A zonificacion.geojson)
+        fetch('zonificacion.geojson')
+            .then(r => r.json())
             .then(data => {
-                L.geoJSON(data, {
-                    style: styleANP,
+                capaZonificacion = L.geoJSON(data, {
+                    style: estiloZonif,
                     onEachFeature: function(feature, layer) {
-                        popupStyle(feature, layer, 'ANP');
+                        // También detectamos clic aquí para dar detalles específicos
+                        layer.on('click', function(e) {
+                            // No detenemos propagación aquí para que se combine con la alerta roja si coinciden
+                        });
                     }
                 }).addTo(map);
-            }).catch(e => console.log("Sin capa ANP adicional"));
+            })
+            .catch(err => console.log("Aún no subes zonificacion.geojson o tiene error de nombre"));
 
 
-        // ============================================================
-        // 4. FUNCIONALIDAD DE UX (GPS y BÚSQUEDA)
-        // ============================================================
+        // --- 3. SISTEMA DE ALERTAS INTELIGENTE ---
 
-        // A. GPS
+        // FUNCIÓN: Muestra Popup ROJO (Peligro)
+        function mostrarAlertaRoja(latlng, props) {
+            var nombre = props.NOMBRE || props.ZONA || "Zona Restringida";
+            
+            var html = `
+                <div style="text-align:center; min-width:200px; font-family:'Roboto'">
+                    <div style="background:#9d2148; color:white; padding:10px; border-radius:5px 5px 0 0;">
+                        <h3 style="margin:0; font-size:16px;">🚫 ZONA PROHIBIDA</h3>
+                    </div>
+                    <div style="padding:10px; border:1px solid #9d2148; border-top:none;">
+                        <strong>${nombre}</strong>
+                        <p style="font-size:13px; margin:8px 0;">Estás dentro del Suelo de Conservación.</p>
+                        <button style="background:#c0392b; color:white; border:none; padding:5px 10px; border-radius:3px; font-weight:bold;">VENTA ILEGAL</button>
+                    </div>
+                </div>
+            `;
+            L.popup().setLatLng(latlng).setContent(html).openOn(map);
+        }
+
+        // FUNCIÓN: Muestra Popup VERDE (Suelo Urbano / Permitido)
+        function mostrarAlertaVerde(latlng) {
+            var html = `
+                <div style="text-align:center; min-width:200px; font-family:'Roboto'">
+                    <div style="background:#27ae60; color:white; padding:10px; border-radius:5px 5px 0 0;">
+                        <h3 style="margin:0; font-size:16px;">✅ SUELO URBANO</h3>
+                    </div>
+                    <div style="padding:10px; border:1px solid #27ae60; border-top:none;">
+                        <p style="font-size:13px; margin:5px 0;">Esta zona <strong>NO</strong> está catalogada como Conservación Ambiental en nuestros registros.</p>
+                        <small style="color:#777;">(Verifica el uso de suelo habitacional en SEDUVI)</small>
+                    </div>
+                </div>
+            `;
+            L.popup().setLatLng(latlng).setContent(html).openOn(map);
+        }
+
+        // --- 4. DETECTOR DE CLICS EN EL MAPA (LA MAGIA) ---
+        
+        map.on('click', function(e) {
+            // Este evento se dispara cuando das clic en el MAPA BASE (lo gris)
+            // Verificamos si por error no cargó la capa aún
+            if (!capaSueloConservacion) return;
+
+            // Usamos leaflet-pip para ver si el clic cayó dentro de algún polígono rojo
+            // aunque el usuario haya dado clic "cerca" o en un hueco.
+            var resultados = leafletPip.pointInLayer(e.latlng, capaSueloConservacion);
+
+            if (resultados.length > 0) {
+                // Cayó dentro (por si falló el evento del layer)
+                mostrarAlertaRoja(e.latlng, resultados[0].feature.properties);
+            } else {
+                // Cayó FUERA -> Es Suelo Urbano
+                mostrarAlertaVerde(e.latlng);
+            }
+        });
+
+
+        // --- 5. BUSCADOR Y GPS (Integrado con validación) ---
+
+        function validarUbicacion(lat, lng, direccion) {
+            map.setView([lat, lng], 16); // Zoom automático cercano
+            
+            // Creamos un punto temporal para validar
+            var latlng = L.latLng(lat, lng);
+            
+            // Verificamos matemáticamente
+            if (capaSueloConservacion) {
+                var resultados = leafletPip.pointInLayer(latlng, capaSueloConservacion);
+                
+                if (resultados.length > 0) {
+                    mostrarAlertaRoja(latlng, resultados[0].feature.properties);
+                } else {
+                    mostrarAlertaVerde(latlng);
+                }
+            } else {
+                // Si no ha cargado la capa, ponemos marcador normal
+                L.marker([lat, lng]).addTo(map).bindPopup(direccion).openPopup();
+            }
+            
+            // Colapsar menú móvil si aplica
+            if(window.innerWidth < 600) {
+                document.querySelector('.info-card').classList.add('collapsed');
+            }
+        }
+
+        // GPS
         const btnGps = document.getElementById('btn-gps-large');
         const statusText = document.getElementById('gps-status');
-        var userMarker, userCircle;
 
         btnGps.addEventListener('click', function() {
-            statusText.innerHTML = "📡 Buscando satélites...";
-            statusText.style.color = "#b28e5c";
+            statusText.innerText = "📡 Localizando...";
             map.locate({setView: true, maxZoom: 16, enableHighAccuracy: true});
         });
 
-        map.on('locationfound', function(e) {
-            statusText.innerHTML = "✅ Ubicación encontrada";
-            statusText.style.color = "green";
-            
-            if(userMarker) map.removeLayer(userMarker);
-            if(userCircle) map.removeLayer(userCircle);
-
-            userMarker = L.circleMarker(e.latlng, { radius: 8, fillColor: "#007bff", color: "#fff", fillOpacity: 1 }).addTo(map).bindPopup("Tú estás aquí").openPopup();
-            userCircle = L.circle(e.latlng, e.accuracy).addTo(map);
-            
-            colapsarMovil();
+        map.on('locationfound', e => {
+            statusText.innerText = "Ubicación encontrada";
+            // Validamos la ubicación del usuario
+            validarUbicacion(e.latlng.lat, e.latlng.lng, "Tu ubicación");
         });
 
-        map.on('locationerror', function(e) {
-            statusText.innerHTML = "❌ Error: Activa tu ubicación/GPS.";
-            statusText.style.color = "red";
-        });
-
-        // B. BÚSQUEDA
+        // BUSCADOR MANUAL
         const inputSearch = document.getElementById('manual-search-input');
         const btnSearch = document.getElementById('btn-manual-search');
 
@@ -236,34 +267,24 @@
             var query = inputSearch.value;
             if (!query) return;
 
-            // Detectar coordenadas
+            // Coordenadas
             if (query.includes(',') && query.match(/[0-9]/)) {
                 var coords = query.split(',');
-                var lat = parseFloat(coords[0]);
-                var lng = parseFloat(coords[1]);
-                if (!isNaN(lat) && !isNaN(lng)) {
-                    map.setView([lat, lng], 17);
-                    L.marker([lat, lng]).addTo(map).bindPopup("Coordenada ingresada").openPopup();
-                    colapsarMovil();
-                    return;
-                }
+                validarUbicacion(parseFloat(coords[0]), parseFloat(coords[1]), "Coordenada");
+                return;
             }
 
-            // Buscar texto (Nominatim)
-            statusText.innerHTML = "🔍 Buscando dirección...";
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}+CDMX+Mexico&addressdetails=1&limit=1`)
+            // Texto
+            statusText.innerText = "Buscando...";
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}+CDMX&limit=1`)
                 .then(r => r.json())
                 .then(data => {
                     if (data.length > 0) {
-                        var lat = data[0].lat;
-                        var lon = data[0].lon;
-                        map.setView([lat, lon], 17);
-                        L.marker([lat, lon]).addTo(map).bindPopup(data[0].display_name).openPopup();
-                        statusText.innerHTML = "";
-                        colapsarMovil();
+                        statusText.innerText = "";
+                        validarUbicacion(data[0].lat, data[0].lon, data[0].display_name);
                     } else {
-                        alert("Dirección no encontrada. Intenta ser más específico (Colonia, Alcaldía).");
-                        statusText.innerHTML = "";
+                        alert("No encontramos esa dirección. Intenta con Colonia y Alcaldía.");
+                        statusText.innerText = "";
                     }
                 });
         }
@@ -271,18 +292,9 @@
         btnSearch.addEventListener('click', realizarBusqueda);
         inputSearch.addEventListener('keypress', function (e) { if (e.key === 'Enter') realizarBusqueda(); });
 
-        // C. UX MÓVIL
-        function colapsarMovil() {
-            if(window.innerWidth < 600) {
-                document.querySelector('.info-card').classList.add('collapsed');
-                document.getElementById('mobile-toggle').innerHTML = "Abrir Menú ⬆";
-            }
-        }
-
+        // Toggle Móvil
         document.getElementById('mobile-toggle').addEventListener('click', function() {
             document.querySelector('.info-card').classList.toggle('collapsed');
-            var isCollapsed = document.querySelector('.info-card').classList.contains('collapsed');
-            this.innerHTML = isCollapsed ? "Abrir Menú ⬆" : "Ver Mapa Completo ⬇";
         });
 
     </script>
