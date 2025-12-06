@@ -1,0 +1,25 @@
+SECTOR,ACTIVIDAD_GENERAL,ACTIVIDAD_ESPECIFICA,AEE,AE,AFE,AF,FPE,FP,FCE,FC
+Agrícola,Intensiva,Cultivos básicos y forrajeros,A,A,A,A,A,P,P,P
+Agrícola,Intensiva,Uso de agroquímicos,A,A,A,A,P,P,P,P
+Agrícola,Tecnologías y métodos,Quemas,P,P,P,P,P,P,P,P
+Agrícola,Tecnologías y métodos,Construcción de bordos y terrazas,A,A,A,A,P,P,P,P
+Agrícola,Mejoramiento de suelos,Pesticidas y herbicidas,P,P,P,P,P,P,P,P
+Pecuario,Ganadería,Libre (Pastoreo extensivo),A,A,A,P,P,P,P,P
+Pecuario,Ganadería,Estabulado (Ganado encerrado),P,A,A,A,A,P,P,P
+Forestal,Maderable,Plantaciones comerciales,A,A,A,A,P,P,P,P
+Forestal,Maderable,Desmonte (Tala total),P,P,P,P,P,P,P,P
+Forestal,No maderable,Extracción de tierra de monte,A,A,A,A,A,A,A,A
+Forestal,Restauración,Reforestación con especies nativas,A,A,A,A,A,A,A,A
+Forestal,Control y prevención,Quemas prescritas (Controladas),P,P,P,P,P,P,P,P
+Vida Silvestre,Comercial,Caza (Cinegética),P,P,P,P,P,P,P,P
+Vida Silvestre,Investigación,Colecta de ejemplares,A,A,A,A,A,A,A,A
+Turismo,Ecoturismo,Senderos interpretativos,A,A,A,A,A,A,A,A
+Turismo,Recreación y deporte,Campismo,A,A,A,A,A,A,A,A
+Turismo,Recreación y deporte,Prácticas en vehículos motorizados (Motos/4x4),P,A,P,P,P,P,P,P
+Turismo,Recreación y deporte,Campos de Golf,P,P,P,P,P,P,P,P
+Infraestructura,Manejo de residuos,Tiro de deshechos sólidos (Cascajo/Basura),P,P,P,P,P,P,P,P
+Infraestructura,Redes e instalaciones,Construcción de caminos y brechas,A,A,A,A,A,A,P,A
+Infraestructura,Redes e instalaciones,Construcción de red sanitaria (Drenaje),A,A,A,A,P,P,P,P
+Infraestructura,Redes e instalaciones,Viveros e invernaderos,A,A,A,A,A,A,A,A
+Infraestructura,Vivienda y Servicios,Nuevos Asentamientos Humanos,P,P,P,P,P,P,P,P
+Minería,Extracción de materiales,Para fines comerciales (Minas),P,P,P,P,P,P,P,P
