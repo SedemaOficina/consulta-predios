@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visor de Suelo de Conservación | SEDEMA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Validador de Predios | SEDEMA</title>
     
     <!-- FUENTES OFICIALES -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,209 +12,223 @@
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- CSS del Buscador -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     
-    <!-- NUESTRO ESTILO -->
+    <!-- ESTILOS -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-    <!-- 1. ENCABEZADO OFICIAL -->
+    <!-- HEADER -->
     <header class="gob-header">
         <div class="header-inner">
-            <!-- LOGO ACTUALIZADO -->
             <img src="logo-sedema.png" alt="Logo SEDEMA" class="logo-cdmx">
-            
             <div class="vertical-line"></div>
-            
             <div class="dependency-name">
                 <h1>SECRETARÍA DEL<br>MEDIO AMBIENTE</h1>
             </div>
         </div>
-        
-        <nav class="nav-links">
-            <a href="#" class="nav-item">Inicio</a>
-            <a href="#" class="nav-item">Ayuda</a>
-        </nav>
+        <!-- Menú simplificado -->
+        <div class="header-right">
+            <span class="emergency-text">¿Dudas? Llama al 911</span>
+        </div>
     </header>
 
-    <!-- 2. CONTENEDOR PRINCIPAL -->
+    <!-- CONTENEDOR -->
     <main class="layout-container">
         
-        <!-- MAPA -->
         <div id="map"></div>
 
-        <!-- BOTÓN DE UBICACIÓN (GPS) -->
-        <button id="btn-locate" class="btn-gps" title="Ubicar mi posición">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <circle cx="12" cy="12" r="3"></circle>
-                <line x1="12" y1="2" x2="12" y2="4"></line>
-                <line x1="12" y1="20" x2="12" y2="22"></line>
-                <line x1="2" y1="12" x2="4" y2="12"></line>
-                <line x1="20" y1="12" x2="22" y2="12"></line>
-            </svg>
-        </button>
-
-        <!-- TARJETA FLOTANTE -->
+        <!-- TARJETA PRINCIPAL (INTERFAZ DE USUARIO) -->
         <div class="info-card">
             <div class="card-header">
-                <h2>Consulta de Predios</h2>
+                <h2>Protege tu Patrimonio</h2>
+                <p>Verifica el terreno antes de pagar un solo peso.</p>
             </div>
             
             <div class="card-body">
-                <p class="roboto-text">
-                    Verifique si un terreno se encuentra en <b>Zona de Conservación</b> antes de realizar cualquier trámite o pago.
-                </p>
-
-                <!-- El buscador ahora estará dentro del mapa, pero dejamos este texto de ayuda -->
-                <p style="font-size: 12px; color:#666; margin-bottom: 5px;">
-                    <i>Tip: Puede buscar por calle o coordenada (Ej: 19.25, -99.10) en la lupa del mapa.</i>
-                </p>
-
-                <div class="separator"></div>
-
-                <h3>Simbología Oficial</h3>
                 
-                <div class="legend-item">
-                    <span class="color-box guinda-fill"></span>
-                    <div>
-                        <span class="legend-title">Suelo de Conservación</span>
-                        <span class="legend-desc">Venta prohibida (Delito Ambiental)</span>
+                <!-- SECCIÓN 1: GPS (Lo más fácil) -->
+                <div class="action-section">
+                    <label>Opción A: Estoy en el terreno ahora</label>
+                    <button id="btn-gps-large" class="btn-block btn-guinda">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle><line x1="12" y1="2" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="22"></line><line x1="2" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="22" y2="12"></line></svg>
+                        USAR MI UBICACIÓN ACTUAL
+                    </button>
+                    <p id="gps-status" class="status-text"></p>
+                </div>
+
+                <div class="divider-text">O BUSCA LA DIRECCIÓN</div>
+
+                <!-- SECCIÓN 2: BUSCADOR MANUAL -->
+                <div class="action-section">
+                    <label>Opción B: Buscar por calle o colonia</label>
+                    <div class="search-wrapper">
+                        <input type="text" id="manual-search-input" placeholder="Ej: Calle 3, San Miguel Topilejo...">
+                        <button id="btn-manual-search" class="btn-search">🔍</button>
+                    </div>
+                    <p class="hint-text">Si tienes coordenadas (ej: 19.25, -99.10), pégalas arriba.</p>
+                </div>
+
+                <!-- SECCIÓN 3: RESULTADOS Y SIMBOLOGÍA -->
+                <div class="results-area">
+                    <h3>¿Qué significan los colores?</h3>
+                    
+                    <div class="legend-item alert-item">
+                        <span class="color-box guinda-fill"></span>
+                        <div>
+                            <strong>ZONA ROJA (Suelo de Conservación)</strong>
+                            <span>¡CUIDADO! Es delito vender o construir aquí. <b>Es un fraude.</b></span>
+                        </div>
+                    </div>
+
+                    <div class="legend-item">
+                        <span class="color-box verde-fill"></span>
+                        <div>
+                            <strong>ZONA VERDE (Área Protegida)</strong>
+                            <span>Bosques y barrancas federales. Propiedad de la Nación.</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="legend-item">
-                    <span class="color-box verde-fill"></span>
-                    <div>
-                        <span class="legend-title">Área Natural Protegida</span>
-                        <span class="legend-desc">Bosques y Barrancas (Federal/Local)</span>
-                    </div>
-                </div>
-
-                <div class="alert-banner">
-                    <span class="alert-icon">⚠️</span>
-                    <p>
-                        <strong>¡ALTO AL FRAUDE!</strong><br>
-                        Si le venden terrenos en zonas coloreadas, 
-                        denuncie al 911 o en PAOT.
-                    </p>
-                </div>
             </div>
-            
-            <div class="card-footer">
-                <small>Gobierno de la Ciudad de México 2024-2030</small>
-            </div>
+            <!-- Botón para cerrar panel en móvil -->
+            <div class="mobile-toggle" id="mobile-toggle">Ver Mapa Completo ⬇</div>
         </div>
 
     </main>
 
-    <!-- SCRIPTS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-    
+
     <script>
-        // --- 1. DEFINICIÓN DE CAPAS BASE (FONDOS) ---
+        // 1. INICIAR MAPA
+        // Centrado en zona de conservación (Sur CDMX)
+        var map = L.map('map', { zoomControl: false }).setView([19.25, -99.15], 11);
         
-        // Opción A: Gris (Elegante/Institucional)
-        var mapaGris = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap, © CARTO'
-        });
+        // Controles de zoom abajo a la derecha para no estorbar
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Opción B: Satélite (Esri World Imagery) - Para ver el bosque real
-        var mapaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles © Esri'
-        });
+        // 2. CAPAS BASE
+        var mapaGris = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap, © CARTO' });
+        var mapaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles © Esri' });
+        var mapaCalles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' });
 
-        // Opción C: Calles (OpenStreetMap) - Para ver nombres de tiendas y calles
-        var mapaCalles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        });
+        // Por defecto Satélite (para que vean si hay bosque)
+        map.addLayer(mapaGris);
 
-        // Inicializamos el mapa con la capa GRIS por defecto
-        var map = L.map('map', { 
-            zoomControl: false,
-            layers: [mapaGris] // Capa inicial
-        }).setView([19.30, -99.15], 11);
+        var baseMaps = { "Mapa Claro": mapaGris, "Ver Bosque (Satélite)": mapaSatelite, "Ver Calles": mapaCalles };
+        L.control.layers(baseMaps, null, { position: 'topright', collapsed: false }).addTo(map);
 
-        // Control de Zoom a la derecha
-        L.control.zoom({ position: 'topright' }).addTo(map);
+        // 3. CAPAS DE RIESGO (SIMULACIÓN)
+        var zonaProhibida = L.polygon([
+            [19.29, -99.18], [19.30, -99.05], [19.20, -99.08], [19.20, -99.20]
+        ], { color: '#9d2148', fillColor: '#9d2148', fillOpacity: 0.5, weight: 2 }).addTo(map);
 
-        // --- 2. CONTROL DE CAPAS (Selector de Fondos) ---
-        var baseMaps = {
-            "Mapa Institucional (Gris)": mapaGris,
-            "Vista Satelital": mapaSatelite,
-            "Mapa de Calles": mapaCalles
-        };
-        // Agregamos el control abajo a la derecha
-        L.control.layers(baseMaps).addTo(map);
+        zonaProhibida.bindPopup('<div style="text-align:center"><h3 style="color:#9d2148">🚫 ZONA PROHIBIDA</h3><p>Suelo de Conservación.<br>No compres aquí.</p></div>');
 
+        // --- LÓGICA DE UX ---
 
-        // --- 3. BUSCADOR INTELIGENTE (Direcciones y Coordenadas) ---
-        var geocoder = L.Control.geocoder({
-            defaultMarkGeocode: false,
-            placeholder: "Buscar calle o coordenadas...",
-            geocoder: L.Control.Geocoder.nominatim() // Usa OSM para predecir
-        })
-        .on('markgeocode', function(e) {
-            var bbox = e.geocode.bbox;
-            var poly = L.polygon([
-                bbox.getSouthEast(),
-                bbox.getNorthEast(),
-                bbox.getNorthWest(),
-                bbox.getSouthWest()
-            ]);
-            map.fitBounds(poly.getBounds());
+        // A. BOTÓN GPS GRANDE
+        const btnGps = document.getElementById('btn-gps-large');
+        const statusText = document.getElementById('gps-status');
+
+        btnGps.addEventListener('click', function() {
+            statusText.innerHTML = "📡 Localizando tu celular... espera un momento.";
+            statusText.style.color = "#b28e5c"; // Dorado
             
-            // Poner un marcador en el resultado
-            L.marker(e.geocode.center).addTo(map)
-                .bindPopup("<b>Ubicación Buscada</b><br>" + e.geocode.name).openPopup();
-        })
-        .addTo(map);
-
-
-        // --- 4. FUNCIÓN GPS (Botón Ubicarme) ---
-        document.getElementById('btn-locate').addEventListener('click', function() {
-            // Pedir al navegador la ubicación
-            map.locate({setView: true, maxZoom: 16});
+            map.locate({setView: true, maxZoom: 16, enableHighAccuracy: true});
         });
 
-        // Si encuentra la ubicación:
         map.on('locationfound', function(e) {
-            var radius = e.accuracy;
+            statusText.innerHTML = "✅ Ubicación encontrada. Mira el mapa.";
+            statusText.style.color = "green";
             
-            L.marker(e.latlng).addTo(map)
-                .bindPopup("📍 ¡Estás aquí!").openPopup();
+            // Marcador pulsante
+            L.circleMarker(e.latlng, {
+                radius: 8, fillColor: "#007bff", color: "#fff", weight: 2, fillOpacity: 1
+            }).addTo(map).bindPopup("Estás aquí").openPopup();
+            
+            L.circle(e.latlng, e.accuracy).addTo(map);
 
-            L.circle(e.latlng, radius).addTo(map);
+            // En móvil, colapsar el panel para que vean el mapa
+            if(window.innerWidth < 600) {
+                document.querySelector('.info-card').classList.add('collapsed');
+                document.getElementById('mobile-toggle').innerHTML = "Abrir Menú ⬆";
+            }
         });
 
-        // Si hay error (ej. el usuario niega el permiso):
         map.on('locationerror', function(e) {
-            alert("No pudimos acceder a tu ubicación. Asegúrate de tener el GPS activado y dar permisos al navegador.");
+            statusText.innerHTML = "❌ Error: Activa el GPS de tu celular y vuelve a intentar.";
+            statusText.style.color = "red";
         });
 
+        // B. BUSCADOR MANUAL (INTEGRADO EN LA TARJETA)
+        const inputSearch = document.getElementById('manual-search-input');
+        const btnSearch = document.getElementById('btn-manual-search');
 
-        // --- 5. TUS CAPAS (Simulación) ---
-        // Aquí irán tus GeoJSON reales. Dejo el polígono de ejemplo.
-        var poligonoProhibido = L.polygon([
-            [19.28, -99.18], [19.29, -99.05], [19.20, -99.08], [19.20, -99.20]
-        ], {
-            color: '#9d2148',
-            fillColor: '#9d2148',
-            fillOpacity: 0.5,
-            weight: 2
-        }).addTo(map);
+        // Función de búsqueda personalizada
+        function realizarBusqueda() {
+            var query = inputSearch.value;
+            if (!query) return;
 
-        poligonoProhibido.bindPopup(`
-            <div style="font-family: 'Roboto', sans-serif; text-align:center;">
-                <h3 style="font-family:'Cabin', sans-serif; color:#9d2148; margin-bottom:5px;">ZONA RESTRINGIDA</h3>
-                <p style="margin:0;">Suelo de Conservación</p>
-                <br>
-                <button style="background:#9d2148; color:white; border:none; padding:8px 12px; border-radius:4px;">VER DETALLES</button>
-            </div>
-        `);
+            // 1. ¿Es coordenada? (Detectar formato "numero, numero")
+            if (query.includes(',')) {
+                var coords = query.split(',');
+                var lat = parseFloat(coords[0]);
+                var lng = parseFloat(coords[1]);
+                
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    map.setView([lat, lng], 16);
+                    L.marker([lat, lng]).addTo(map).bindPopup("Coordenada Buscada").openPopup();
+                    return;
+                }
+            }
+
+            // 2. Si es texto, usar Geocoder
+            // Usamos la API de Nominatim manualmente
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}+CDMX`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        var resultado = data[0];
+                        var lat = resultado.lat;
+                        var lon = resultado.lon;
+                        
+                        map.setView([lat, lon], 16);
+                        L.marker([lat, lon]).addTo(map)
+                            .bindPopup(`<b>${resultado.display_name}</b>`).openPopup();
+                        
+                        // Ocultar teclado en móvil
+                        inputSearch.blur();
+                        // Colapsar panel en móvil
+                        if(window.innerWidth < 600) {
+                            document.querySelector('.info-card').classList.add('collapsed');
+                            document.getElementById('mobile-toggle').innerHTML = "Abrir Menú ⬆";
+                        }
+                    } else {
+                        alert("No encontramos esa dirección. Intenta poner solo la Colonia y Alcaldía.");
+                    }
+                })
+                .catch(err => {
+                    alert("Error de conexión.");
+                });
+        }
+
+        btnSearch.addEventListener('click', realizarBusqueda);
+        inputSearch.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') realizarBusqueda();
+        });
+
+        // C. COLAPSAR PANEL EN MÓVIL
+        document.getElementById('mobile-toggle').addEventListener('click', function() {
+            document.querySelector('.info-card').classList.toggle('collapsed');
+            if (document.querySelector('.info-card').classList.contains('collapsed')) {
+                this.innerHTML = "Abrir Buscador ⬆";
+            } else {
+                this.innerHTML = "Ver Mapa Completo ⬇";
+            }
+        });
 
     </script>
 </body>
