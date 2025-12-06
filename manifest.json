@@ -1,1 +1,20 @@
-
+{
+  "name": "Visor SEDEMA",
+  "short_name": "Suelo CDMX",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#9d2148",
+  "icons": [
+    {
+      "src": "logo-sedema.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "logo-sedema.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
