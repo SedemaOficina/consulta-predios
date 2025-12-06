@@ -11,310 +11,419 @@
     <!-- LEAFLET Y LIBRERÍAS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Librería PIP (Punto en Polígono) VITAL para que funcione el clic -->
+    <!-- Librería PIP (Punto en Polígono) -->
     <script src="https://unpkg.com/@mapbox/leaflet-pip@latest/leaflet-pip.js"></script>
     <!-- Librería AJAX -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
 
-    <link rel="stylesheet" href="styles.css">
+    <!-- ESTILOS CSS INCORPORADOS (Para que no fallen) -->
+    <style>
+        /* RESET GENERAL (Para quitar bordes feos por defecto) */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Montserrat', sans-serif; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; /* Evita doble barra de scroll */
+        }
+
+        /* --- 1. ENCABEZADO --- */
+        .gob-header {
+            height: 70px;
+            background: white;
+            border-bottom: 4px solid #9d2148; /* Guinda */
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 2000;
+            flex-shrink: 0; /* Que no se aplaste */
+        }
+
+        .logo-box img { 
+            height: 50px; 
+            width: auto; 
+            display: block;
+        }
+
+        /* --- 2. CONTENEDOR PRINCIPAL (LADO A LADO) --- */
+        .main-wrapper {
+            display: flex;
+            flex: 1; /* Ocupa el resto de la altura */
+            position: relative;
+            height: calc(100vh - 70px); /* Altura total menos header */
+        }
+
+        /* --- 3. PANEL LATERAL (IZQUIERDA) --- */
+        .sidebar {
+            width: 350px;
+            background: #f9f9f9;
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            flex-shrink: 0;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            background: #9d2148;
+            color: white;
+            padding: 15px 20px;
+        }
+        .sidebar-header h3 { margin: 0; font-size: 16px; font-weight: 700; text-transform: uppercase; }
+        .sidebar-header p { margin: 5px 0 0 0; font-size: 11px; opacity: 0.9; }
+
+        .sidebar-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* CONTROLES */
+        .control-group { margin-bottom: 25px; }
+        .label-titulo { 
+            display: block; 
+            font-size: 12px; 
+            font-weight: 700; 
+            color: #9d2148; 
+            margin-bottom: 8px; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Botón GPS */
+        .btn-full {
+            width: 100%;
+            padding: 12px;
+            background: #2c3e50; /* Gris oscuro elegante */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: background 0.2s;
+        }
+        .btn-full:hover { background: #1a252f; }
+
+        .divider { 
+            text-align: center; margin: 15px 0; font-size: 11px; color: #999; font-weight: bold; position: relative; 
+        }
+        .divider::before { content: ""; position: absolute; top: 50%; left: 0; width: 45%; height: 1px; background: #ddd; }
+        .divider::after { content: ""; position: absolute; top: 50%; right: 0; width: 45%; height: 1px; background: #ddd; }
+
+        /* Buscador */
+        .search-row { display: flex; gap: 5px; }
+        .search-row input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 13px;
+        }
+        .search-row button {
+            padding: 0 15px;
+            background: #b28e5c; /* Dorado */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* RESULTADOS */
+        .result-container {
+            margin-top: 10px;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background: white;
+            font-size: 13px;
+        }
+        /* Colores de alerta */
+        .res-rojo { border-left: 5px solid #C0392B; background: #fff5f5; }
+        .res-verde { border-left: 5px solid #27ae60; background: #f0fff4; }
+        .res-azul { border-left: 5px solid #2980b9; background: #eef7fc; }
+
+        .res-titulo { font-weight: 800; margin-bottom: 5px; display: block; font-size: 14px;}
+        .res-rojo .res-titulo { color: #C0392B; }
+        .res-verde .res-titulo { color: #27ae60; }
+        .res-azul .res-titulo { color: #2980b9; }
+
+        /* SIMBOLOGÍA */
+        .leyenda-box {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+        .leyenda-box h4 { margin: 0 0 10px 0; font-size: 12px; color: #666; }
+        .item-leyenda { font-size: 11px; margin-bottom: 6px; display: flex; align-items: center; color: #444; }
+        .dot { width: 12px; height: 12px; display: inline-block; margin-right: 8px; border-radius: 2px; }
+        
+        .bg-rojo { background: rgba(192, 57, 43, 0.6); border: 1px solid #C0392B; }
+        .bg-azul { border: 2px solid #3498db; }
+        .bg-verde { background: rgba(39, 174, 96, 0.6); border: 1px solid #27ae60; }
+
+        /* --- 4. MAPA --- */
+        #map {
+            flex: 1; /* Toma todo el espacio restante */
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* --- POPUPS --- */
+        .leaflet-popup-content-wrapper { border-radius: 0; padding: 0; }
+        .leaflet-popup-content { margin: 0; width: 280px !important; }
+        
+        .popup-head { padding: 10px; color: white; font-weight: bold; text-align: center; font-size: 13px; }
+        .popup-body { padding: 15px; font-size: 12px; line-height: 1.4; color: #333; }
+        
+        .list-check { list-style: none; padding: 0; margin: 5px 0; }
+        .list-check li::before { content: "✅ "; }
+        .list-cross { list-style: none; padding: 0; margin: 5px 0; color: #C0392B; }
+        .list-cross li::before { content: "🚫 "; }
+
+        /* RESPONSIVO CELULAR */
+        @media (max-width: 768px) {
+            .main-wrapper { flex-direction: column-reverse; } /* Panel abajo en celular */
+            .sidebar { width: 100%; height: 40%; }
+            #map { height: 60%; }
+            .gob-header { justify-content: center; } /* Logo centrado */
+        }
+    </style>
 </head>
 <body>
 
-    <!-- ENCABEZADO -->
+    <!-- HEADER -->
     <header class="gob-header">
         <div class="logo-box">
-            <img src="logo-sedema.png" alt="SEDEMA" class="logo-img">
-        </div>
-        <div class="header-title">
-            <h1>SECRETARÍA DEL MEDIO AMBIENTE</h1>
-            <h2>Sistema de Información Geográfica y Vigilancia</h2>
+            <img src="logo-sedema.png" alt="SEDEMA CDMX">
         </div>
     </header>
 
-    <!-- CONTENEDOR PRINCIPAL (PANEL + MAPA) -->
+    <!-- CONTENEDOR PRINCIPAL -->
     <div class="main-wrapper">
         
-        <!-- PANEL LATERAL (IZQUIERDA) -->
+        <!-- PANEL IZQUIERDO -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <h3>🔍 Consulta de Predios</h3>
-                <p>Verifica si un terreno es regular o prohibido.</p>
+                <h3>Consulta Ciudadana</h3>
+                <p>Verifica el uso de suelo y evita fraudes.</p>
             </div>
 
             <div class="sidebar-body">
-                <!-- 1. GPS -->
+                <!-- GPS -->
                 <div class="control-group">
-                    <label>Opción A: Ubícame aquí</label>
-                    <button id="btn-gps" class="btn-full btn-guinda">
-                        📍 USAR MI UBICACIÓN ACTUAL
+                    <label class="label-titulo">1. Ubicación Actual</label>
+                    <button id="btn-gps" class="btn-full">
+                        📍 USAR MI GPS
                     </button>
-                    <div id="status-gps" class="status-msg"></div>
+                    <div id="status-gps" style="font-size:11px; margin-top:5px; color:#666; text-align:center;"></div>
                 </div>
 
-                <div class="divider"><span>O</span></div>
+                <div class="divider">O BUSCA UNA DIRECCIÓN</div>
 
-                <!-- 2. BUSCADOR -->
+                <!-- BUSCADOR -->
                 <div class="control-group">
-                    <label>Opción B: Buscar dirección</label>
+                    <label class="label-titulo">2. Buscar Dirección</label>
                     <div class="search-row">
                         <input type="text" id="input-busqueda" placeholder="Calle, Colonia o Coordenadas...">
                         <button id="btn-buscar">🔎</button>
                     </div>
                 </div>
 
-                <!-- 3. RESULTADOS (Se llena dinámicamente) -->
+                <!-- CAJA DE RESULTADOS (Se llena sola) -->
                 <div id="panel-resultados" class="result-container" style="display:none;">
-                    <h4 id="res-titulo">RESULTADO</h4>
-                    <p id="res-zona"></p>
-                    <div id="res-reglas"></div>
+                    <span id="res-titulo" class="res-titulo">RESULTADO</span>
+                    <p id="res-texto" style="margin:5px 0;"></p>
+                    <div id="res-detalles"></div>
                 </div>
 
-                <!-- 4. SIMBOLOGÍA -->
+                <!-- LEYENDA -->
                 <div class="leyenda-box">
-                    <h4>Simbología</h4>
-                    <div class="item"><span class="dot rojo"></span> Suelo de Conservación (Restringido)</div>
-                    <div class="item"><span class="dot azul"></span> Zonificación (Reglas PGOEDF)</div>
-                    <div class="item"><span class="dot verde"></span> Áreas Naturales Protegidas</div>
+                    <h4>Simbología del Mapa</h4>
+                    <div class="item-leyenda"><span class="dot bg-rojo"></span> Suelo de Conservación (Restringido)</div>
+                    <div class="item-leyenda"><span class="dot bg-azul"></span> Zonificación (Reglas PGOEDF)</div>
+                    <div class="item-leyenda"><span class="dot bg-verde"></span> Áreas Naturales Protegidas</div>
                 </div>
             </div>
         </aside>
 
-        <!-- MAPA (DERECHA) -->
+        <!-- MAPA -->
         <div id="map"></div>
     </div>
 
+    <!-- LÓGICA DEL SISTEMA -->
     <script>
-        // ==========================================
-        // 1. BASE DE DATOS DE REGLAS (PGOEDF)
-        // ==========================================
-        const reglasPGOEDF = {
+        // --- 1. BASE DE DATOS PGOEDF (REGLAS) ---
+        const reglas = {
             "Forestal de Conservación": {
-                codigo: "FC",
-                permitido: ["Reforestación", "Vigilancia", "Ecoturismo (Senderos)"],
-                prohibido: ["VIVIENDA", "Agricultura", "Ganadería", "Apertura de calles"]
+                perm: ["Reforestación", "Vigilancia", "Ecoturismo"],
+                proh: ["VIVIENDA", "Agricultura", "Ganadería", "Calles"]
             },
             "Forestal de Conservación Especial": {
-                codigo: "FCE",
-                permitido: ["Turismo sustentable", "Viveros", "Apicultura"],
-                prohibido: ["NUEVOS ASENTAMIENTOS", "Industria", "Minería"]
+                perm: ["Turismo sustentable", "Viveros", "Apicultura"],
+                proh: ["ASENTAMIENTOS", "Industria", "Minería"]
             },
             "Forestal de Protección": {
-                codigo: "FP",
-                permitido: ["Obras conservación", "Reforestación"],
-                prohibido: ["Urbanización", "Tiraderos de basura", "Pastoreo"]
+                perm: ["Obras conservación", "Reforestación"],
+                proh: ["Urbanización", "Tiraderos", "Pastoreo"]
             },
             "Agroforestal": {
-                codigo: "AF",
-                permitido: ["Cultivos tradicionales", "Frutales", "Leña doméstica"],
-                prohibido: ["Fraccionamientos", "Industria", "Tala rasa"]
+                perm: ["Cultivos", "Frutales", "Leña doméstica"],
+                proh: ["Fraccionamientos", "Industria", "Tala"]
             },
             "Agroecológica": {
-                codigo: "AE",
-                permitido: ["Agricultura intensiva", "Venta productos"],
-                prohibido: ["Uso Habitacional", "Centros comerciales"]
+                perm: ["Agricultura intensiva", "Venta productos"],
+                proh: ["Uso Habitacional", "Centros comerciales"]
             },
             "Agroecológica Especial": {
-                codigo: "AEE",
-                permitido: ["Chinampas", "Turismo canales"],
-                prohibido: ["Relleno canales", "Construcción casas", "Drenaje"]
+                perm: ["Chinampas", "Turismo canales"],
+                proh: ["Relleno canales", "Construcción casas"]
             }
         };
 
-        function getReglas(nombre) {
+        function getInfo(nombre) {
             if(!nombre) return null;
-            for(let key in reglasPGOEDF) {
-                if(nombre.toUpperCase().includes(key.toUpperCase())) return reglasPGOEDF[key];
+            for(let key in reglas) {
+                if(nombre.toUpperCase().includes(key.toUpperCase())) return {nombre: key, ...reglas[key]};
             }
-            // Default preventivo
-            return { 
-                codigo: "SC", 
-                permitido: ["Consulta a la autoridad"], 
-                prohibido: ["Urbanización no autorizada"] 
-            };
+            return { nombre: "Zona Regulada", perm: ["Consulta SEDEMA"], proh: ["Actividades no autorizadas"] };
         }
 
-        // ==========================================
-        // 2. MAPA Y CAPAS
-        // ==========================================
+        // --- 2. INICIALIZAR MAPA ---
         var map = L.map('map', { zoomControl: false }).setView([19.30, -99.15], 11);
         L.control.zoom({ position: 'topright' }).addTo(map);
 
         var satelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri' }).addTo(map);
-        var calles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', { opacity: 0.8 }).addTo(map);
+        var calles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', { opacity: 0.7, attribution: 'CARTO' }).addTo(map);
 
-        // Capas GeoJSON
+        // Capas para guardar datos
         var layerSuelo = L.layerGroup().addTo(map);
-        var layerZoni = L.geoJSON(null, { // La definimos vacía para cargarla después
-            style: { color: '#3498db', weight: 1, fillOpacity: 0.05 },
+        var layerZoni = L.geoJSON(null, {
+            style: { color: '#3498db', weight: 2, fillOpacity: 0.05 },
             onEachFeature: function(feature, layer) {
-                // Evento clic en el polígono
                 layer.on('click', function(e) {
                     L.DomEvent.stopPropagation(e);
-                    analizarPunto(e.latlng);
+                    analizar(e.latlng);
                 });
             }
-        }).addTo(map); 
+        }).addTo(map);
 
-        // CARGAR DATOS
-        // 1. Suelo de Conservación (Fondo Rojo)
-        fetch('suelo-de-conservacion-2020.geojson')
-            .then(r => r.json())
-            .then(data => {
-                L.geoJSON(data, {
-                    style: { color: '#C0392B', fillColor: '#C0392B', fillOpacity: 0.25, weight: 0 },
-                    interactive: false 
-                }).addTo(layerSuelo);
-            });
-
-        // 2. Zonificación (Reglas) - NOMBRE EXACTO QUE PEDISTE
-        fetch('zoonificación_pgoedf_2000.geojson')
-            .then(r => r.json())
-            .then(data => {
-                layerZoni.addData(data);
-            })
-            .catch(err => console.error("Error cargando zonificación. Revisa el nombre del archivo.", err));
-
-
-        // ==========================================
-        // 3. EL CEREBRO (ANÁLISIS Y POPUP)
-        // ==========================================
+        // --- 3. CARGAR ARCHIVOS ---
         
-        var currentMarker; // Para borrar el pin anterior
+        // Rojo (Suelo Conservación)
+        fetch('suelo-de-conservacion-2020.geojson').then(r=>r.json()).then(d=>{
+            L.geoJSON(d, {
+                style: { color: '#C0392B', fillColor: '#C0392B', fillOpacity: 0.2, weight: 0 },
+                interactive: false
+            }).addTo(layerSuelo);
+        });
 
-        function analizarPunto(latlng, textoOrigen) {
-            // 1. Mover mapa y poner pin
-            map.setView(latlng, 16); // Zoom cercano
+        // Azul (Zonificación - Lógica)
+        fetch('zoonificación_pgoedf_2000.geojson').then(r=>r.json()).then(d=>{
+            layerZoni.addData(d);
+        }).catch(e => alert("Error: No se encuentra el archivo 'zoonificación_pgoedf_2000.geojson'. Verifica el nombre en GitHub."));
+
+        // Verde (ANP - Opcional)
+        fetch('anp.geojson').then(r=>r.json()).then(d=>{
+            L.geoJSON(d, {style:{color:'#27ae60', fillOpacity:0.3}}).addTo(map);
+        });
+
+        // --- 4. FUNCIÓN MAESTRA: ANALIZAR PUNTO ---
+        var pinActual;
+
+        function analizar(latlng, origenTexto) {
+            // Mover mapa
+            map.setView(latlng, 16);
+            if(pinActual) map.removeLayer(pinActual);
+            pinActual = L.marker(latlng).addTo(map);
+
+            // Verificar PIP
+            var results = leafletPip.pointInLayer(latlng, layerZoni);
             
-            if (currentMarker) map.removeLayer(currentMarker);
-            currentMarker = L.marker(latlng).addTo(map);
+            var html = "", clase = "", titulo = "", texto = "";
 
-            // 2. Analizar si cae dentro de Zonificación (usando leaflet-pip)
-            // leaflet-pip requiere buscar en las capas de layerZoni
-            var resultados = leafletPip.pointInLayer(latlng, layerZoni);
-            
-            var htmlPopup = "";
-            var tituloPanel = "";
-            var clasePanel = "";
-            var htmlReglas = "";
+            if(results.length > 0) {
+                // ZONA PROHIBIDA
+                var p = results[0].feature.properties;
+                var rawName = p.DESCRIPCIO || p.ZONA || p.TIPO || "Zona";
+                var info = getInfo(rawName);
+                var uga = p.UGA || p.CLAVE || "";
 
-            if (resultados.length > 0) {
-                // --- CASO 1: ZONA RESTRINGIDA ---
-                var p = resultados[0].feature.properties;
-                var nombreZona = p.DESCRIPCIO || p.ZONA || p.TIPO || "Zona Regulada";
-                var uga = p.UGA || p.CLAVE || "S/D";
-                var reglas = getReglas(nombreZona);
-
-                // Generar listas
-                var si = reglas.permitido.map(x => `<li>✅ ${x}</li>`).join("");
-                var no = reglas.prohibido.map(x => `<li>🚫 ${x}</li>`).join("");
-
-                // Contenido del Popup y Panel
-                htmlReglas = `
-                    <div class="badge">UGA: ${uga} | ${reglas.codigo}</div>
-                    <div class="box-prohibido">
-                        <strong>PROHIBIDO:</strong>
-                        <ul>${no}</ul>
-                    </div>
-                    <div class="box-permitido">
-                        <strong>PERMITIDO:</strong>
-                        <ul>${si}</ul>
+                titulo = "🚫 SUELO DE CONSERVACIÓN";
+                clase = "res-rojo";
+                texto = `Estás en: <strong>${info.nombre}</strong> (UGA ${uga})`;
+                
+                var listaNo = info.proh.map(x=>`<li>${x}</li>`).join("");
+                
+                html = `
+                    <div style="background:#C0392B; color:white; padding:10px; text-align:center; font-weight:bold;">${titulo}</div>
+                    <div style="padding:10px; font-family:Montserrat;">
+                        <p style="font-size:12px; margin-bottom:5px;">${texto}</p>
+                        <div style="background:#ffebee; border:1px solid red; padding:5px;">
+                            <strong style="color:red; font-size:11px;">PROHIBIDO:</strong>
+                            <ul style="color:red; font-size:11px; padding-left:15px; margin:0;">${listaNo}</ul>
+                        </div>
                     </div>
                 `;
-
-                htmlPopup = `
-                    <div class="popup-content">
-                        <h4 style="color:#C0392B">⚠️ SUELO DE CONSERVACIÓN</h4>
-                        <strong>${nombreZona}</strong>
-                        ${htmlReglas}
-                    </div>
-                `;
-
-                tituloPanel = "SUELO DE CONSERVACIÓN";
-                clasePanel = "alert-roja";
-
             } else {
-                // --- CASO 2: SUELO URBANO (O FUERA DE CAPAS) ---
-                htmlPopup = `
-                    <div class="popup-content">
-                        <h4 style="color:#27ae60">✅ SUELO URBANO</h4>
-                        <p>Esta ubicación está fuera de la zonificación de conservación registrada.</p>
+                // SUELO URBANO
+                titulo = "✅ SUELO URBANO";
+                clase = "res-verde";
+                texto = "Ubicación fuera de la zonificación de conservación.";
+                html = `
+                    <div style="background:#27ae60; color:white; padding:10px; text-align:center; font-weight:bold;">${titulo}</div>
+                    <div style="padding:10px; font-family:Montserrat;">
+                        <p style="font-size:12px;">${texto}</p>
                         <small>Consulta uso habitacional en SEDUVI.</small>
                     </div>
                 `;
-                
-                tituloPanel = "SUELO URBANO / SIN RESTRICCIÓN";
-                clasePanel = "alert-verde";
-                htmlReglas = "<p>Zona aparente de desarrollo urbano. Verificar escrituras.</p>";
             }
 
-            // 3. Abrir Popup INMEDIATAMENTE
-            currentMarker.bindPopup(htmlPopup).openPopup();
+            // Popup
+            pinActual.bindPopup(html, {minWidth:250}).openPopup();
 
-            // 4. Actualizar Panel Lateral
+            // Panel Lateral
             var panel = document.getElementById('panel-resultados');
-            panel.style.display = 'block';
-            panel.className = 'result-container ' + clasePanel;
-            document.getElementById('res-titulo').innerText = tituloPanel;
-            document.getElementById('res-zona').innerText = textoOrigen || "Punto seleccionado";
-            document.getElementById('res-reglas').innerHTML = htmlReglas;
+            panel.style.display = "block";
+            panel.className = "result-container " + clase;
+            document.getElementById('res-titulo').innerText = titulo;
+            document.getElementById('res-texto').innerHTML = texto;
+            document.getElementById('res-detalles').innerHTML = (results.length > 0) ? 
+                `<small><strong>Regla PGOEDF:</strong> ${info.proh.join(", ")} prohibido.</small>` : "";
         }
 
-        // Clic en el mapa (para zonas vacías)
-        map.on('click', function(e) {
-            analizarPunto(e.latlng, "Coordenadas seleccionadas");
-        });
+        // Clic en mapa vacío
+        map.on('click', function(e) { analizar(e.latlng); });
 
-
-        // ==========================================
-        // 4. BOTONES (GPS Y BÚSQUEDA)
-        // ==========================================
-
+        // --- 5. BOTONES ---
+        
         // GPS
         document.getElementById('btn-gps').addEventListener('click', function() {
-            var status = document.getElementById('status-gps');
-            status.innerText = "🛰️ Buscando señal GPS...";
-            
+            document.getElementById('status-gps').innerText = "🛰️ Buscando señal...";
             map.locate({setView: true, maxZoom: 16, enableHighAccuracy: true});
         });
-
-        map.on('locationfound', function(e) {
+        map.on('locationfound', e => {
             document.getElementById('status-gps').innerText = "";
-            analizarPunto(e.latlng, "Tu Ubicación Actual");
+            analizar(e.latlng);
         });
+        map.on('locationerror', () => alert("Activa tu GPS."));
 
-        map.on('locationerror', function() {
-            alert("Error: No se pudo obtener la ubicación. Activa el GPS.");
-            document.getElementById('status-gps').innerText = "";
-        });
-
-        // BUSCADOR
+        // Buscador
         document.getElementById('btn-buscar').addEventListener('click', function() {
             var q = document.getElementById('input-busqueda').value;
             if(!q) return;
-
-            // ¿Es coordenada?
-            if(q.includes(',') && q.match(/[0-9]/)) {
-                var coords = q.split(',');
-                var lat = parseFloat(coords[0]);
-                var lng = parseFloat(coords[1]);
-                if(!isNaN(lat) && !isNaN(lng)) {
-                    analizarPunto([lat, lng], "Coordenadas Ingresadas");
-                    return;
-                }
-            }
-
-            // Es texto
             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}+CDMX&limit=1`)
-                .then(r => r.json())
-                .then(d => {
-                    if(d.length > 0) {
-                        var lat = d[0].lat;
-                        var lon = d[0].lon;
-                        analizarPunto([lat, lon], d[0].display_name);
-                    } else {
-                        alert("Dirección no encontrada.");
-                    }
-                });
+            .then(r=>r.json())
+            .then(d=>{
+                if(d.length) analizar([d[0].lat, d[0].lon]);
+                else alert("No encontrado");
+            });
         });
 
     </script>
