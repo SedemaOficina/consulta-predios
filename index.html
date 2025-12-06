@@ -5,124 +5,73 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Consulta PGOEDF | SEDEMA</title>
     
-    <!-- FUENTES Y ESTILOS -->
+    <!-- FUENTES OFICIALES -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     
-    <style>
-        /* --- ESTILOS (CSS INTEGRADO PARA EVITAR ERRORES) --- */
-        :root { --guinda: #9d2148; --dorado: #b28e5c; --gris: #f4f4f4; --texto: #333; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Montserrat', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-
-        /* HEADER */
-        header { height: 70px; background: white; border-bottom: 4px solid var(--guinda); display: flex; align-items: center; justify-content: center; z-index: 2000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        header img { height: 50px; }
-
-        /* CONTENEDOR */
-        .main-wrapper { display: flex; flex: 1; height: 100%; position: relative; }
-
-        /* SIDEBAR (IZQUIERDA) */
-        .sidebar { width: 380px; background: white; border-right: 1px solid #ccc; display: flex; flex-direction: column; z-index: 1000; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
-        .sidebar-header { padding: 20px; background: var(--gris); border-bottom: 1px solid #ddd; }
-        .sidebar-header h2 { color: var(--guinda); font-size: 16px; margin: 0; font-weight: 700; }
-        .sidebar-body { padding: 20px; overflow-y: auto; flex: 1; }
-
-        /* CONTROLES */
-        .control-group { margin-bottom: 20px; }
-        .btn-full { width: 100%; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .btn-guinda { background: var(--guinda); color: white; }
-        .btn-guinda:hover { background: #7c1c36; }
-        
-        .search-box { display: flex; gap: 5px; }
-        .search-box input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
-        .btn-search { background: var(--dorado); color: white; border: none; padding: 0 15px; border-radius: 4px; cursor: pointer; }
-
-        /* RESULTADOS */
-        .result-panel { display: none; margin-top: 15px; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
-        .res-header { padding: 10px; color: white; font-weight: bold; text-align: center; font-size: 14px; }
-        .res-body { padding: 15px; font-size: 12px; }
-        
-        .bg-rojo { background: #C0392B; }
-        .bg-azul { background: #2980b9; }
-        .bg-verde { background: #27ae60; }
-
-        .regla-box { margin-bottom: 10px; padding: 8px; border-radius: 4px; }
-        .permitido { background: #e8f5e9; border-left: 4px solid #27ae60; }
-        .prohibido { background: #ffebee; border-left: 4px solid #C0392B; }
-        .regla-titulo { font-weight: bold; display: block; margin-bottom: 4px; }
-        .prohibido .regla-titulo { color: #C0392B; }
-        .permitido .regla-titulo { color: #27ae60; }
-        ul { margin: 0; padding-left: 15px; }
-
-        /* MAPA */
-        #map { flex: 1; height: 100%; z-index: 1; }
-
-        /* RESPONSIVO */
-        @media (max-width: 768px) {
-            .main-wrapper { flex-direction: column-reverse; }
-            .sidebar { width: 100%; height: 45%; }
-            #map { height: 55%; }
-        }
-    </style>
+    <!-- LEAFLET Y LIBRERÍAS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- VINCULACIÓN AL CSS EXTERNO -->
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-    <header>
-        <img src="logo-sedema.png" alt="SEDEMA CDMX">
+    <!-- ENCABEZADO -->
+    <header class="gob-header">
+        <div class="logo-box">
+            <img src="logo-sedema.png" alt="SEDEMA CDMX" class="logo-img">
+        </div>
+        <div class="header-text">
+            <h1>SECRETARÍA DEL MEDIO AMBIENTE</h1>
+            <h2>Sistema de Ordenamiento Ecológico</h2>
+        </div>
     </header>
 
+    <!-- CONTENEDOR PRINCIPAL -->
     <div class="main-wrapper">
-        <!-- PANEL LATERAL -->
+        
+        <!-- PANEL LATERAL (IZQUIERDA) -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <h2>Consulta PGOEDF</h2>
-                <p style="font-size:12px; color:#666;">Ordenamiento Ecológico del D.F.</p>
+                <h3>🔍 Consulta de Predios</h3>
+                <p>Verifica reglas de uso de suelo (PGOEDF).</p>
             </div>
-            
+
             <div class="sidebar-body">
-                <!-- GPS -->
+                <!-- 1. GPS -->
                 <div class="control-group">
-                    <button id="btn-gps" class="btn-full btn-guinda">📍 UBICARME EN EL MAPA</button>
-                    <div id="status-gps" style="text-align:center; font-size:11px; margin-top:5px; color:#666;"></div>
+                    <label>Opción A: Ubícame aquí</label>
+                    <button id="btn-gps" class="btn-full btn-guinda">
+                        📍 USAR MI UBICACIÓN ACTUAL
+                    </button>
+                    <div id="status-gps" class="status-msg"></div>
                 </div>
 
-                <!-- BUSCADOR -->
+                <div class="divider"><span>O</span></div>
+
+                <!-- 2. BUSCADOR -->
                 <div class="control-group">
-                    <div class="search-box">
-                        <input type="text" id="input-busqueda" placeholder="Calle, Colonia o Coordenadas...">
-                        <button id="btn-buscar" class="btn-search">🔍</button>
+                    <label>Opción B: Dirección o Coordenadas</label>
+                    <div class="search-row">
+                        <input type="text" id="input-busqueda" placeholder="Ej: 19.243, -99.123 o Calle...">
+                        <button id="btn-buscar">🔎</button>
                     </div>
+                    <small style="color:#666; font-size:10px;">Tip: Puedes pegar coordenadas de Google Maps.</small>
                 </div>
 
-                <!-- RESULTADOS -->
-                <div id="resultado" class="result-panel">
-                    <div id="res-header" class="res-header">RESULTADO</div>
-                    <div class="res-body">
-                        <h3 id="res-zona" style="margin:0 0 5px 0; color:#333;"></h3>
-                        <p id="res-desc" style="margin-bottom:10px; color:#555; font-style:italic;"></p>
-                        
-                        <div class="regla-box prohibido">
-                            <span class="regla-titulo">🚫 PROHIBIDO (Tabla PGOEDF):</span>
-                            <ul id="lista-prohibido"></ul>
-                        </div>
-                        
-                        <div class="regla-box permitido">
-                            <span class="regla-titulo">✅ AUTORIZADO:</span>
-                            <ul id="lista-permitido"></ul>
-                        </div>
-                        
-                        <div style="font-size:10px; color:#999; margin-top:10px; text-align:center;">
-                            Fuente: PGOEDF (Págs. 116-117)
-                        </div>
-                    </div>
+                <!-- 3. RESULTADOS (Dinámico) -->
+                <div id="panel-resultados" class="result-container" style="display:none;">
+                    <h4 id="res-titulo">RESULTADO</h4>
+                    <p id="res-zona" style="font-weight:bold; margin-bottom:5px;"></p>
+                    <div id="res-reglas"></div>
                 </div>
-                
-                <!-- LEYENDA -->
-                <div style="margin-top:20px; border-top:1px solid #ddd; padding-top:10px; font-size:11px;">
-                    <div style="display:flex; align-items:center; margin-bottom:5px;"><span style="width:12px; height:12px; background:#C0392B; margin-right:8px; opacity:0.6;"></span> Suelo Conservación (Restringido)</div>
-                    <div style="display:flex; align-items:center;"><span style="width:12px; height:12px; border:2px solid #2980b9; margin-right:8px;"></span> Zonificación (Límites)</div>
+
+                <!-- 4. SIMBOLOGÍA -->
+                <div class="leyenda-box">
+                    <h4>Simbología</h4>
+                    <div class="item"><span class="dot rojo"></span> Suelo de Conservación (Restringido)</div>
+                    <div class="item"><span class="dot azul"></span> Zonificación (PGOEDF)</div>
+                    <div class="item"><span class="dot verde"></span> Áreas Naturales Protegidas</div>
                 </div>
             </div>
         </aside>
@@ -133,213 +82,259 @@
 
     <!-- SCRIPTS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <script src="https://unpkg.com/@mapbox/leaflet-pip@latest/leaflet-pip.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
+
     <script>
-        // ==================================================================
-        // 1. EL "CEREBRO": BASE DE DATOS DIGITALIZADA DEL PDF (Págs 116-117)
-        // ==================================================================
-        const baseDatosPGOEDF = {
+        // ==========================================
+        // 1. BASE DE DATOS DEL PGOEDF (PDF)
+        // ==========================================
+        const reglasPGOEDF = {
             "Forestal de Conservación": {
-                desc: "Zonas con mayores extensiones de vegetación natural. Prioridad: Recarga acuífero y biodiversidad.",
-                permitido: ["Reforestación", "Investigación", "Ecoturismo (Senderos)", "Apicultura", "Vigilancia Ambiental"],
-                prohibido: ["VIVIENDA (Casas/Fraccionamientos)", "Agricultura", "Ganadería", "Apertura de calles/brechas", "Tala de árboles", "Minería", "Industria"]
+                codigo: "FC",
+                desc: "Zona de alto valor biológico. Prioridad: Recarga de acuíferos.",
+                permitido: ["Reforestación", "Investigación", "Vigilancia Ambiental", "Ecoturismo"],
+                prohibido: ["VIVIENDA", "Agricultura", "Ganadería", "Apertura de calles", "Tala"]
             },
             "Forestal de Conservación Especial": {
-                desc: "Zonas boscosas con presión productiva. Se permite manejo sustentable.",
-                permitido: ["Turismo sustentable", "Viveros", "Apicultura", "Cultivo de hongos", "Reforestación"],
-                prohibido: ["NUEVOS ASENTAMIENTOS HUMANOS", "Industria", "Minería", "Cambio de uso de suelo a urbano"]
+                codigo: "FCE",
+                desc: "Bosque con manejo sustentable.",
+                permitido: ["Turismo sustentable", "Viveros", "Apicultura", "Cultivo de hongos"],
+                prohibido: ["NUEVOS ASENTAMIENTOS", "Industria", "Minería", "Cambio de uso a urbano"]
             },
             "Forestal de Protección": {
-                desc: "Zonas de transición o amortiguamiento. Requieren restauración.",
-                permitido: ["Obras de conservación de suelo", "Reforestación", "Ecoturismo"],
-                prohibido: ["Urbanización", "Tiraderos de basura", "Pastoreo extensivo", "Agricultura intensiva"]
-            },
-            "Forestal de Protección Especial": {
-                desc: "Áreas con vegetación natural que requieren frenar el deterioro.",
-                permitido: ["Agroforestería", "Pastoreo controlado (Estabulado)", "Manejo de vida silvestre"],
-                prohibido: ["Crecimiento urbano", "Quemas agrícolas", "Uso de agroquímicos agresivos"]
+                codigo: "FP",
+                desc: "Zona de transición. Requiere restauración.",
+                permitido: ["Obras conservación suelo", "Reforestación"],
+                prohibido: ["Urbanización", "Tiraderos de basura", "Pastoreo extensivo"]
             },
             "Agroforestal": {
-                desc: "Zona de transición bosque-cultivo.",
-                permitido: ["Cultivos tradicionales", "Frutales", "Leña (uso doméstico)", "Turismo rural"],
-                prohibido: ["Fraccionamientos habitacionales", "Industria contaminante", "Tala rasa"]
+                codigo: "AF",
+                desc: "Zona mixta bosque-cultivo.",
+                permitido: ["Cultivos tradicionales", "Frutales", "Leña doméstica"],
+                prohibido: ["Fraccionamientos", "Industria", "Tala rasa"]
             },
             "Agroforestal Especial": {
-                desc: "Zona agrícola con manchones de bosque (Tlalpan/Milpa Alta).",
+                codigo: "AFE",
+                desc: "Zona agrícola con manchones de bosque.",
                 permitido: ["Cultivos anuales", "Hortalizas", "Invernaderos", "Ganadería controlada"],
-                prohibido: ["Nuevas construcciones urbanas", "Minería a cielo abierto", "Industria"]
+                prohibido: ["Nuevas construcciones urbanas", "Minería"]
             },
             "Agroecológica": {
-                desc: "Zona agrícola de alta productividad (Nopal, Hortalizas).",
-                permitido: ["Agricultura intensiva", "Invernaderos", "Venta de productos agrícolas", "Infraestructura de apoyo agrícola"],
-                prohibido: ["Cambio de uso a habitacional", "Centros comerciales", "Industria"]
+                codigo: "AE",
+                desc: "Zona agrícola de alta productividad.",
+                permitido: ["Agricultura intensiva", "Venta productos agrícolas"],
+                prohibido: ["Cambio a uso habitacional", "Centros comerciales", "Industria"]
             },
             "Agroecológica Especial": {
-                desc: "Zona de Humedales y Chinampas (Xochimilco/Tláhuac).",
-                permitido: ["Agricultura chinampera", "Turismo en canales", "Pesca tradicional", "Flores y plantas"],
-                prohibido: ["Relleno de canales", "Construcción de casas", "Drenaje en canales", "Uso de pesticidas"]
+                codigo: "AEE",
+                desc: "Zona de Humedales y Chinampas.",
+                permitido: ["Agricultura chinampera", "Turismo canales", "Pesca tradicional"],
+                prohibido: ["Relleno de canales", "Construcción de casas", "Drenaje en canales"]
             }
         };
 
-        // Función inteligente para buscar la regla aunque el nombre varíe un poco en el SHP
-        function buscarReglas(nombreZona) {
-            if (!nombreZona) return null;
-            let nombreLimpio = nombreZona.toUpperCase().trim();
-            
-            for (let key in baseDatosPGOEDF) {
-                if (nombreLimpio.includes(key.toUpperCase())) {
-                    return { nombre: key, datos: baseDatosPGOEDF[key] };
-                }
+        function getReglas(nombre) {
+            if(!nombre) return null;
+            for(let key in reglasPGOEDF) {
+                if(nombre.toUpperCase().includes(key.toUpperCase())) return reglasPGOEDF[key];
             }
-            return null; // Si no encuentra coincidencia
+            // Default preventivo
+            return { 
+                codigo: "SC", 
+                desc: "Suelo de Conservación Regulado.",
+                permitido: ["Consulta a la autoridad"], 
+                prohibido: ["Urbanización no autorizada"] 
+            };
         }
 
-        // ==================================================================
-        // 2. CONFIGURACIÓN DEL MAPA
-        // ==================================================================
+        // ==========================================
+        // 2. INICIALIZAR MAPA
+        // ==========================================
         var map = L.map('map', { zoomControl: false }).setView([19.28, -99.13], 11);
         L.control.zoom({ position: 'topright' }).addTo(map);
 
-        // Capas Base
         var satelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri' }).addTo(map);
         var calles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', { opacity: 0.8, attribution: 'CARTO' }).addTo(map);
 
-        // Variables para las capas
+        // Capas
+        var layerSuelo = L.layerGroup().addTo(map);
         var layerZoni = L.geoJSON(null, {
-            style: { color: '#3498db', weight: 2, fillOpacity: 0.05 }, // Azul transparente
+            style: { color: '#3498db', weight: 1, fillOpacity: 0.05 },
             onEachFeature: function(feature, layer) {
-                // Al dar clic en un polígono
                 layer.on('click', function(e) {
                     L.DomEvent.stopPropagation(e);
-                    analizarUbicacion(e.latlng);
+                    analizarPunto(e.latlng);
                 });
             }
         }).addTo(map);
 
-        var layerSuelo = L.geoJSON(null, {
-            style: { color: '#C0392B', weight: 0, fillOpacity: 0.25 }, // Rojo fondo
-            interactive: false
-        }).addTo(map);
+        // --- CARGAR DATOS ---
+        fetch('suelo-de-conservacion-2020.geojson')
+            .then(r => r.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    style: { color: '#C0392B', fillColor: '#C0392B', fillOpacity: 0.25, weight: 0 },
+                    interactive: false
+                }).addTo(layerSuelo);
+            });
 
-        // ==================================================================
-        // 3. CARGA DE ARCHIVOS
-        // ==================================================================
-        
-        // Cargar ZONIFICACIÓN (Vital: debe coincidir el nombre)
         fetch('zoonificación_pgoedf_2000.geojson')
             .then(r => r.json())
             .then(data => layerZoni.addData(data))
-            .catch(e => alert("Error: No encuentro 'zoonificación_pgoedf_2000.geojson'. Revisa tu GitHub."));
+            .catch(e => console.error("Error cargando zonificación:", e));
 
-        // Cargar SUELO CONSERVACIÓN
-        fetch('suelo-de-conservacion-2020.geojson')
-            .then(r => r.json())
-            .then(data => layerSuelo.addData(data));
+        fetch('anp.geojson').then(r => r.json()).then(d => {
+            L.geoJSON(d, {style:{color:'#27ae60', fillOpacity:0.3, weight:1}}).addTo(map);
+        }).catch(e=>{}); // Ignorar si no existe
 
+        // ==========================================
+        // 3. LÓGICA DE ANÁLISIS
+        // ==========================================
+        var pinActual;
 
-        // ==================================================================
-        // 4. LÓGICA DE ANÁLISIS (EL CORAZÓN DEL SISTEMA)
-        // ==================================================================
-        
-        var marcadorActual;
+        function analizarPunto(latlng, origenTexto) {
+            map.setView(latlng, 17); // Zoom profundo
+            if(pinActual) map.removeLayer(pinActual);
+            pinActual = L.marker(latlng).addTo(map);
 
-        function analizarUbicacion(latlng) {
-            // 1. Mover mapa
-            map.setView(latlng, 16);
-            if (marcadorActual) map.removeLayer(marcadorActual);
-            marcadorActual = L.marker(latlng).addTo(map);
-
-            // 2. ¿En qué polígono cayó? (Usando Leaflet PIP)
-            var resultados = leafletPip.pointInLayer(latlng, layerZoni);
+            // Verificar Polígono (PIP)
+            var results = leafletPip.pointInLayer(latlng, layerZoni);
             
-            // Elementos del panel
-            var panel = document.getElementById('resultado');
-            var header = document.getElementById('res-header');
+            // Elementos DOM
+            var panel = document.getElementById('panel-resultados');
+            var titulo = document.getElementById('res-titulo');
             var zona = document.getElementById('res-zona');
-            var desc = document.getElementById('res-desc');
-            var ulProh = document.getElementById('lista-prohibido');
-            var ulPerm = document.getElementById('lista-permitido');
-
-            ulProh.innerHTML = "";
-            ulPerm.innerHTML = "";
+            var divReglas = document.getElementById('res-reglas');
+            
             panel.style.display = "block";
 
-            if (resultados.length > 0) {
-                // --- CAYÓ EN SUELO DE CONSERVACIÓN ---
-                var p = resultados[0].feature.properties;
-                // Buscamos el nombre en tus columnas posibles
-                var nombreRaw = p.DESCRIPCIO || p.ZONA || p.TIPO || "Sin Nombre";
-                var info = buscarReglas(nombreRaw);
+            var htmlPopup = "";
 
-                header.innerText = "⚠️ SUELO DE CONSERVACIÓN";
-                header.className = "res-header bg-rojo";
+            if (results.length > 0) {
+                // --- DENTRO DE ZONA RESTRINGIDA ---
+                var p = results[0].feature.properties;
+                var nombre = p.DESCRIPCIO || p.ZONA || p.TIPO || "Zona Regulada";
+                var uga = p.UGA || p.CLAVE || "S/D";
+                var info = getReglas(nombre);
+
+                // Listas
+                var liNo = info.prohibido.map(x=>`<li>${x}</li>`).join("");
+                var liSi = info.permitido.map(x=>`<li>${x}</li>`).join("");
+
+                // Actualizar Panel Lateral
+                panel.className = "result-container alerta-roja";
+                titulo.innerText = "🚫 SUELO DE CONSERVACIÓN";
+                zona.innerHTML = `${info.desc}<br><small>Clave: ${info.codigo} (UGA ${uga})</small>`;
                 
-                if (info) {
-                    zona.innerText = info.nombre;
-                    desc.innerText = info.datos.desc;
-                    // Llenar listas
-                    info.datos.prohibido.forEach(item => {
-                        let li = document.createElement('li'); li.innerText = item; ulProh.appendChild(li);
-                    });
-                    info.datos.permitido.forEach(item => {
-                        let li = document.createElement('li'); li.innerText = item; ulPerm.appendChild(li);
-                    });
-                } else {
-                    zona.innerText = nombreRaw;
-                    desc.innerText = "Zona regulada. Consulta a SEDEMA.";
-                    ulProh.innerHTML = "<li>Verificar Plan de Manejo</li>";
-                }
+                divReglas.innerHTML = `
+                    <div class="box prohibido">
+                        <strong>PROHIBIDO:</strong>
+                        <ul>${liNo}</ul>
+                    </div>
+                    <div class="box permitido">
+                        <strong>PERMITIDO:</strong>
+                        <ul>${liSi}</ul>
+                    </div>
+                `;
 
-                // Popup en el mapa también
-                marcadorActual.bindPopup(`<b style="color:#C0392B">🚫 ZONA RESTRINGIDA</b><br>${nombreRaw}`).openPopup();
+                // HTML Popup
+                htmlPopup = `
+                    <div style="font-family:Montserrat; text-align:center;">
+                        <h4 style="color:#C0392B; margin:0;">⚠️ ZONA RESTRINGIDA</h4>
+                        <p style="font-size:11px; margin:5px 0;">${nombre}</p>
+                        <div style="background:#ffebee; border:1px solid #C0392B; padding:5px; text-align:left;">
+                            <strong style="color:#C0392B; font-size:10px;">PROHIBIDO:</strong>
+                            <ul style="font-size:10px; margin:0; padding-left:15px;">${liNo}</ul>
+                        </div>
+                    </div>
+                `;
 
             } else {
-                // --- CAYÓ FUERA (SUELO URBANO) ---
-                header.innerText = "✅ SUELO URBANO / OTRA ZONA";
-                header.className = "res-header bg-verde";
-                zona.innerText = "Fuera del Suelo de Conservación";
-                desc.innerText = "Esta ubicación no presenta restricciones del PGOEDF.";
-                ulProh.innerHTML = "<li>N/A</li>";
-                ulPerm.innerHTML = "<li>Uso Habitacional (Verificar SEDUVI)</li>";
+                // --- SUELO URBANO ---
+                panel.className = "result-container alerta-verde";
+                titulo.innerText = "✅ SUELO URBANO";
+                zona.innerText = "Fuera de la zonificación de conservación.";
+                divReglas.innerHTML = `
+                    <p style="font-size:12px;">Esta ubicación no presenta restricciones del Programa de Ordenamiento Ecológico (PGOEDF).</p>
+                    <small>Se recomienda verificar el uso de suelo habitacional en SEDUVI y Registro Público.</small>
+                `;
+
+                htmlPopup = `
+                    <div style="font-family:Montserrat; text-align:center;">
+                        <h4 style="color:#27ae60; margin:0;">✅ SUELO URBANO</h4>
+                        <p style="font-size:11px;">Zona sin restricción ambiental aparente.</p>
+                    </div>
+                `;
+            }
+
+            // Abrir Popup
+            pinActual.bindPopup(htmlPopup, {minWidth:220}).openPopup();
+        }
+
+        // Clic en mapa
+        map.on('click', function(e) { analizarPunto(e.latlng); });
+
+        // ==========================================
+        // 4. FUNCIONALIDAD DE BÚSQUEDA
+        // ==========================================
+        
+        function ejecutarBusqueda() {
+            var input = document.getElementById('input-busqueda').value.trim();
+            if(!input) return;
+
+            // 1. DETECCIÓN DE COORDENADAS (Regex)
+            // Acepta formatos: "19.23, -99.12" o "19.23 -99.12"
+            var coordMatch = input.match(/^(-?\d+(\.\d+)?)[,\s]+(-?\d+(\.\d+)?)$/);
+
+            if (coordMatch) {
+                var lat = parseFloat(coordMatch[1]);
+                var lng = parseFloat(coordMatch[3]);
                 
-                marcadorActual.bindPopup(`<b style="color:#27ae60">✅ SUELO URBANO</b>`).openPopup();
+                if (lat >= 18 && lat <= 20 && lng >= -100 && lng <= -98) { // Validar rango CDMX aprox
+                    analizarPunto([lat, lng]);
+                } else {
+                    alert("Coordenadas fuera del rango de la CDMX.");
+                }
+            } else {
+                // 2. BÚSQUEDA DE TEXTO (NOMINATIM)
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${input}+CDMX&limit=1`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        analizarPunto([data[0].lat, data[0].lon]);
+                    } else {
+                        alert("Dirección no encontrada. Intenta buscar por Colonia.");
+                    }
+                })
+                .catch(() => alert("Error de conexión."));
             }
         }
 
-        // Clic en el mapa vacío
-        map.on('click', function(e) { analizarUbicacion(e.latlng); });
-
-        // ==================================================================
-        // 5. FUNCIONES DE BOTONES
-        // ==================================================================
+        // Eventos
+        document.getElementById('btn-buscar').addEventListener('click', ejecutarBusqueda);
         
+        // EVENTO ENTER EN EL INPUT
+        document.getElementById('input-busqueda').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                ejecutarBusqueda();
+            }
+        });
+
         // GPS
         document.getElementById('btn-gps').addEventListener('click', function() {
-            document.getElementById('status-gps').innerText = "🛰️ Buscando señal...";
-            map.locate({setView: true, maxZoom: 16, enableHighAccuracy: true});
-        });
-        map.on('locationfound', function(e) {
-            document.getElementById('status-gps').innerText = "";
-            analizarUbicacion(e.latlng);
-        });
-        map.on('locationerror', function() {
-            alert("Activa tu GPS para usar esta función.");
-            document.getElementById('status-gps').innerText = "";
+            var status = document.getElementById('status-gps');
+            status.innerText = "🛰️ Buscando señal...";
+            map.locate({setView: true, maxZoom: 17, enableHighAccuracy: true});
         });
 
-        // BUSCADOR
-        document.getElementById('btn-buscar').addEventListener('click', function() {
-            var q = document.getElementById('input-busqueda').value;
-            if(!q) return;
-            // Nominatim
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}+CDMX&limit=1`)
-            .then(r=>r.json())
-            .then(d=>{
-                if(d.length > 0) analizarUbicacion([d[0].lat, d[0].lon]);
-                else alert("Dirección no encontrada.");
-            });
+        map.on('locationfound', e => {
+            document.getElementById('status-gps').innerText = "";
+            analizarPunto(e.latlng);
+        });
+        map.on('locationerror', () => {
+            alert("Activa el GPS de tu dispositivo.");
+            document.getElementById('status-gps').innerText = "";
         });
 
     </script>
