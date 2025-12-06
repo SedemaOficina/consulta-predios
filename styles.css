@@ -1,265 +1,258 @@
 /* =========================================
-   VARIABLES DE COLOR (PALETA INSTITUCIONAL)
+   1. VARIABLES DE COLOR (MANUAL 2024-2030)
    ========================================= */
 :root {
-    --sedema-green: #235B4E;   /* Verde Oscuro Institucional */
-    --gob-gold: #BC955C;       /* Dorado Gobierno CDMX */
-    --alert-red: #C0392B;      /* Rojo Alerta */
-    --bg-white: #FFFFFF;
-    --text-dark: #333333;
-    --text-light: #666666;
-    --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    /* Pág. 21 y 30 del Manual */
+    --cdmx-guinda: #9d2148;  /* Pantone 7420 C - PRIMARIO */
+    --cdmx-dorado: #b28e5c;  /* Pantone 465 C - SECUNDARIO */
+    --cdmx-gris: #55585a;    /* Pantone 425 C - TEXTOS */
+    --cdmx-marfil: #fffae9;  /* Pantone P7-1 C - FONDOS */
+    
+    /* Colores Auxiliares */
+    --cdmx-verde: #027a35;   /* Pantone 356 C (Para Bosques) */
+    --cdmx-rojo: #C0392B;    /* Alertas */
+    
+    /* Sombras suaves (Material Design) */
+    --shadow-card: 0 2px 10px rgba(0,0,0,0.15);
 }
 
 /* =========================================
-   CONFIGURACIÓN GENERAL
+   2. TIPOGRAFÍA GLOBAL
    ========================================= */
 body {
     margin: 0;
     padding: 0;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Roboto', sans-serif; /* Pág 29 */
+    color: var(--cdmx-gris);
     height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden; /* Evita scrollbars molestos */
-}
-
-/* =========================================
-   ENCABEZADO (HEADER)
-   ========================================= */
-.main-header {
-    background-color: var(--bg-white);
-    height: 80px; /* Altura fija */
-    border-bottom: 5px solid var(--gob-gold); /* La línea dorada inferior */
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    z-index: 2000; /* Asegura que esté encima del mapa */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.header-content {
-    width: 95%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.logo-box {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.logo-img {
-    height: 55px;
-    width: auto;
-}
-
-.vertical-divider {
-    width: 1px;
-    height: 40px;
-    background-color: #ccc;
-}
-
-.titles h1 {
-    font-size: 0.9rem;
-    color: var(--text-light);
-    margin: 0;
-    font-weight: 500;
-    letter-spacing: 1px;
-}
-
-.titles h2 {
-    font-size: 1.2rem;
-    color: var(--sedema-green);
-    margin: 0;
-    font-weight: 800; /* Letra muy gruesa */
-    text-transform: uppercase;
-}
-
-.btn-nav {
-    background-color: var(--sedema-green);
-    color: white;
-    text-decoration: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    transition: background 0.3s;
-}
-
-.btn-nav:hover {
-    background-color: #1a453b; /* Un verde un poco más oscuro al pasar mouse */
-}
-
-/* =========================================
-   CONTENEDOR DEL MAPA Y PANELES
-   ========================================= */
-.map-container {
-    position: relative;
-    flex-grow: 1; /* Ocupa todo el espacio restante */
-    width: 100%;
-}
-
-#map {
-    height: 100%;
-    width: 100%;
-    z-index: 1;
-}
-
-/* =========================================
-   PANEL FLOTANTE (SIDEBAR)
-   ========================================= */
-.floating-panel {
-    position: absolute;
-    top: 20px;
-    left: 20px; /* Panel a la izquierda */
-    width: 320px;
-    background-color: rgba(255, 255, 255, 0.97); /* Casi sólido */
-    border-radius: 8px;
-    box-shadow: var(--shadow);
-    z-index: 1000; /* Encima del mapa */
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
-.panel-header {
-    background-color: var(--sedema-green);
-    color: white;
+h1, h2, h3 {
+    font-family: 'Cabin', sans-serif; /* Pág 20 */
+    font-weight: 700; /* Bold */
+}
+
+/* =========================================
+   3. ENCABEZADO (HEADER) - Pág. 23
+   ========================================= */
+.gob-header {
+    background-color: white;
+    height: 85px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    border-bottom: 1px solid #e0e0e0;
+    /* Pág 13: Narrativa visual (pleca inferior guinda opcional, aquí sutil) */
+    border-bottom: 4px solid var(--cdmx-guinda);
+    z-index: 2000;
+}
+
+.header-inner {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.logo-cdmx {
+    height: 50px;
+    width: auto;
+}
+
+/* La línea vertical que separa Logo y Dependencia (Pág 23) */
+.vertical-line {
+    width: 2px;
+    height: 45px;
+    background-color: var(--cdmx-guinda); /* Color Guinda para la línea */
+}
+
+.dependency-name h1 {
+    font-size: 16px;
+    line-height: 1.2;
+    color: var(--cdmx-guinda); /* Texto en Guinda */
+    text-transform: uppercase;
+    margin: 0;
+    letter-spacing: 0.5px;
+}
+
+/* Navegación Derecha */
+.nav-links {
+    display: flex;
+    gap: 20px;
+}
+.nav-item {
+    text-decoration: none;
+    color: var(--cdmx-gris);
+    font-weight: 500;
+    font-size: 14px;
+}
+.nav-item:hover {
+    color: var(--cdmx-guinda);
+}
+
+/* =========================================
+   4. LAYOUT PRINCIPAL
+   ========================================= */
+.layout-container {
+    position: relative;
+    flex-grow: 1;
+    width: 100%;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+/* =========================================
+   5. TARJETA FLOTANTE (COMPONENTES Pág 75)
+   ========================================= */
+.info-card {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 340px;
+    background-color: white;
+    border-radius: 8px; /* Pág 75 muestra bordes redondeados */
+    box-shadow: var(--shadow-card);
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.card-header {
+    background-color: var(--cdmx-guinda);
     padding: 15px 20px;
 }
 
-.panel-header h3 {
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-}
-
-.panel-header h3::before {
-    content: '🛡️'; /* Icono escudo */
-    margin-right: 10px;
-}
-
-.panel-body {
-    padding: 20px;
-    max-height: 70vh; /* Para que no sea más alto que la pantalla en laptops */
-    overflow-y: auto; /* Scroll si el contenido es mucho */
-}
-
-.instruction-text {
-    font-size: 0.9rem;
-    color: var(--text-dark);
-    margin-top: 0;
-    line-height: 1.5;
-}
-
-/* Buscador Falso */
-.fake-search-bar {
-    display: flex;
-    margin-top: 15px;
-}
-.fake-search-bar input {
-    flex-grow: 1;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px 0 0 4px;
-    outline: none;
-}
-.fake-search-bar button {
-    background: var(--gob-gold);
-    border: none;
+.card-header h2 {
     color: white;
-    padding: 0 15px;
-    border-radius: 0 4px 4px 0;
-    cursor: pointer;
+    margin: 0;
+    font-size: 18px;
+    text-transform: uppercase;
 }
 
-.divider {
-    border: 0;
-    border-top: 1px solid #eee;
-    margin: 20px 0;
+.card-body {
+    padding: 20px;
+}
+
+.roboto-text {
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+/* Inputs y Botones (Pág 74) */
+.input-group {
+    display: flex;
+    gap: 5px;
+}
+.input-group input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: 'Roboto', sans-serif;
+}
+.btn-primary {
+    background-color: var(--cdmx-dorado); /* Dorado para acción secundaria o búsqueda */
+    color: white;
+    border: none;
+    padding: 0 15px;
+    border-radius: 4px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Cabin', sans-serif;
+    transition: background 0.2s;
+}
+.btn-primary:hover {
+    background-color: #9c7b4a; /* Un dorado más oscuro */
+}
+
+/* Separador */
+.separator {
+    height: 1px;
+    background-color: #eee;
+    margin: 15px 0;
+}
+
+.card-body h3 {
+    font-size: 14px;
+    color: var(--cdmx-gris);
+    margin-bottom: 10px;
 }
 
 /* Simbología */
-.legend-row {
+.legend-item {
     display: flex;
-    align-items: flex-start;
-    margin-bottom: 15px;
+    align-items: center;
+    margin-bottom: 12px;
 }
-
-.color-sample {
-    width: 25px;
-    height: 25px;
-    border-radius: 4px;
-    flex-shrink: 0;
+.color-box {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
     margin-right: 12px;
-    margin-top: 3px;
-    border: 1px solid rgba(0,0,0,0.2);
+    flex-shrink: 0;
 }
+.guinda-fill { background-color: var(--cdmx-guinda); opacity: 0.8; }
+.verde-fill { background-color: var(--cdmx-verde); opacity: 0.8; }
 
-.red-zone { background-color: rgba(192, 57, 43, 0.6); border-color: var(--alert-red); }
-.green-zone { background-color: rgba(39, 174, 96, 0.6); border-color: #27ae60; }
-
-.legend-text strong {
+.legend-title {
     display: block;
-    font-size: 0.9rem;
-    color: var(--text-dark);
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--cdmx-gris);
 }
-.legend-text small {
+.legend-desc {
     display: block;
-    font-size: 0.75rem;
-    color: var(--text-light);
+    font-size: 11px;
+    color: #777;
 }
 
-/* Caja de Alerta */
-.warning-box {
-    margin-top: 10px;
-    background-color: #FDEDEC; /* Rojo muy claro */
-    border-left: 4px solid var(--alert-red);
+/* Alerta de Fraude */
+.alert-banner {
+    background-color: var(--cdmx-marfil); /* Fondo Marfil Pág 30 */
+    border-left: 4px solid var(--cdmx-guinda);
     padding: 12px;
     border-radius: 4px;
     display: flex;
     gap: 10px;
-    font-size: 0.85rem;
-    line-height: 1.4;
-    color: #581616;
+    align-items: start;
+    margin-top: 15px;
+}
+.alert-icon { font-size: 20px; }
+.alert-banner p {
+    margin: 0;
+    font-size: 12px;
+    color: var(--cdmx-guinda);
 }
 
-.panel-footer {
-    background-color: #f1f1f1;
+.card-footer {
+    background-color: #f5f5f5;
     text-align: center;
     padding: 8px;
-    font-size: 0.7rem;
     color: #999;
-    border-top: 1px solid #ddd;
+    font-size: 11px;
 }
 
-/* =========================================
-   RESPONSIVO (CELULARES)
-   ========================================= */
+/* RESPONSIVO */
 @media (max-width: 600px) {
-    .header-content {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 10px 0;
-    }
-    .main-header { height: auto; padding-bottom: 10px; }
-    .btn-nav { display: none; } /* Ocultar botón en móvil si falta espacio */
-    .vertical-divider { display: none; }
-    .titles h1 { display: none; }
-    .titles h2 { font-size: 1rem; }
+    .gob-header { height: 60px; padding: 0 15px; }
+    .logo-cdmx { height: 35px; }
+    .dependency-name h1 { font-size: 11px; }
+    .vertical-line { height: 30px; }
+    .nav-links { display: none; }
     
-    .floating-panel {
+    .info-card {
         top: auto;
         bottom: 0;
         left: 0;
         width: 100%;
-        border-radius: 15px 15px 0 0; /* Redondear solo arriba */
-        max-height: 40vh;
+        border-radius: 15px 15px 0 0;
     }
 }
