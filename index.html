@@ -19,7 +19,7 @@
 </head>
 <body>
 
-    <!-- HEADER -->
+    <!-- HEADER INSTITUCIONAL -->
     <header class="gob-header">
         <div class="header-inner">
             <img src="logo-sedema.png" alt="Logo SEDEMA" class="logo-cdmx">
@@ -28,206 +28,261 @@
                 <h1>SECRETARÍA DEL<br>MEDIO AMBIENTE</h1>
             </div>
         </div>
-        <!-- Menú simplificado -->
         <div class="header-right">
-            <span class="emergency-text">¿Dudas? Llama al 911</span>
+            <span class="emergency-text">Denuncia irregularidades al 911 o PAOT</span>
         </div>
     </header>
 
-    <!-- CONTENEDOR -->
+    <!-- CONTENEDOR PRINCIPAL -->
     <main class="layout-container">
         
+        <!-- EL MAPA -->
         <div id="map"></div>
 
-        <!-- TARJETA PRINCIPAL (INTERFAZ DE USUARIO) -->
+        <!-- INTERFAZ DE USUARIO (TARJETA FLOTANTE) -->
         <div class="info-card">
             <div class="card-header">
                 <h2>Protege tu Patrimonio</h2>
-                <p>Verifica el terreno antes de pagar un solo peso.</p>
+                <p>Consulta el estatus del suelo antes de comprar.</p>
             </div>
             
             <div class="card-body">
                 
-                <!-- SECCIÓN 1: GPS (Lo más fácil) -->
+                <!-- BOTÓN DE GPS -->
                 <div class="action-section">
-                    <label>Opción A: Estoy en el terreno ahora</label>
+                    <label>Opción A: Estoy en el terreno</label>
                     <button id="btn-gps-large" class="btn-block btn-guinda">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle><line x1="12" y1="2" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="22"></line><line x1="2" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="22" y2="12"></line></svg>
-                        USAR MI UBICACIÓN ACTUAL
+                        UBICARME AHORA (GPS)
                     </button>
                     <p id="gps-status" class="status-text"></p>
                 </div>
 
-                <div class="divider-text">O BUSCA LA DIRECCIÓN</div>
+                <div class="divider-text">O BUSCA UNA DIRECCIÓN</div>
 
-                <!-- SECCIÓN 2: BUSCADOR MANUAL -->
+                <!-- BUSCADOR MANUAL -->
                 <div class="action-section">
-                    <label>Opción B: Buscar por calle o colonia</label>
+                    <label>Opción B: Buscar desde casa</label>
                     <div class="search-wrapper">
-                        <input type="text" id="manual-search-input" placeholder="Ej: Calle 3, San Miguel Topilejo...">
+                        <input type="text" id="manual-search-input" placeholder="Calle, Colonia o Coordenadas...">
                         <button id="btn-manual-search" class="btn-search">🔍</button>
                     </div>
-                    <p class="hint-text">Si tienes coordenadas (ej: 19.25, -99.10), pégalas arriba.</p>
+                    <p class="hint-text">Ejemplo coordenadas: 19.2831, -99.1354</p>
                 </div>
 
-                <!-- SECCIÓN 3: RESULTADOS Y SIMBOLOGÍA -->
+                <!-- LEYENDA / SIMBOLOGÍA -->
                 <div class="results-area">
-                    <h3>¿Qué significan los colores?</h3>
+                    <h3>Simbología Oficial</h3>
                     
                     <div class="legend-item alert-item">
                         <span class="color-box guinda-fill"></span>
                         <div>
-                            <strong>ZONA ROJA (Suelo de Conservación)</strong>
-                            <span>¡CUIDADO! Es delito vender o construir aquí. <b>Es un fraude.</b></span>
+                            <strong>SUELO DE CONSERVACIÓN</strong>
+                            <span>Zona Restringida. Venta y construcción prohibida.</span>
                         </div>
                     </div>
 
                     <div class="legend-item">
                         <span class="color-box verde-fill"></span>
                         <div>
-                            <strong>ZONA VERDE (Área Protegida)</strong>
-                            <span>Bosques y barrancas federales. Propiedad de la Nación.</span>
+                            <strong>ÁREA NATURAL PROTEGIDA</strong>
+                            <span>Bosques y Barrancas (ANP). Propiedad Federal/Local.</span>
                         </div>
                     </div>
                 </div>
 
             </div>
-            <!-- Botón para cerrar panel en móvil -->
+            <!-- Botón para cerrar en celular -->
             <div class="mobile-toggle" id="mobile-toggle">Ver Mapa Completo ⬇</div>
         </div>
-
     </main>
 
+    <!-- LIBRERÍAS JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <!-- Librería AJAX para cargar GeoJSON fácilmente -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
 
     <script>
-        // 1. INICIAR MAPA
-        // Centrado en zona de conservación (Sur CDMX)
+        // 1. INICIALIZAR MAPA (Centrado en CDMX Sur)
         var map = L.map('map', { zoomControl: false }).setView([19.25, -99.15], 11);
-        
-        // Controles de zoom abajo a la derecha para no estorbar
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // 2. CAPAS BASE
-        var mapaGris = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap, © CARTO' });
+        // 2. CAPAS BASE (Satélite por defecto para ver si hay árboles/casas)
+        var mapaGris = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© CARTO' });
         var mapaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles © Esri' });
         var mapaCalles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' });
 
-        // Por defecto Satélite (para que vean si hay bosque)
-        map.addLayer(mapaGris);
+        map.addLayer(mapaSatelite); // Inicia con Satélite
 
-        var baseMaps = { "Mapa Claro": mapaGris, "Ver Bosque (Satélite)": mapaSatelite, "Ver Calles": mapaCalles };
+        var baseMaps = { "Satélite (Bosque)": mapaSatelite, "Mapa Claro": mapaGris, "Callejero": mapaCalles };
         L.control.layers(baseMaps, null, { position: 'topright', collapsed: false }).addTo(map);
 
-        // 3. CAPAS DE RIESGO (SIMULACIÓN)
-        var zonaProhibida = L.polygon([
-            [19.29, -99.18], [19.30, -99.05], [19.20, -99.08], [19.20, -99.20]
-        ], { color: '#9d2148', fillColor: '#9d2148', fillOpacity: 0.5, weight: 2 }).addTo(map);
+        // ============================================================
+        // 3. CARGAR TUS CAPAS REALES
+        // ============================================================
 
-        zonaProhibida.bindPopup('<div style="text-align:center"><h3 style="color:#9d2148">🚫 ZONA PROHIBIDA</h3><p>Suelo de Conservación.<br>No compres aquí.</p></div>');
+        // ESTILO ROJO/GUINDA (Suelo de Conservación)
+        var styleSueloConservacion = {
+            color: '#9d2148',       // Borde Guinda
+            fillColor: '#9d2148',   // Relleno Guinda
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.5
+        };
 
-        // --- LÓGICA DE UX ---
+        // ESTILO VERDE (ANP / Bosques)
+        var styleANP = {
+            color: '#027a35',
+            fillColor: '#027a35',
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.5
+        };
 
-        // A. BOTÓN GPS GRANDE
+        // FUNCIÓN POPUP (Qué sale al dar clic)
+        function popupStyle(feature, layer, titulo) {
+            // Intenta buscar el nombre en varias columnas comunes
+            var props = feature.properties;
+            var nombre = props.NOMBRE || props.Nombre || props.ZONA || props.COLONIA || "Zona Regulada";
+            
+            var html = `
+                <div style="text-align:center; min-width:200px;">
+                    <h3 style="color:${titulo === 'ANP' ? '#027a35' : '#9d2148'}; margin-top:0;">⚠️ ATENCIÓN</h3>
+                    <strong>${nombre}</strong><br>
+                    <p style="font-size:12px; margin:5px 0;">Este predio se encuentra clasificado como:</p>
+                    <div style="background:${titulo === 'ANP' ? '#027a35' : '#9d2148'}; color:white; padding:5px; border-radius:4px; font-weight:bold; font-size:11px;">
+                        ${titulo === 'ANP' ? 'ÁREA NATURAL PROTEGIDA' : 'SUELO DE CONSERVACIÓN'}
+                    </div>
+                    <p style="font-size:11px; margin-top:5px;">Verifica con SEDEMA antes de cualquier transacción.</p>
+                </div>
+            `;
+            layer.bindPopup(html);
+        }
+
+        // --- CARGA DEL ARCHIVO PRINCIPAL ---
+        fetch('suelo-de-conservacion-2020.geojson')
+            .then(response => {
+                if(!response.ok) throw new Error("No se encontró el archivo");
+                return response.json();
+            })
+            .then(data => {
+                L.geoJSON(data, {
+                    style: styleSueloConservacion,
+                    onEachFeature: function(feature, layer) {
+                        popupStyle(feature, layer, 'SUELO DE CONSERVACIÓN');
+                    }
+                }).addTo(map);
+                console.log("Capa Suelo Conservación cargada con éxito.");
+            })
+            .catch(err => {
+                console.error("Error cargando capa:", err);
+                // Si falla, no hace nada visual, solo lo marca en consola (F12)
+            });
+
+        // --- CARGA DEL ARCHIVO SECUNDARIO (Bosques/ANP) ---
+        // Nota: Si aún no tienes este archivo unido, no pasará nada, solo no cargará.
+        // Nómbralo 'anp.geojson' en tu GitHub para que funcione.
+        fetch('anp.geojson')
+            .then(res => res.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    style: styleANP,
+                    onEachFeature: function(feature, layer) {
+                        popupStyle(feature, layer, 'ANP');
+                    }
+                }).addTo(map);
+            }).catch(e => console.log("Sin capa ANP adicional"));
+
+
+        // ============================================================
+        // 4. FUNCIONALIDAD DE UX (GPS y BÚSQUEDA)
+        // ============================================================
+
+        // A. GPS
         const btnGps = document.getElementById('btn-gps-large');
         const statusText = document.getElementById('gps-status');
+        var userMarker, userCircle;
 
         btnGps.addEventListener('click', function() {
-            statusText.innerHTML = "📡 Localizando tu celular... espera un momento.";
-            statusText.style.color = "#b28e5c"; // Dorado
-            
+            statusText.innerHTML = "📡 Buscando satélites...";
+            statusText.style.color = "#b28e5c";
             map.locate({setView: true, maxZoom: 16, enableHighAccuracy: true});
         });
 
         map.on('locationfound', function(e) {
-            statusText.innerHTML = "✅ Ubicación encontrada. Mira el mapa.";
+            statusText.innerHTML = "✅ Ubicación encontrada";
             statusText.style.color = "green";
             
-            // Marcador pulsante
-            L.circleMarker(e.latlng, {
-                radius: 8, fillColor: "#007bff", color: "#fff", weight: 2, fillOpacity: 1
-            }).addTo(map).bindPopup("Estás aquí").openPopup();
-            
-            L.circle(e.latlng, e.accuracy).addTo(map);
+            if(userMarker) map.removeLayer(userMarker);
+            if(userCircle) map.removeLayer(userCircle);
 
-            // En móvil, colapsar el panel para que vean el mapa
-            if(window.innerWidth < 600) {
-                document.querySelector('.info-card').classList.add('collapsed');
-                document.getElementById('mobile-toggle').innerHTML = "Abrir Menú ⬆";
-            }
+            userMarker = L.circleMarker(e.latlng, { radius: 8, fillColor: "#007bff", color: "#fff", fillOpacity: 1 }).addTo(map).bindPopup("Tú estás aquí").openPopup();
+            userCircle = L.circle(e.latlng, e.accuracy).addTo(map);
+            
+            colapsarMovil();
         });
 
         map.on('locationerror', function(e) {
-            statusText.innerHTML = "❌ Error: Activa el GPS de tu celular y vuelve a intentar.";
+            statusText.innerHTML = "❌ Error: Activa tu ubicación/GPS.";
             statusText.style.color = "red";
         });
 
-        // B. BUSCADOR MANUAL (INTEGRADO EN LA TARJETA)
+        // B. BÚSQUEDA
         const inputSearch = document.getElementById('manual-search-input');
         const btnSearch = document.getElementById('btn-manual-search');
 
-        // Función de búsqueda personalizada
         function realizarBusqueda() {
             var query = inputSearch.value;
             if (!query) return;
 
-            // 1. ¿Es coordenada? (Detectar formato "numero, numero")
-            if (query.includes(',')) {
+            // Detectar coordenadas
+            if (query.includes(',') && query.match(/[0-9]/)) {
                 var coords = query.split(',');
                 var lat = parseFloat(coords[0]);
                 var lng = parseFloat(coords[1]);
-                
                 if (!isNaN(lat) && !isNaN(lng)) {
-                    map.setView([lat, lng], 16);
-                    L.marker([lat, lng]).addTo(map).bindPopup("Coordenada Buscada").openPopup();
+                    map.setView([lat, lng], 17);
+                    L.marker([lat, lng]).addTo(map).bindPopup("Coordenada ingresada").openPopup();
+                    colapsarMovil();
                     return;
                 }
             }
 
-            // 2. Si es texto, usar Geocoder
-            // Usamos la API de Nominatim manualmente
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}+CDMX`)
-                .then(response => response.json())
+            // Buscar texto (Nominatim)
+            statusText.innerHTML = "🔍 Buscando dirección...";
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}+CDMX+Mexico&addressdetails=1&limit=1`)
+                .then(r => r.json())
                 .then(data => {
-                    if (data && data.length > 0) {
-                        var resultado = data[0];
-                        var lat = resultado.lat;
-                        var lon = resultado.lon;
-                        
-                        map.setView([lat, lon], 16);
-                        L.marker([lat, lon]).addTo(map)
-                            .bindPopup(`<b>${resultado.display_name}</b>`).openPopup();
-                        
-                        // Ocultar teclado en móvil
-                        inputSearch.blur();
-                        // Colapsar panel en móvil
-                        if(window.innerWidth < 600) {
-                            document.querySelector('.info-card').classList.add('collapsed');
-                            document.getElementById('mobile-toggle').innerHTML = "Abrir Menú ⬆";
-                        }
+                    if (data.length > 0) {
+                        var lat = data[0].lat;
+                        var lon = data[0].lon;
+                        map.setView([lat, lon], 17);
+                        L.marker([lat, lon]).addTo(map).bindPopup(data[0].display_name).openPopup();
+                        statusText.innerHTML = "";
+                        colapsarMovil();
                     } else {
-                        alert("No encontramos esa dirección. Intenta poner solo la Colonia y Alcaldía.");
+                        alert("Dirección no encontrada. Intenta ser más específico (Colonia, Alcaldía).");
+                        statusText.innerHTML = "";
                     }
-                })
-                .catch(err => {
-                    alert("Error de conexión.");
                 });
         }
 
         btnSearch.addEventListener('click', realizarBusqueda);
-        inputSearch.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') realizarBusqueda();
-        });
+        inputSearch.addEventListener('keypress', function (e) { if (e.key === 'Enter') realizarBusqueda(); });
 
-        // C. COLAPSAR PANEL EN MÓVIL
+        // C. UX MÓVIL
+        function colapsarMovil() {
+            if(window.innerWidth < 600) {
+                document.querySelector('.info-card').classList.add('collapsed');
+                document.getElementById('mobile-toggle').innerHTML = "Abrir Menú ⬆";
+            }
+        }
+
         document.getElementById('mobile-toggle').addEventListener('click', function() {
             document.querySelector('.info-card').classList.toggle('collapsed');
-            if (document.querySelector('.info-card').classList.contains('collapsed')) {
-                this.innerHTML = "Abrir Buscador ⬆";
-            } else {
-                this.innerHTML = "Ver Mapa Completo ⬇";
-            }
+            var isCollapsed = document.querySelector('.info-card').classList.contains('collapsed');
+            this.innerHTML = isCollapsed ? "Abrir Menú ⬆" : "Ver Mapa Completo ⬇";
         });
 
     </script>
