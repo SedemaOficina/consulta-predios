@@ -3,98 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prototipo: Visor de Suelo de Conservación | SEDEMA</title>
+    <title>Visor de Suelo de Conservación | SEDEMA</title>
     
-    <!-- Fuente Institucional (Montserrat) -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <!-- FUENTES OFICIALES (Manual Pág. 20 y 29) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     
-    <!-- Librerías de Mapas (Leaflet) -->
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
-    <!-- NUESTRO ESTILO PERSONALIZADO -->
+    <!-- NUESTRO ESTILO (Vinculado) -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- =========================================
-       1. ENCABEZADO (HEADER) INSTITUCIONAL
-       ========================================= -->
-    <header class="main-header">
-        <div class="header-content">
-            <!-- Espacio para el LOGO (Placeholder) -->
-            <div class="logo-box">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Gobierno_de_la_Ciudad_de_M%C3%A9xico_%28logo_2018%29.svg/1200px-Gobierno_de_la_Ciudad_de_M%C3%A9xico_%28logo_2018%29.svg.png" alt="Logo CDMX" class="logo-img">
-                <div class="vertical-divider"></div>
-                <div class="titles">
-                    <h1>SISTEMA DE INFORMACIÓN GEOGRÁFICA</h1>
-                    <h2>Vigilancia de Suelo de Conservación y ANP</h2>
-                </div>
-            </div>
+    <!-- 1. ENCABEZADO OFICIAL (Según Pág. 23 del Manual) -->
+    <header class="gob-header">
+        <div class="header-inner">
+            <!-- Logo Gobierno CDMX (Escudo y Mosaico) -->
+            <!-- Usamos un placeholder, deberás subir el SVG oficial que viene en tu paquete -->
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Gobierno_de_la_Ciudad_de_M%C3%A9xico_%28logo_2018%29.svg/1200px-Gobierno_de_la_Ciudad_de_M%C3%A9xico_%28logo_2018%29.svg.png" alt="Gobierno CDMX" class="logo-cdmx">
             
-            <!-- Botón de acción (Ejemplo: Reportar) -->
-            <a href="#" class="btn-nav">Reportar Irregularidad</a>
+            <div class="vertical-line"></div>
+            
+            <div class="dependency-name">
+                <!-- Tipografía Cabin Bold (Pág 23) -->
+                <h1>SECRETARÍA DEL<br>MEDIO AMBIENTE</h1>
+            </div>
         </div>
+        
+        <!-- Menú navegación simple -->
+        <nav class="nav-links">
+            <a href="#" class="nav-item">Inicio</a>
+            <a href="#" class="nav-item">Ayuda</a>
+        </nav>
     </header>
 
-    <!-- =========================================
-       2. CONTENEDOR PRINCIPAL
-       ========================================= -->
-    <main class="map-container">
+    <!-- 2. CONTENEDOR PRINCIPAL -->
+    <main class="layout-container">
         
-        <!-- EL MAPA SE DIBUJA AQUÍ -->
+        <!-- MAPA -->
         <div id="map"></div>
 
-        <!-- PANEL FLOTANTE (SIDEBAR) -->
-        <div class="floating-panel">
-            <div class="panel-header">
-                <h3>Validador de Predios</h3>
+        <!-- TARJETA FLOTANTE (Estilo "Card" Pág. 75) -->
+        <div class="info-card">
+            <div class="card-header">
+                <h2>Consulta de Predios</h2>
             </div>
             
-            <div class="panel-body">
-                <p class="instruction-text">
-                    Ingrese una dirección o navegue en el mapa para verificar el estatus del suelo.
+            <div class="card-body">
+                <p class="roboto-text">
+                    Verifique si un terreno se encuentra en <b>Zona de Conservación</b> antes de realizar cualquier trámite o pago.
                 </p>
 
-                <!-- Buscador Falso (Solo visual por ahora) -->
-                <div class="fake-search-bar">
-                    <input type="text" placeholder="Ej: Colonia San Miguel Topilejo...">
-                    <button>🔍</button>
+                <!-- Buscador Estilo Material -->
+                <div class="input-group">
+                    <input type="text" placeholder="Buscar colonia o calle...">
+                    <button class="btn-primary">BUSCAR</button>
                 </div>
 
-                <hr class="divider">
+                <div class="separator"></div>
 
-                <h4>Simbología</h4>
+                <h3>Simbología Oficial</h3>
                 
-                <div class="legend-row">
-                    <span class="color-sample red-zone"></span>
-                    <div class="legend-text">
-                        <strong>Suelo de Conservación / Restringido</strong>
-                        <small>Prohibida la venta y urbanización</small>
+                <!-- Ítems de la leyenda -->
+                <div class="legend-item">
+                    <span class="color-box guinda-fill"></span>
+                    <div>
+                        <span class="legend-title">Suelo de Conservación</span>
+                        <span class="legend-desc">Venta prohibida (Delito Ambiental)</span>
                     </div>
                 </div>
 
-                <div class="legend-row">
-                    <span class="color-sample green-zone"></span>
-                    <div class="legend-text">
-                        <strong>Área Natural Protegida (ANP)</strong>
-                        <small>Zona federal o local protegida</small>
+                <div class="legend-item">
+                    <span class="color-box verde-fill"></span>
+                    <div>
+                        <span class="legend-title">Área Natural Protegida</span>
+                        <span class="legend-desc">Bosques y Barrancas (Federal/Local)</span>
                     </div>
                 </div>
 
-                <!-- CAJA DE ALERTA -->
-                <div class="warning-box">
-                    <div class="icon">⚠️</div>
-                    <div class="text">
-                        <strong>¡ALERTA DE FRAUDE!</strong><br>
-                        Si le ofrecen terrenos en zonas marcadas en 
-                        <span style="color:#C0392B; font-weight:800;">ROJO</span>, 
-                        es un delito. No entregue dinero.
-                    </div>
+                <!-- ALERTA DE FRAUDE -->
+                <div class="alert-banner">
+                    <span class="alert-icon">⚠️</span>
+                    <p>
+                        <strong>¡ALTO AL FRAUDE!</strong><br>
+                        Si le venden terrenos en zonas coloreadas, 
+                        denuncie al 911 o en PAOT.
+                    </p>
                 </div>
             </div>
-
-            <div class="panel-footer">
-                SEDEMA CDMX © 2025
+            
+            <!-- Footer de la tarjeta -->
+            <div class="card-footer">
+                <small>Gobierno de la Ciudad de México 2024-2030</small>
             </div>
         </div>
 
@@ -103,45 +106,34 @@
     <!-- LÓGICA DE MAPA (JAVASCRIPT) -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // 1. Inicializar mapa centrado en el sur de CDMX (Xochimilco/Tlalpan)
-        var map = L.map('map', { zoomControl: false }).setView([19.25, -99.10], 12);
-
-        // 2. Mover controles de zoom a la derecha
+        // Configuración básica del mapa
+        var map = L.map('map', { zoomControl: false }).setView([19.30, -99.15], 11);
         L.control.zoom({ position: 'topright' }).addTo(map);
 
-        // 3. Mapa Base (Gris elegante para que resalten tus datos)
+        // Mapa Base: CartoDB Light (Limpio para institucional)
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap &copy; CARTO'
+            attribution: '© OpenStreetMap, © CARTO'
         }).addTo(map);
 
-        // 4. --- DATOS DE EJEMPLO (DUMMY DATA) ---
-        // Voy a dibujar un POLÍGONO ROJO FALSO para que veas el estilo.
-        // Esto simula tu capa de "Suelo de Conservación".
-        
-        var polygonCoords = [
-            [19.28, -99.15],
-            [19.28, -99.05],
-            [19.22, -99.08],
-            [19.22, -99.18]
-        ];
-
-        var polygon = L.polygon(polygonCoords, {
-            color: '#C0392B',       // Borde Rojo Institucional
-            fillColor: '#C0392B',   // Relleno Rojo
-            fillOpacity: 0.4,       // Transparencia (40%)
+        // --- EJEMPLO DE ZONA RESTRINGIDA (COLOR GUINDA) ---
+        // Simulación de tu SHP de Suelo de Conservación
+        var poligonoProhibido = L.polygon([
+            [19.28, -99.18], [19.29, -99.05], [19.20, -99.08], [19.20, -99.20]
+        ], {
+            color: '#9d2148',       // GUINDA INSTITUCIONAL (Borde)
+            fillColor: '#9d2148',   // GUINDA INSTITUCIONAL (Relleno)
+            fillOpacity: 0.5,
             weight: 2
         }).addTo(map);
 
-        // Popup al hacer clic en el polígono falso
-        polygon.bindPopup(`
-            <div style="text-align:center; font-family:'Montserrat', sans-serif;">
-                <h3 style="color:#C0392B; margin:0;">🚫 ZONA RESTRINGIDA</h3>
-                <p><b>Polígono de Ejemplo</b></p>
-                <p>Aquí aparecerán los datos reales de tu SHP.</p>
-                <button style="background:#C0392B; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:pointer;">VER FICHA TÉCNICA</button>
+        poligonoProhibido.bindPopup(`
+            <div style="font-family: 'Roboto', sans-serif; text-align:center;">
+                <h3 style="font-family:'Cabin', sans-serif; color:#9d2148; margin-bottom:5px;">ZONA RESTRINGIDA</h3>
+                <p style="margin:0;">Suelo de Conservación</p>
+                <br>
+                <button style="background:#9d2148; color:white; border:none; padding:8px 12px; border-radius:4px;">VER DETALLES</button>
             </div>
         `);
-
     </script>
 </body>
 </html>
