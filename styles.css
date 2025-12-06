@@ -1,0 +1,265 @@
+/* =========================================
+   VARIABLES DE COLOR (PALETA INSTITUCIONAL)
+   ========================================= */
+:root {
+    --sedema-green: #235B4E;   /* Verde Oscuro Institucional */
+    --gob-gold: #BC955C;       /* Dorado Gobierno CDMX */
+    --alert-red: #C0392B;      /* Rojo Alerta */
+    --bg-white: #FFFFFF;
+    --text-dark: #333333;
+    --text-light: #666666;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* =========================================
+   CONFIGURACIÓN GENERAL
+   ========================================= */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Montserrat', sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Evita scrollbars molestos */
+}
+
+/* =========================================
+   ENCABEZADO (HEADER)
+   ========================================= */
+.main-header {
+    background-color: var(--bg-white);
+    height: 80px; /* Altura fija */
+    border-bottom: 5px solid var(--gob-gold); /* La línea dorada inferior */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 2000; /* Asegura que esté encima del mapa */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-content {
+    width: 95%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-box {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo-img {
+    height: 55px;
+    width: auto;
+}
+
+.vertical-divider {
+    width: 1px;
+    height: 40px;
+    background-color: #ccc;
+}
+
+.titles h1 {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin: 0;
+    font-weight: 500;
+    letter-spacing: 1px;
+}
+
+.titles h2 {
+    font-size: 1.2rem;
+    color: var(--sedema-green);
+    margin: 0;
+    font-weight: 800; /* Letra muy gruesa */
+    text-transform: uppercase;
+}
+
+.btn-nav {
+    background-color: var(--sedema-green);
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: background 0.3s;
+}
+
+.btn-nav:hover {
+    background-color: #1a453b; /* Un verde un poco más oscuro al pasar mouse */
+}
+
+/* =========================================
+   CONTENEDOR DEL MAPA Y PANELES
+   ========================================= */
+.map-container {
+    position: relative;
+    flex-grow: 1; /* Ocupa todo el espacio restante */
+    width: 100%;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    z-index: 1;
+}
+
+/* =========================================
+   PANEL FLOTANTE (SIDEBAR)
+   ========================================= */
+.floating-panel {
+    position: absolute;
+    top: 20px;
+    left: 20px; /* Panel a la izquierda */
+    width: 320px;
+    background-color: rgba(255, 255, 255, 0.97); /* Casi sólido */
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    z-index: 1000; /* Encima del mapa */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.panel-header {
+    background-color: var(--sedema-green);
+    color: white;
+    padding: 15px 20px;
+}
+
+.panel-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+}
+
+.panel-header h3::before {
+    content: '🛡️'; /* Icono escudo */
+    margin-right: 10px;
+}
+
+.panel-body {
+    padding: 20px;
+    max-height: 70vh; /* Para que no sea más alto que la pantalla en laptops */
+    overflow-y: auto; /* Scroll si el contenido es mucho */
+}
+
+.instruction-text {
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    margin-top: 0;
+    line-height: 1.5;
+}
+
+/* Buscador Falso */
+.fake-search-bar {
+    display: flex;
+    margin-top: 15px;
+}
+.fake-search-bar input {
+    flex-grow: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px 0 0 4px;
+    outline: none;
+}
+.fake-search-bar button {
+    background: var(--gob-gold);
+    border: none;
+    color: white;
+    padding: 0 15px;
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+}
+
+.divider {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 20px 0;
+}
+
+/* Simbología */
+.legend-row {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.color-sample {
+    width: 25px;
+    height: 25px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-right: 12px;
+    margin-top: 3px;
+    border: 1px solid rgba(0,0,0,0.2);
+}
+
+.red-zone { background-color: rgba(192, 57, 43, 0.6); border-color: var(--alert-red); }
+.green-zone { background-color: rgba(39, 174, 96, 0.6); border-color: #27ae60; }
+
+.legend-text strong {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
+.legend-text small {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+
+/* Caja de Alerta */
+.warning-box {
+    margin-top: 10px;
+    background-color: #FDEDEC; /* Rojo muy claro */
+    border-left: 4px solid var(--alert-red);
+    padding: 12px;
+    border-radius: 4px;
+    display: flex;
+    gap: 10px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: #581616;
+}
+
+.panel-footer {
+    background-color: #f1f1f1;
+    text-align: center;
+    padding: 8px;
+    font-size: 0.7rem;
+    color: #999;
+    border-top: 1px solid #ddd;
+}
+
+/* =========================================
+   RESPONSIVO (CELULARES)
+   ========================================= */
+@media (max-width: 600px) {
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px 0;
+    }
+    .main-header { height: auto; padding-bottom: 10px; }
+    .btn-nav { display: none; } /* Ocultar botón en móvil si falta espacio */
+    .vertical-divider { display: none; }
+    .titles h1 { display: none; }
+    .titles h2 { font-size: 1rem; }
+    
+    .floating-panel {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        border-radius: 15px 15px 0 0; /* Redondear solo arriba */
+        max-height: 40vh;
+    }
+}
