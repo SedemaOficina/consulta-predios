@@ -3,252 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Consulta de Predios | SEDEMA</title>
+    <title>Consulta PGOEDF | SEDEMA</title>
     
-    <!-- FUENTES -->
+    <!-- FUENTES Y ESTILOS -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <!-- LEAFLET Y LIBRERÍAS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Librería PIP (Punto en Polígono) -->
-    <script src="https://unpkg.com/@mapbox/leaflet-pip@latest/leaflet-pip.js"></script>
-    <!-- Librería AJAX -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
-
-    <!-- ESTILOS CSS INCORPORADOS (Para que no fallen) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    
     <style>
-        /* RESET GENERAL (Para quitar bordes feos por defecto) */
+        /* --- ESTILOS (CSS INTEGRADO PARA EVITAR ERRORES) --- */
+        :root { --guinda: #9d2148; --dorado: #b28e5c; --gris: #f4f4f4; --texto: #333; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body { 
-            font-family: 'Montserrat', sans-serif; 
-            height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden; /* Evita doble barra de scroll */
-        }
+        body { font-family: 'Montserrat', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* --- 1. ENCABEZADO --- */
-        .gob-header {
-            height: 70px;
-            background: white;
-            border-bottom: 4px solid #9d2148; /* Guinda */
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            z-index: 2000;
-            flex-shrink: 0; /* Que no se aplaste */
-        }
+        /* HEADER */
+        header { height: 70px; background: white; border-bottom: 4px solid var(--guinda); display: flex; align-items: center; justify-content: center; z-index: 2000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        header img { height: 50px; }
 
-        .logo-box img { 
-            height: 50px; 
-            width: auto; 
-            display: block;
-        }
+        /* CONTENEDOR */
+        .main-wrapper { display: flex; flex: 1; height: 100%; position: relative; }
 
-        /* --- 2. CONTENEDOR PRINCIPAL (LADO A LADO) --- */
-        .main-wrapper {
-            display: flex;
-            flex: 1; /* Ocupa el resto de la altura */
-            position: relative;
-            height: calc(100vh - 70px); /* Altura total menos header */
-        }
-
-        /* --- 3. PANEL LATERAL (IZQUIERDA) --- */
-        .sidebar {
-            width: 350px;
-            background: #f9f9f9;
-            border-right: 1px solid #ddd;
-            display: flex;
-            flex-direction: column;
-            z-index: 1000;
-            flex-shrink: 0;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-        }
-
-        .sidebar-header {
-            background: #9d2148;
-            color: white;
-            padding: 15px 20px;
-        }
-        .sidebar-header h3 { margin: 0; font-size: 16px; font-weight: 700; text-transform: uppercase; }
-        .sidebar-header p { margin: 5px 0 0 0; font-size: 11px; opacity: 0.9; }
-
-        .sidebar-body {
-            padding: 20px;
-            overflow-y: auto;
-            flex: 1;
-        }
+        /* SIDEBAR (IZQUIERDA) */
+        .sidebar { width: 380px; background: white; border-right: 1px solid #ccc; display: flex; flex-direction: column; z-index: 1000; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+        .sidebar-header { padding: 20px; background: var(--gris); border-bottom: 1px solid #ddd; }
+        .sidebar-header h2 { color: var(--guinda); font-size: 16px; margin: 0; font-weight: 700; }
+        .sidebar-body { padding: 20px; overflow-y: auto; flex: 1; }
 
         /* CONTROLES */
-        .control-group { margin-bottom: 25px; }
-        .label-titulo { 
-            display: block; 
-            font-size: 12px; 
-            font-weight: 700; 
-            color: #9d2148; 
-            margin-bottom: 8px; 
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* Botón GPS */
-        .btn-full {
-            width: 100%;
-            padding: 12px;
-            background: #2c3e50; /* Gris oscuro elegante */
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            transition: background 0.2s;
-        }
-        .btn-full:hover { background: #1a252f; }
-
-        .divider { 
-            text-align: center; margin: 15px 0; font-size: 11px; color: #999; font-weight: bold; position: relative; 
-        }
-        .divider::before { content: ""; position: absolute; top: 50%; left: 0; width: 45%; height: 1px; background: #ddd; }
-        .divider::after { content: ""; position: absolute; top: 50%; right: 0; width: 45%; height: 1px; background: #ddd; }
-
-        /* Buscador */
-        .search-row { display: flex; gap: 5px; }
-        .search-row input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 13px;
-        }
-        .search-row button {
-            padding: 0 15px;
-            background: #b28e5c; /* Dorado */
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
+        .control-group { margin-bottom: 20px; }
+        .btn-full { width: 100%; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-guinda { background: var(--guinda); color: white; }
+        .btn-guinda:hover { background: #7c1c36; }
+        
+        .search-box { display: flex; gap: 5px; }
+        .search-box input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-search { background: var(--dorado); color: white; border: none; padding: 0 15px; border-radius: 4px; cursor: pointer; }
 
         /* RESULTADOS */
-        .result-container {
-            margin-top: 10px;
-            padding: 15px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            background: white;
-            font-size: 13px;
-        }
-        /* Colores de alerta */
-        .res-rojo { border-left: 5px solid #C0392B; background: #fff5f5; }
-        .res-verde { border-left: 5px solid #27ae60; background: #f0fff4; }
-        .res-azul { border-left: 5px solid #2980b9; background: #eef7fc; }
-
-        .res-titulo { font-weight: 800; margin-bottom: 5px; display: block; font-size: 14px;}
-        .res-rojo .res-titulo { color: #C0392B; }
-        .res-verde .res-titulo { color: #27ae60; }
-        .res-azul .res-titulo { color: #2980b9; }
-
-        /* SIMBOLOGÍA */
-        .leyenda-box {
-            margin-top: 30px;
-            padding-top: 15px;
-            border-top: 1px solid #ddd;
-        }
-        .leyenda-box h4 { margin: 0 0 10px 0; font-size: 12px; color: #666; }
-        .item-leyenda { font-size: 11px; margin-bottom: 6px; display: flex; align-items: center; color: #444; }
-        .dot { width: 12px; height: 12px; display: inline-block; margin-right: 8px; border-radius: 2px; }
+        .result-panel { display: none; margin-top: 15px; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+        .res-header { padding: 10px; color: white; font-weight: bold; text-align: center; font-size: 14px; }
+        .res-body { padding: 15px; font-size: 12px; }
         
-        .bg-rojo { background: rgba(192, 57, 43, 0.6); border: 1px solid #C0392B; }
-        .bg-azul { border: 2px solid #3498db; }
-        .bg-verde { background: rgba(39, 174, 96, 0.6); border: 1px solid #27ae60; }
+        .bg-rojo { background: #C0392B; }
+        .bg-azul { background: #2980b9; }
+        .bg-verde { background: #27ae60; }
 
-        /* --- 4. MAPA --- */
-        #map {
-            flex: 1; /* Toma todo el espacio restante */
-            height: 100%;
-            z-index: 1;
-        }
+        .regla-box { margin-bottom: 10px; padding: 8px; border-radius: 4px; }
+        .permitido { background: #e8f5e9; border-left: 4px solid #27ae60; }
+        .prohibido { background: #ffebee; border-left: 4px solid #C0392B; }
+        .regla-titulo { font-weight: bold; display: block; margin-bottom: 4px; }
+        .prohibido .regla-titulo { color: #C0392B; }
+        .permitido .regla-titulo { color: #27ae60; }
+        ul { margin: 0; padding-left: 15px; }
 
-        /* --- POPUPS --- */
-        .leaflet-popup-content-wrapper { border-radius: 0; padding: 0; }
-        .leaflet-popup-content { margin: 0; width: 280px !important; }
-        
-        .popup-head { padding: 10px; color: white; font-weight: bold; text-align: center; font-size: 13px; }
-        .popup-body { padding: 15px; font-size: 12px; line-height: 1.4; color: #333; }
-        
-        .list-check { list-style: none; padding: 0; margin: 5px 0; }
-        .list-check li::before { content: "✅ "; }
-        .list-cross { list-style: none; padding: 0; margin: 5px 0; color: #C0392B; }
-        .list-cross li::before { content: "🚫 "; }
+        /* MAPA */
+        #map { flex: 1; height: 100%; z-index: 1; }
 
-        /* RESPONSIVO CELULAR */
+        /* RESPONSIVO */
         @media (max-width: 768px) {
-            .main-wrapper { flex-direction: column-reverse; } /* Panel abajo en celular */
-            .sidebar { width: 100%; height: 40%; }
-            #map { height: 60%; }
-            .gob-header { justify-content: center; } /* Logo centrado */
+            .main-wrapper { flex-direction: column-reverse; }
+            .sidebar { width: 100%; height: 45%; }
+            #map { height: 55%; }
         }
     </style>
 </head>
 <body>
 
-    <!-- HEADER -->
-    <header class="gob-header">
-        <div class="logo-box">
-            <img src="logo-sedema.png" alt="SEDEMA CDMX">
-        </div>
+    <header>
+        <img src="logo-sedema.png" alt="SEDEMA CDMX">
     </header>
 
-    <!-- CONTENEDOR PRINCIPAL -->
     <div class="main-wrapper">
-        
-        <!-- PANEL IZQUIERDO -->
+        <!-- PANEL LATERAL -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <h3>Consulta Ciudadana</h3>
-                <p>Verifica el uso de suelo y evita fraudes.</p>
+                <h2>Consulta PGOEDF</h2>
+                <p style="font-size:12px; color:#666;">Ordenamiento Ecológico del D.F.</p>
             </div>
-
+            
             <div class="sidebar-body">
                 <!-- GPS -->
                 <div class="control-group">
-                    <label class="label-titulo">1. Ubicación Actual</label>
-                    <button id="btn-gps" class="btn-full">
-                        📍 USAR MI GPS
-                    </button>
-                    <div id="status-gps" style="font-size:11px; margin-top:5px; color:#666; text-align:center;"></div>
+                    <button id="btn-gps" class="btn-full btn-guinda">📍 UBICARME EN EL MAPA</button>
+                    <div id="status-gps" style="text-align:center; font-size:11px; margin-top:5px; color:#666;"></div>
                 </div>
-
-                <div class="divider">O BUSCA UNA DIRECCIÓN</div>
 
                 <!-- BUSCADOR -->
                 <div class="control-group">
-                    <label class="label-titulo">2. Buscar Dirección</label>
-                    <div class="search-row">
+                    <div class="search-box">
                         <input type="text" id="input-busqueda" placeholder="Calle, Colonia o Coordenadas...">
-                        <button id="btn-buscar">🔎</button>
+                        <button id="btn-buscar" class="btn-search">🔍</button>
                     </div>
                 </div>
 
-                <!-- CAJA DE RESULTADOS (Se llena sola) -->
-                <div id="panel-resultados" class="result-container" style="display:none;">
-                    <span id="res-titulo" class="res-titulo">RESULTADO</span>
-                    <p id="res-texto" style="margin:5px 0;"></p>
-                    <div id="res-detalles"></div>
+                <!-- RESULTADOS -->
+                <div id="resultado" class="result-panel">
+                    <div id="res-header" class="res-header">RESULTADO</div>
+                    <div class="res-body">
+                        <h3 id="res-zona" style="margin:0 0 5px 0; color:#333;"></h3>
+                        <p id="res-desc" style="margin-bottom:10px; color:#555; font-style:italic;"></p>
+                        
+                        <div class="regla-box prohibido">
+                            <span class="regla-titulo">🚫 PROHIBIDO (Tabla PGOEDF):</span>
+                            <ul id="lista-prohibido"></ul>
+                        </div>
+                        
+                        <div class="regla-box permitido">
+                            <span class="regla-titulo">✅ AUTORIZADO:</span>
+                            <ul id="lista-permitido"></ul>
+                        </div>
+                        
+                        <div style="font-size:10px; color:#999; margin-top:10px; text-align:center;">
+                            Fuente: PGOEDF (Págs. 116-117)
+                        </div>
+                    </div>
                 </div>
-
+                
                 <!-- LEYENDA -->
-                <div class="leyenda-box">
-                    <h4>Simbología del Mapa</h4>
-                    <div class="item-leyenda"><span class="dot bg-rojo"></span> Suelo de Conservación (Restringido)</div>
-                    <div class="item-leyenda"><span class="dot bg-azul"></span> Zonificación (Reglas PGOEDF)</div>
-                    <div class="item-leyenda"><span class="dot bg-verde"></span> Áreas Naturales Protegidas</div>
+                <div style="margin-top:20px; border-top:1px solid #ddd; padding-top:10px; font-size:11px;">
+                    <div style="display:flex; align-items:center; margin-bottom:5px;"><span style="width:12px; height:12px; background:#C0392B; margin-right:8px; opacity:0.6;"></span> Suelo Conservación (Restringido)</div>
+                    <div style="display:flex; align-items:center;"><span style="width:12px; height:12px; border:2px solid #2980b9; margin-right:8px;"></span> Zonificación (Límites)</div>
                 </div>
             </div>
         </aside>
@@ -257,172 +131,214 @@
         <div id="map"></div>
     </div>
 
-    <!-- LÓGICA DEL SISTEMA -->
+    <!-- SCRIPTS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script src="https://unpkg.com/@mapbox/leaflet-pip@latest/leaflet-pip.js"></script>
+    
     <script>
-        // --- 1. BASE DE DATOS PGOEDF (REGLAS) ---
-        const reglas = {
+        // ==================================================================
+        // 1. EL "CEREBRO": BASE DE DATOS DIGITALIZADA DEL PDF (Págs 116-117)
+        // ==================================================================
+        const baseDatosPGOEDF = {
             "Forestal de Conservación": {
-                perm: ["Reforestación", "Vigilancia", "Ecoturismo"],
-                proh: ["VIVIENDA", "Agricultura", "Ganadería", "Calles"]
+                desc: "Zonas con mayores extensiones de vegetación natural. Prioridad: Recarga acuífero y biodiversidad.",
+                permitido: ["Reforestación", "Investigación", "Ecoturismo (Senderos)", "Apicultura", "Vigilancia Ambiental"],
+                prohibido: ["VIVIENDA (Casas/Fraccionamientos)", "Agricultura", "Ganadería", "Apertura de calles/brechas", "Tala de árboles", "Minería", "Industria"]
             },
             "Forestal de Conservación Especial": {
-                perm: ["Turismo sustentable", "Viveros", "Apicultura"],
-                proh: ["ASENTAMIENTOS", "Industria", "Minería"]
+                desc: "Zonas boscosas con presión productiva. Se permite manejo sustentable.",
+                permitido: ["Turismo sustentable", "Viveros", "Apicultura", "Cultivo de hongos", "Reforestación"],
+                prohibido: ["NUEVOS ASENTAMIENTOS HUMANOS", "Industria", "Minería", "Cambio de uso de suelo a urbano"]
             },
             "Forestal de Protección": {
-                perm: ["Obras conservación", "Reforestación"],
-                proh: ["Urbanización", "Tiraderos", "Pastoreo"]
+                desc: "Zonas de transición o amortiguamiento. Requieren restauración.",
+                permitido: ["Obras de conservación de suelo", "Reforestación", "Ecoturismo"],
+                prohibido: ["Urbanización", "Tiraderos de basura", "Pastoreo extensivo", "Agricultura intensiva"]
+            },
+            "Forestal de Protección Especial": {
+                desc: "Áreas con vegetación natural que requieren frenar el deterioro.",
+                permitido: ["Agroforestería", "Pastoreo controlado (Estabulado)", "Manejo de vida silvestre"],
+                prohibido: ["Crecimiento urbano", "Quemas agrícolas", "Uso de agroquímicos agresivos"]
             },
             "Agroforestal": {
-                perm: ["Cultivos", "Frutales", "Leña doméstica"],
-                proh: ["Fraccionamientos", "Industria", "Tala"]
+                desc: "Zona de transición bosque-cultivo.",
+                permitido: ["Cultivos tradicionales", "Frutales", "Leña (uso doméstico)", "Turismo rural"],
+                prohibido: ["Fraccionamientos habitacionales", "Industria contaminante", "Tala rasa"]
+            },
+            "Agroforestal Especial": {
+                desc: "Zona agrícola con manchones de bosque (Tlalpan/Milpa Alta).",
+                permitido: ["Cultivos anuales", "Hortalizas", "Invernaderos", "Ganadería controlada"],
+                prohibido: ["Nuevas construcciones urbanas", "Minería a cielo abierto", "Industria"]
             },
             "Agroecológica": {
-                perm: ["Agricultura intensiva", "Venta productos"],
-                proh: ["Uso Habitacional", "Centros comerciales"]
+                desc: "Zona agrícola de alta productividad (Nopal, Hortalizas).",
+                permitido: ["Agricultura intensiva", "Invernaderos", "Venta de productos agrícolas", "Infraestructura de apoyo agrícola"],
+                prohibido: ["Cambio de uso a habitacional", "Centros comerciales", "Industria"]
             },
             "Agroecológica Especial": {
-                perm: ["Chinampas", "Turismo canales"],
-                proh: ["Relleno canales", "Construcción casas"]
+                desc: "Zona de Humedales y Chinampas (Xochimilco/Tláhuac).",
+                permitido: ["Agricultura chinampera", "Turismo en canales", "Pesca tradicional", "Flores y plantas"],
+                prohibido: ["Relleno de canales", "Construcción de casas", "Drenaje en canales", "Uso de pesticidas"]
             }
         };
 
-        function getInfo(nombre) {
-            if(!nombre) return null;
-            for(let key in reglas) {
-                if(nombre.toUpperCase().includes(key.toUpperCase())) return {nombre: key, ...reglas[key]};
+        // Función inteligente para buscar la regla aunque el nombre varíe un poco en el SHP
+        function buscarReglas(nombreZona) {
+            if (!nombreZona) return null;
+            let nombreLimpio = nombreZona.toUpperCase().trim();
+            
+            for (let key in baseDatosPGOEDF) {
+                if (nombreLimpio.includes(key.toUpperCase())) {
+                    return { nombre: key, datos: baseDatosPGOEDF[key] };
+                }
             }
-            return { nombre: "Zona Regulada", perm: ["Consulta SEDEMA"], proh: ["Actividades no autorizadas"] };
+            return null; // Si no encuentra coincidencia
         }
 
-        // --- 2. INICIALIZAR MAPA ---
-        var map = L.map('map', { zoomControl: false }).setView([19.30, -99.15], 11);
+        // ==================================================================
+        // 2. CONFIGURACIÓN DEL MAPA
+        // ==================================================================
+        var map = L.map('map', { zoomControl: false }).setView([19.28, -99.13], 11);
         L.control.zoom({ position: 'topright' }).addTo(map);
 
+        // Capas Base
         var satelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri' }).addTo(map);
-        var calles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', { opacity: 0.7, attribution: 'CARTO' }).addTo(map);
+        var calles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', { opacity: 0.8, attribution: 'CARTO' }).addTo(map);
 
-        // Capas para guardar datos
-        var layerSuelo = L.layerGroup().addTo(map);
+        // Variables para las capas
         var layerZoni = L.geoJSON(null, {
-            style: { color: '#3498db', weight: 2, fillOpacity: 0.05 },
+            style: { color: '#3498db', weight: 2, fillOpacity: 0.05 }, // Azul transparente
             onEachFeature: function(feature, layer) {
+                // Al dar clic en un polígono
                 layer.on('click', function(e) {
                     L.DomEvent.stopPropagation(e);
-                    analizar(e.latlng);
+                    analizarUbicacion(e.latlng);
                 });
             }
         }).addTo(map);
 
-        // --- 3. CARGAR ARCHIVOS ---
+        var layerSuelo = L.geoJSON(null, {
+            style: { color: '#C0392B', weight: 0, fillOpacity: 0.25 }, // Rojo fondo
+            interactive: false
+        }).addTo(map);
+
+        // ==================================================================
+        // 3. CARGA DE ARCHIVOS
+        // ==================================================================
         
-        // Rojo (Suelo Conservación)
-        fetch('suelo-de-conservacion-2020.geojson').then(r=>r.json()).then(d=>{
-            L.geoJSON(d, {
-                style: { color: '#C0392B', fillColor: '#C0392B', fillOpacity: 0.2, weight: 0 },
-                interactive: false
-            }).addTo(layerSuelo);
-        });
+        // Cargar ZONIFICACIÓN (Vital: debe coincidir el nombre)
+        fetch('zoonificación_pgoedf_2000.geojson')
+            .then(r => r.json())
+            .then(data => layerZoni.addData(data))
+            .catch(e => alert("Error: No encuentro 'zoonificación_pgoedf_2000.geojson'. Revisa tu GitHub."));
 
-        // Azul (Zonificación - Lógica)
-        fetch('zoonificación_pgoedf_2000.geojson').then(r=>r.json()).then(d=>{
-            layerZoni.addData(d);
-        }).catch(e => alert("Error: No se encuentra el archivo 'zoonificación_pgoedf_2000.geojson'. Verifica el nombre en GitHub."));
+        // Cargar SUELO CONSERVACIÓN
+        fetch('suelo-de-conservacion-2020.geojson')
+            .then(r => r.json())
+            .then(data => layerSuelo.addData(data));
 
-        // Verde (ANP - Opcional)
-        fetch('anp.geojson').then(r=>r.json()).then(d=>{
-            L.geoJSON(d, {style:{color:'#27ae60', fillOpacity:0.3}}).addTo(map);
-        });
 
-        // --- 4. FUNCIÓN MAESTRA: ANALIZAR PUNTO ---
-        var pinActual;
+        // ==================================================================
+        // 4. LÓGICA DE ANÁLISIS (EL CORAZÓN DEL SISTEMA)
+        // ==================================================================
+        
+        var marcadorActual;
 
-        function analizar(latlng, origenTexto) {
-            // Mover mapa
+        function analizarUbicacion(latlng) {
+            // 1. Mover mapa
             map.setView(latlng, 16);
-            if(pinActual) map.removeLayer(pinActual);
-            pinActual = L.marker(latlng).addTo(map);
+            if (marcadorActual) map.removeLayer(marcadorActual);
+            marcadorActual = L.marker(latlng).addTo(map);
 
-            // Verificar PIP
-            var results = leafletPip.pointInLayer(latlng, layerZoni);
+            // 2. ¿En qué polígono cayó? (Usando Leaflet PIP)
+            var resultados = leafletPip.pointInLayer(latlng, layerZoni);
             
-            var html = "", clase = "", titulo = "", texto = "";
+            // Elementos del panel
+            var panel = document.getElementById('resultado');
+            var header = document.getElementById('res-header');
+            var zona = document.getElementById('res-zona');
+            var desc = document.getElementById('res-desc');
+            var ulProh = document.getElementById('lista-prohibido');
+            var ulPerm = document.getElementById('lista-permitido');
 
-            if(results.length > 0) {
-                // ZONA PROHIBIDA
-                var p = results[0].feature.properties;
-                var rawName = p.DESCRIPCIO || p.ZONA || p.TIPO || "Zona";
-                var info = getInfo(rawName);
-                var uga = p.UGA || p.CLAVE || "";
-
-                titulo = "🚫 SUELO DE CONSERVACIÓN";
-                clase = "res-rojo";
-                texto = `Estás en: <strong>${info.nombre}</strong> (UGA ${uga})`;
-                
-                var listaNo = info.proh.map(x=>`<li>${x}</li>`).join("");
-                
-                html = `
-                    <div style="background:#C0392B; color:white; padding:10px; text-align:center; font-weight:bold;">${titulo}</div>
-                    <div style="padding:10px; font-family:Montserrat;">
-                        <p style="font-size:12px; margin-bottom:5px;">${texto}</p>
-                        <div style="background:#ffebee; border:1px solid red; padding:5px;">
-                            <strong style="color:red; font-size:11px;">PROHIBIDO:</strong>
-                            <ul style="color:red; font-size:11px; padding-left:15px; margin:0;">${listaNo}</ul>
-                        </div>
-                    </div>
-                `;
-            } else {
-                // SUELO URBANO
-                titulo = "✅ SUELO URBANO";
-                clase = "res-verde";
-                texto = "Ubicación fuera de la zonificación de conservación.";
-                html = `
-                    <div style="background:#27ae60; color:white; padding:10px; text-align:center; font-weight:bold;">${titulo}</div>
-                    <div style="padding:10px; font-family:Montserrat;">
-                        <p style="font-size:12px;">${texto}</p>
-                        <small>Consulta uso habitacional en SEDUVI.</small>
-                    </div>
-                `;
-            }
-
-            // Popup
-            pinActual.bindPopup(html, {minWidth:250}).openPopup();
-
-            // Panel Lateral
-            var panel = document.getElementById('panel-resultados');
+            ulProh.innerHTML = "";
+            ulPerm.innerHTML = "";
             panel.style.display = "block";
-            panel.className = "result-container " + clase;
-            document.getElementById('res-titulo').innerText = titulo;
-            document.getElementById('res-texto').innerHTML = texto;
-            document.getElementById('res-detalles').innerHTML = (results.length > 0) ? 
-                `<small><strong>Regla PGOEDF:</strong> ${info.proh.join(", ")} prohibido.</small>` : "";
+
+            if (resultados.length > 0) {
+                // --- CAYÓ EN SUELO DE CONSERVACIÓN ---
+                var p = resultados[0].feature.properties;
+                // Buscamos el nombre en tus columnas posibles
+                var nombreRaw = p.DESCRIPCIO || p.ZONA || p.TIPO || "Sin Nombre";
+                var info = buscarReglas(nombreRaw);
+
+                header.innerText = "⚠️ SUELO DE CONSERVACIÓN";
+                header.className = "res-header bg-rojo";
+                
+                if (info) {
+                    zona.innerText = info.nombre;
+                    desc.innerText = info.datos.desc;
+                    // Llenar listas
+                    info.datos.prohibido.forEach(item => {
+                        let li = document.createElement('li'); li.innerText = item; ulProh.appendChild(li);
+                    });
+                    info.datos.permitido.forEach(item => {
+                        let li = document.createElement('li'); li.innerText = item; ulPerm.appendChild(li);
+                    });
+                } else {
+                    zona.innerText = nombreRaw;
+                    desc.innerText = "Zona regulada. Consulta a SEDEMA.";
+                    ulProh.innerHTML = "<li>Verificar Plan de Manejo</li>";
+                }
+
+                // Popup en el mapa también
+                marcadorActual.bindPopup(`<b style="color:#C0392B">🚫 ZONA RESTRINGIDA</b><br>${nombreRaw}`).openPopup();
+
+            } else {
+                // --- CAYÓ FUERA (SUELO URBANO) ---
+                header.innerText = "✅ SUELO URBANO / OTRA ZONA";
+                header.className = "res-header bg-verde";
+                zona.innerText = "Fuera del Suelo de Conservación";
+                desc.innerText = "Esta ubicación no presenta restricciones del PGOEDF.";
+                ulProh.innerHTML = "<li>N/A</li>";
+                ulPerm.innerHTML = "<li>Uso Habitacional (Verificar SEDUVI)</li>";
+                
+                marcadorActual.bindPopup(`<b style="color:#27ae60">✅ SUELO URBANO</b>`).openPopup();
+            }
         }
 
-        // Clic en mapa vacío
-        map.on('click', function(e) { analizar(e.latlng); });
+        // Clic en el mapa vacío
+        map.on('click', function(e) { analizarUbicacion(e.latlng); });
 
-        // --- 5. BOTONES ---
+        // ==================================================================
+        // 5. FUNCIONES DE BOTONES
+        // ==================================================================
         
         // GPS
         document.getElementById('btn-gps').addEventListener('click', function() {
             document.getElementById('status-gps').innerText = "🛰️ Buscando señal...";
             map.locate({setView: true, maxZoom: 16, enableHighAccuracy: true});
         });
-        map.on('locationfound', e => {
+        map.on('locationfound', function(e) {
             document.getElementById('status-gps').innerText = "";
-            analizar(e.latlng);
+            analizarUbicacion(e.latlng);
         });
-        map.on('locationerror', () => alert("Activa tu GPS."));
+        map.on('locationerror', function() {
+            alert("Activa tu GPS para usar esta función.");
+            document.getElementById('status-gps').innerText = "";
+        });
 
-        // Buscador
+        // BUSCADOR
         document.getElementById('btn-buscar').addEventListener('click', function() {
             var q = document.getElementById('input-busqueda').value;
             if(!q) return;
+            // Nominatim
             fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}+CDMX&limit=1`)
             .then(r=>r.json())
             .then(d=>{
-                if(d.length) analizar([d[0].lat, d[0].lon]);
-                else alert("No encontrado");
+                if(d.length > 0) analizarUbicacion([d[0].lat, d[0].lon]);
+                else alert("Dirección no encontrada.");
             });
         });
 
