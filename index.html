@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visor de Suelo de Conservación | SEDEMA</title>
     
-    <!-- FUENTES OFICIALES (Manual Pág. 20 y 29) -->
+    <!-- FUENTES OFICIALES -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -13,27 +13,21 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
-    <!-- NUESTRO ESTILO (Vinculado) -->
-    <link rel="stylesheet" href="style.css">
+    <!-- AQUI ESTABA EL ERROR: LE PUSE LA 'S' QUE FALTABA -->
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-    <!-- 1. ENCABEZADO OFICIAL (Según Pág. 23 del Manual) -->
+    <!-- 1. ENCABEZADO OFICIAL -->
     <header class="gob-header">
         <div class="header-inner">
-            <!-- Logo Gobierno CDMX (Escudo y Mosaico) -->
-            <!-- Usamos un placeholder, deberás subir el SVG oficial que viene en tu paquete -->
             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Gobierno_de_la_Ciudad_de_M%C3%A9xico_%28logo_2018%29.svg/1200px-Gobierno_de_la_Ciudad_de_M%C3%A9xico_%28logo_2018%29.svg.png" alt="Gobierno CDMX" class="logo-cdmx">
-            
             <div class="vertical-line"></div>
-            
             <div class="dependency-name">
-                <!-- Tipografía Cabin Bold (Pág 23) -->
                 <h1>SECRETARÍA DEL<br>MEDIO AMBIENTE</h1>
             </div>
         </div>
         
-        <!-- Menú navegación simple -->
         <nav class="nav-links">
             <a href="#" class="nav-item">Inicio</a>
             <a href="#" class="nav-item">Ayuda</a>
@@ -46,7 +40,7 @@
         <!-- MAPA -->
         <div id="map"></div>
 
-        <!-- TARJETA FLOTANTE (Estilo "Card" Pág. 75) -->
+        <!-- TARJETA FLOTANTE -->
         <div class="info-card">
             <div class="card-header">
                 <h2>Consulta de Predios</h2>
@@ -57,7 +51,6 @@
                     Verifique si un terreno se encuentra en <b>Zona de Conservación</b> antes de realizar cualquier trámite o pago.
                 </p>
 
-                <!-- Buscador Estilo Material -->
                 <div class="input-group">
                     <input type="text" placeholder="Buscar colonia o calle...">
                     <button class="btn-primary">BUSCAR</button>
@@ -67,7 +60,6 @@
 
                 <h3>Simbología Oficial</h3>
                 
-                <!-- Ítems de la leyenda -->
                 <div class="legend-item">
                     <span class="color-box guinda-fill"></span>
                     <div>
@@ -84,7 +76,6 @@
                     </div>
                 </div>
 
-                <!-- ALERTA DE FRAUDE -->
                 <div class="alert-banner">
                     <span class="alert-icon">⚠️</span>
                     <p>
@@ -95,7 +86,6 @@
                 </div>
             </div>
             
-            <!-- Footer de la tarjeta -->
             <div class="card-footer">
                 <small>Gobierno de la Ciudad de México 2024-2030</small>
             </div>
@@ -103,25 +93,22 @@
 
     </main>
 
-    <!-- LÓGICA DE MAPA (JAVASCRIPT) -->
+    <!-- LÓGICA DE MAPA -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Configuración básica del mapa
         var map = L.map('map', { zoomControl: false }).setView([19.30, -99.15], 11);
         L.control.zoom({ position: 'topright' }).addTo(map);
 
-        // Mapa Base: CartoDB Light (Limpio para institucional)
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap, © CARTO'
         }).addTo(map);
 
-        // --- EJEMPLO DE ZONA RESTRINGIDA (COLOR GUINDA) ---
-        // Simulación de tu SHP de Suelo de Conservación
+        // Polígono de ejemplo (Simulación)
         var poligonoProhibido = L.polygon([
             [19.28, -99.18], [19.29, -99.05], [19.20, -99.08], [19.20, -99.20]
         ], {
-            color: '#9d2148',       // GUINDA INSTITUCIONAL (Borde)
-            fillColor: '#9d2148',   // GUINDA INSTITUCIONAL (Relleno)
+            color: '#9d2148',
+            fillColor: '#9d2148',
             fillOpacity: 0.5,
             weight: 2
         }).addTo(map);
