@@ -12,8 +12,10 @@
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- CSS del Buscador -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     
-    <!-- AQUI ESTABA EL ERROR: LE PUSE LA 'S' QUE FALTABA -->
+    <!-- NUESTRO ESTILO -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -21,8 +23,11 @@
     <!-- 1. ENCABEZADO OFICIAL -->
     <header class="gob-header">
         <div class="header-inner">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Gobierno_de_la_Ciudad_de_M%C3%A9xico_%28logo_2018%29.svg/1200px-Gobierno_de_la_Ciudad_de_M%C3%A9xico_%28logo_2018%29.svg.png" alt="Gobierno CDMX" class="logo-cdmx">
+            <!-- LOGO ACTUALIZADO -->
+            <img src="logo-sedema.png" alt="Logo SEDEMA" class="logo-cdmx">
+            
             <div class="vertical-line"></div>
+            
             <div class="dependency-name">
                 <h1>SECRETARÍA DEL<br>MEDIO AMBIENTE</h1>
             </div>
@@ -40,6 +45,18 @@
         <!-- MAPA -->
         <div id="map"></div>
 
+        <!-- BOTÓN DE UBICACIÓN (GPS) -->
+        <button id="btn-locate" class="btn-gps" title="Ubicar mi posición">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="3"></circle>
+                <line x1="12" y1="2" x2="12" y2="4"></line>
+                <line x1="12" y1="20" x2="12" y2="22"></line>
+                <line x1="2" y1="12" x2="4" y2="12"></line>
+                <line x1="20" y1="12" x2="22" y2="12"></line>
+            </svg>
+        </button>
+
         <!-- TARJETA FLOTANTE -->
         <div class="info-card">
             <div class="card-header">
@@ -51,10 +68,10 @@
                     Verifique si un terreno se encuentra en <b>Zona de Conservación</b> antes de realizar cualquier trámite o pago.
                 </p>
 
-                <div class="input-group">
-                    <input type="text" placeholder="Buscar colonia o calle...">
-                    <button class="btn-primary">BUSCAR</button>
-                </div>
+                <!-- El buscador ahora estará dentro del mapa, pero dejamos este texto de ayuda -->
+                <p style="font-size: 12px; color:#666; margin-bottom: 5px;">
+                    <i>Tip: Puede buscar por calle o coordenada (Ej: 19.25, -99.10) en la lupa del mapa.</i>
+                </p>
 
                 <div class="separator"></div>
 
@@ -93,17 +110,94 @@
 
     </main>
 
-    <!-- LÓGICA DE MAPA -->
+    <!-- SCRIPTS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    
     <script>
-        var map = L.map('map', { zoomControl: false }).setView([19.30, -99.15], 11);
+        // --- 1. DEFINICIÓN DE CAPAS BASE (FONDOS) ---
+        
+        // Opción A: Gris (Elegante/Institucional)
+        var mapaGris = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap, © CARTO'
+        });
+
+        // Opción B: Satélite (Esri World Imagery) - Para ver el bosque real
+        var mapaSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles © Esri'
+        });
+
+        // Opción C: Calles (OpenStreetMap) - Para ver nombres de tiendas y calles
+        var mapaCalles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        });
+
+        // Inicializamos el mapa con la capa GRIS por defecto
+        var map = L.map('map', { 
+            zoomControl: false,
+            layers: [mapaGris] // Capa inicial
+        }).setView([19.30, -99.15], 11);
+
+        // Control de Zoom a la derecha
         L.control.zoom({ position: 'topright' }).addTo(map);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '© OpenStreetMap, © CARTO'
-        }).addTo(map);
+        // --- 2. CONTROL DE CAPAS (Selector de Fondos) ---
+        var baseMaps = {
+            "Mapa Institucional (Gris)": mapaGris,
+            "Vista Satelital": mapaSatelite,
+            "Mapa de Calles": mapaCalles
+        };
+        // Agregamos el control abajo a la derecha
+        L.control.layers(baseMaps).addTo(map);
 
-        // Polígono de ejemplo (Simulación)
+
+        // --- 3. BUSCADOR INTELIGENTE (Direcciones y Coordenadas) ---
+        var geocoder = L.Control.geocoder({
+            defaultMarkGeocode: false,
+            placeholder: "Buscar calle o coordenadas...",
+            geocoder: L.Control.Geocoder.nominatim() // Usa OSM para predecir
+        })
+        .on('markgeocode', function(e) {
+            var bbox = e.geocode.bbox;
+            var poly = L.polygon([
+                bbox.getSouthEast(),
+                bbox.getNorthEast(),
+                bbox.getNorthWest(),
+                bbox.getSouthWest()
+            ]);
+            map.fitBounds(poly.getBounds());
+            
+            // Poner un marcador en el resultado
+            L.marker(e.geocode.center).addTo(map)
+                .bindPopup("<b>Ubicación Buscada</b><br>" + e.geocode.name).openPopup();
+        })
+        .addTo(map);
+
+
+        // --- 4. FUNCIÓN GPS (Botón Ubicarme) ---
+        document.getElementById('btn-locate').addEventListener('click', function() {
+            // Pedir al navegador la ubicación
+            map.locate({setView: true, maxZoom: 16});
+        });
+
+        // Si encuentra la ubicación:
+        map.on('locationfound', function(e) {
+            var radius = e.accuracy;
+            
+            L.marker(e.latlng).addTo(map)
+                .bindPopup("📍 ¡Estás aquí!").openPopup();
+
+            L.circle(e.latlng, radius).addTo(map);
+        });
+
+        // Si hay error (ej. el usuario niega el permiso):
+        map.on('locationerror', function(e) {
+            alert("No pudimos acceder a tu ubicación. Asegúrate de tener el GPS activado y dar permisos al navegador.");
+        });
+
+
+        // --- 5. TUS CAPAS (Simulación) ---
+        // Aquí irán tus GeoJSON reales. Dejo el polígono de ejemplo.
         var poligonoProhibido = L.polygon([
             [19.28, -99.18], [19.29, -99.05], [19.20, -99.08], [19.20, -99.20]
         ], {
@@ -121,6 +215,7 @@
                 <button style="background:#9d2148; color:white; border:none; padding:8px 12px; border-radius:4px;">VER DETALLES</button>
             </div>
         `);
+
     </script>
 </body>
 </html>
