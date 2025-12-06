@@ -3,111 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Validador de Suelo de Conservación</title>
+    <title>Prototipo: Visor de Suelo de Conservación | SEDEMA</title>
     
-    <!-- Estilos de Leaflet -->
+    <!-- Fuente Institucional (Montserrat) -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Librerías de Mapas (Leaflet) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Estilos del Buscador -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-
-    <style>
-        body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        #map { height: 100vh; width: 100%; }
-        
-        /* Cuadro de leyenda flotante */
-        .info-panel {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
-            background: white;
-            padding: 15px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            max-width: 300px;
-        }
-        .danger-text { color: #d9534f; font-weight: bold; }
-        .safe-text { color: #5cb85c; font-weight: bold; }
-    </style>
+    
+    <!-- NUESTRO ESTILO PERSONALIZADO -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="info-panel">
-        <h3>Verificador de Predios</h3>
-        <p>Busca una dirección o haz clic en el mapa.</p>
-        <p><small>Si el terreno cae en zona roja, <b>NO COMPRES</b> sin consultar a la autoridad.</small></p>
-    </div>
-
-    <div id="map"></div>
-
-    <!-- Librerías JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-    <!-- Librería para leer archivos externos fácilmente (opcional pero recomendada) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.1.0/leaflet.ajax.min.js"></script>
-
-    <script>
-        // 1. Inicializar el mapa (Coordenadas de ejemplo: CDMX, ajústalo a tu zona)
-        var map = L.map('map').setView([19.4326, -99.1332], 11);
-
-        // 2. Capa base (OpenStreetMap)
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-
-        // 3. Estilos para las zonas restringidas
-        var estiloRestringido = {
-            color: "#ff0000", // Borde rojo
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 0.4,
-            fillColor: "#ff0000" // Relleno rojo alerta
-        };
-
-        // 4. Función para mostrar alertas al hacer clic
-        function onEachFeature(feature, layer) {
-            var props = feature.properties;
-            // Ajusta 'NOMBRE' o 'ZONA' según como se llamen las columnas en tu SHP
-            var nombreZona = props.NOMBRE || props.ZONA || "Zona Restringida"; 
+    <!-- =========================================
+       1. ENCABEZADO (HEADER) INSTITUCIONAL
+       ========================================= -->
+    <header class="main-header">
+        <div class="header-content">
+            <!-- Espacio para el LOGO (Placeholder) -->
+            <div class="logo-box">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Gobierno_de_la_Ciudad_de_M%C3%A9xico_%28logo_2018%29.svg/1200px-Gobierno_de_la_Ciudad_de_M%C3%A9xico_%28logo_2018%29.svg.png" alt="Logo CDMX" class="logo-img">
+                <div class="vertical-divider"></div>
+                <div class="titles">
+                    <h1>SISTEMA DE INFORMACIÓN GEOGRÁFICA</h1>
+                    <h2>Vigilancia de Suelo de Conservación y ANP</h2>
+                </div>
+            </div>
             
-            layer.bindPopup(
-                `<div style="text-align:center">
-                    <h3 style="color:red">⚠️ ¡ALERTA! ⚠️</h3>
-                    <p>Estás consultando un punto dentro de:</p>
-                    <b>${nombreZona}</b><br>
-                    <p>Esta es un área protegida o suelo de conservación.</p>
-                    <button style="background:red; color:white; border:none; padding:5px;">VENTA PROHIBIDA / RESTRINGIDA</button>
-                </div>`
-            );
-        }
+            <!-- Botón de acción (Ejemplo: Reportar) -->
+            <a href="#" class="btn-nav">Reportar Irregularidad</a>
+        </div>
+    </header>
 
-        // 5. Cargar tus archivos GeoJSON
-        // IMPORTANTE: Asegúrate de que los nombres coincidan con los que subiste al repo
+    <!-- =========================================
+       2. CONTENEDOR PRINCIPAL
+       ========================================= -->
+    <main class="map-container">
         
-        // Ejemplo: Capa de Suelo de Conservación
-        var capaConservacion = new L.GeoJSON.AJAX("conservacion.geojson", {
-            style: estiloRestringido,
-            onEachFeature: onEachFeature
+        <!-- EL MAPA SE DIBUJA AQUÍ -->
+        <div id="map"></div>
+
+        <!-- PANEL FLOTANTE (SIDEBAR) -->
+        <div class="floating-panel">
+            <div class="panel-header">
+                <h3>Validador de Predios</h3>
+            </div>
+            
+            <div class="panel-body">
+                <p class="instruction-text">
+                    Ingrese una dirección o navegue en el mapa para verificar el estatus del suelo.
+                </p>
+
+                <!-- Buscador Falso (Solo visual por ahora) -->
+                <div class="fake-search-bar">
+                    <input type="text" placeholder="Ej: Colonia San Miguel Topilejo...">
+                    <button>🔍</button>
+                </div>
+
+                <hr class="divider">
+
+                <h4>Simbología</h4>
+                
+                <div class="legend-row">
+                    <span class="color-sample red-zone"></span>
+                    <div class="legend-text">
+                        <strong>Suelo de Conservación / Restringido</strong>
+                        <small>Prohibida la venta y urbanización</small>
+                    </div>
+                </div>
+
+                <div class="legend-row">
+                    <span class="color-sample green-zone"></span>
+                    <div class="legend-text">
+                        <strong>Área Natural Protegida (ANP)</strong>
+                        <small>Zona federal o local protegida</small>
+                    </div>
+                </div>
+
+                <!-- CAJA DE ALERTA -->
+                <div class="warning-box">
+                    <div class="icon">⚠️</div>
+                    <div class="text">
+                        <strong>¡ALERTA DE FRAUDE!</strong><br>
+                        Si le ofrecen terrenos en zonas marcadas en 
+                        <span style="color:#C0392B; font-weight:800;">ROJO</span>, 
+                        es un delito. No entregue dinero.
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-footer">
+                SEDEMA CDMX © 2025
+            </div>
+        </div>
+
+    </main>
+
+    <!-- LÓGICA DE MAPA (JAVASCRIPT) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 1. Inicializar mapa centrado en el sur de CDMX (Xochimilco/Tlalpan)
+        var map = L.map('map', { zoomControl: false }).setView([19.25, -99.10], 12);
+
+        // 2. Mover controles de zoom a la derecha
+        L.control.zoom({ position: 'topright' }).addTo(map);
+
+        // 3. Mapa Base (Gris elegante para que resalten tus datos)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO'
         }).addTo(map);
 
-        // Ejemplo: Capa de ANP (puedes agregar más copiando este bloque)
-        var capaANP = new L.GeoJSON.AJAX("anp_locales.geojson", {
-            style: {color: "orange", fillOpacity: 0.5}, // Color naranja para ANP
-            onEachFeature: onEachFeature
+        // 4. --- DATOS DE EJEMPLO (DUMMY DATA) ---
+        // Voy a dibujar un POLÍGONO ROJO FALSO para que veas el estilo.
+        // Esto simula tu capa de "Suelo de Conservación".
+        
+        var polygonCoords = [
+            [19.28, -99.15],
+            [19.28, -99.05],
+            [19.22, -99.08],
+            [19.22, -99.18]
+        ];
+
+        var polygon = L.polygon(polygonCoords, {
+            color: '#C0392B',       // Borde Rojo Institucional
+            fillColor: '#C0392B',   // Relleno Rojo
+            fillOpacity: 0.4,       // Transparencia (40%)
+            weight: 2
         }).addTo(map);
 
-        // 6. Agregar buscador de direcciones
-        L.Control.geocoder({
-            defaultMarkGeocode: false
-        })
-        .on('markgeocode', function(e) {
-            var latlng = e.geocode.center;
-            L.marker(latlng).addTo(map)
-                .bindPopup("Ubicación buscada").openPopup();
-            map.setView(latlng, 16);
-        })
-        .addTo(map);
+        // Popup al hacer clic en el polígono falso
+        polygon.bindPopup(`
+            <div style="text-align:center; font-family:'Montserrat', sans-serif;">
+                <h3 style="color:#C0392B; margin:0;">🚫 ZONA RESTRINGIDA</h3>
+                <p><b>Polígono de Ejemplo</b></p>
+                <p>Aquí aparecerán los datos reales de tu SHP.</p>
+                <button style="background:#C0392B; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:pointer;">VER FICHA TÉCNICA</button>
+            </div>
+        `);
 
     </script>
 </body>
