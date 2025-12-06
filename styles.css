@@ -8,7 +8,7 @@
     --cdmx-marfil: #fffae9;
     --cdmx-verde: #027a35;
     --cdmx-rojo: #C0392B;
-    --shadow-card: 0 2px 10px rgba(0,0,0,0.15);
+    --shadow-card: 0 4px 15px rgba(0,0,0,0.2);
 }
 
 /* =========================================
@@ -52,7 +52,7 @@ h1, h2, h3 {
 }
 
 .logo-cdmx {
-    height: 50px;
+    height: 55px; /* Ajustado para que se vea bien el logo nuevo */
     width: auto;
 }
 
@@ -100,6 +100,45 @@ h1, h2, h3 {
     z-index: 1;
 }
 
+/* --- BOTÓN GPS PERSONALIZADO --- */
+.btn-gps {
+    position: absolute;
+    top: 80px; /* Debajo de los controles de zoom */
+    right: 10px; /* Alineado a la derecha */
+    width: 40px;
+    height: 40px;
+    background-color: white;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    color: var(--cdmx-gris);
+    z-index: 1000;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+    transition: all 0.3s;
+}
+
+.btn-gps:hover {
+    background-color: var(--cdmx-guinda);
+    color: white;
+    border-color: var(--cdmx-guinda);
+}
+
+/* Estilo para los controles de Leaflet (Zoom y Capas) */
+.leaflet-control-layers, .leaflet-bar {
+    border: none !important;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.65) !important;
+}
+
+/* Estilo para el Buscador (Leaflet Geocoder) */
+.leaflet-control-geocoder-icon {
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 4px;
+}
+
 /* =========================================
    5. TARJETA FLOTANTE
    ========================================= */
@@ -113,6 +152,8 @@ h1, h2, h3 {
     box-shadow: var(--shadow-card);
     z-index: 1000;
     overflow: hidden;
+    max-height: 85vh; /* Evita que se salga en pantallas chicas */
+    overflow-y: auto;
 }
 
 .card-header {
@@ -136,32 +177,6 @@ h1, h2, h3 {
     line-height: 1.5;
     margin-bottom: 15px;
     color: #333;
-}
-
-.input-group {
-    display: flex;
-    gap: 5px;
-}
-.input-group input {
-    flex: 1;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-family: 'Roboto', sans-serif;
-}
-.btn-primary {
-    background-color: var(--cdmx-dorado);
-    color: white;
-    border: none;
-    padding: 0 15px;
-    border-radius: 4px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: 'Cabin', sans-serif;
-    transition: background 0.2s;
-}
-.btn-primary:hover {
-    background-color: #9c7b4a;
 }
 
 .separator {
@@ -241,5 +256,12 @@ h1, h2, h3 {
         left: 0;
         width: 100%;
         border-radius: 15px 15px 0 0;
+    }
+    
+    /* En móvil, movemos el botón GPS para que no tape la tarjeta abajo */
+    .btn-gps {
+        top: 20px;
+        left: 10px; /* Lo cambiamos de lado */
+        right: auto;
     }
 }
