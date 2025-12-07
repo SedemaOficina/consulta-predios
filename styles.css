@@ -1,11 +1,17 @@
-/* VARIABLES */
+/* =========================================
+   1. VARIABLES Y CONFIGURACIÓN BASE
+   ========================================= */
 :root {
     --guinda: #9d2148;
     --dorado: #b28e5c;
-    --verde-ok: #27ae60;
-    --rojo-error: #c0392b;
-    --gris-fondo: #f9f9f9;
+    --gris-claro: #f5f5f5;
     --texto: #333;
+    
+    /* Colores de Estado */
+    --rojo: #C0392B;
+    --verde: #27ae60;
+    --naranja: #d35400; /* Para PDU/Poblados */
+    --gris-neutro: #7f8c8d; /* Para Fuera de CDMX */
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -15,120 +21,357 @@ body {
     height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: hidden; /* Evita doble scroll en la página */
+    color: var(--texto);
 }
 
-/* HEADER */
+/* =========================================
+   2. ENCABEZADO (HEADER)
+   ========================================= */
 .gob-header {
-    height: 70px;
+    height: 75px;
     background: white;
-    border-bottom: 4px solid var(--guinda);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    z-index: 2000; flex-shrink: 0;
+    border-bottom: 5px solid var(--guinda);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 2000;
+    flex-shrink: 0;
 }
-.logo-box img { height: 50px; width: auto; }
 
-/* LAYOUT */
-.main-wrapper { display: flex; flex: 1; height: calc(100vh - 70px); position: relative; }
+.logo-box img {
+    height: 55px;
+    margin-right: 20px;
+}
 
-/* SIDEBAR */
+.header-text h1 {
+    font-size: 16px;
+    color: var(--guinda);
+    margin: 0;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.header-text h2 {
+    font-size: 13px;
+    color: #666;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* =========================================
+   3. LAYOUT PRINCIPAL (SIDEBAR + MAPA)
+   ========================================= */
+.main-wrapper {
+    display: flex;
+    flex: 1; /* Ocupa todo el espacio restante bajo el header */
+    height: calc(100vh - 75px);
+}
+
+/* --- SIDEBAR IZQUIERDA --- */
 .sidebar {
     width: 380px;
     background: white;
-    border-right: 1px solid #ccc;
-    display: flex; flex-direction: column;
-    z-index: 1000; box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.05);
 }
-.sidebar-header { padding: 20px; background: var(--gris-fondo); border-bottom: 1px solid #ddd; }
-.sidebar-header h3 { margin: 0; color: var(--guinda); font-size: 16px; font-weight: 700; }
-.sidebar-header p { margin: 5px 0 0 0; font-size: 12px; color: #666; }
-.sidebar-body { padding: 20px; overflow-y: auto; flex: 1; }
 
-/* CONTROLES */
-.control-group { margin-bottom: 20px; }
-.btn-full {
-    width: 100%; padding: 12px; border: none; border-radius: 4px;
-    cursor: pointer; font-weight: bold; font-size: 13px;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
+.sidebar-header {
+    padding: 20px;
+    background: var(--gris-claro);
+    border-bottom: 1px solid #eee;
 }
+
+.sidebar-header h3 { margin: 0; color: var(--guinda); font-size: 18px; }
+.sidebar-header p { margin: 5px 0 0 0; font-size: 12px; color: #666; }
+
+.sidebar-body {
+    padding: 20px;
+    overflow-y: auto; /* Scroll solo en el contenido si es muy largo */
+    flex: 1;
+}
+
+/* --- MAPA DERECHA --- */
+#map {
+    flex: 1;
+    height: 100%;
+    z-index: 1;
+}
+
+/* =========================================
+   4. CONTROLES Y BOTONES
+   ========================================= */
+.control-group { margin-bottom: 20px; }
+
+.btn-full {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: 0.2s;
+}
+
 .btn-guinda { background: var(--guinda); color: white; }
 .btn-guinda:hover { background: #7c1c36; }
-.status-msg { text-align: center; font-size: 11px; margin-top: 5px; color: #666; }
-.divider { text-align: center; margin: 15px 0; font-size: 12px; color: #999; font-weight: bold; }
+
+.btn-print { background: var(--dorado); color: white; margin-top: 10px; }
+.btn-print:hover { background: #9c7b4a; }
+
+.btn-whats { background: #25D366; color: white; margin-top: 10px; }
+.btn-whats:hover { background: #1ebd59; }
+
+.status-msg {
+    text-align: center; font-size: 11px; margin-top: 5px; color: #666; min-height: 15px;
+}
+
+/* DIVISOR */
+.divider {
+    text-align: center; margin: 20px 0; font-size: 11px; color: #999;
+    font-weight: bold; border-bottom: 1px solid #eee; line-height: 0.1em;
+}
+.divider span { background: white; padding: 0 10px; }
+
+/* INPUT BÚSQUEDA */
 .search-row { display: flex; gap: 5px; }
-.search-row input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: 'Montserrat'; }
-.search-row button { padding: 0 15px; background: var(--dorado); color: white; border: none; border-radius: 4px; cursor: pointer; }
 
-/* RESULTADOS (Sidebar) */
+.search-row input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: 'Montserrat';
+    font-size: 13px;
+}
+
+.search-row button {
+    background: var(--dorado);
+    color: white;
+    border: none;
+    padding: 0 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* =========================================
+   5. PANEL DE RESULTADOS
+   ========================================= */
 .result-container {
-    margin-top: 15px; padding: 15px; border-radius: 6px; border: 1px solid #ddd;
-    font-size: 13px; background: white; text-align: center;
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
-.alerta-roja { background: #fff5f5; border-left: 5px solid #c0392b; }
-.alerta-amarilla { background: #fffde7; border-left: 5px solid #fbc02d; }
-.alerta-verde { background: #f0fff4; border-left: 5px solid #27ae60; }
-#res-titulo { margin: 0 0 5px 0; font-size: 14px; font-weight: 800; display: block; }
-.alerta-roja #res-titulo { color: var(--rojo-error); }
-.alerta-verde #res-titulo { color: var(--verde-ok); }
-.zona-nombre { font-size: 14px; margin-bottom: 15px; color: #333; }
 
-/* BOTÓN VER TABLA */
-.btn-tabla {
-    width: 100%; padding: 10px; background: #2c3e50; color: white;
-    border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;
-    margin-top: 10px;
+.res-status-bar {
+    padding: 12px;
+    text-align: center;
+    color: white;
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: 0.5px;
 }
-.btn-tabla:hover { background: #34495e; }
-.nota-pie { font-size: 10px; color: #777; margin-top: 8px; font-style: italic; }
 
-/* LEYENDA */
-.leyenda-box { margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px; }
-.leyenda-box h4 { margin: 0 0 10px 0; font-size: 12px; color: #666; }
-.item { font-size: 11px; margin-bottom: 5px; display: flex; align-items: center; }
-.dot { width: 12px; height: 12px; display: inline-block; margin-right: 8px; border-radius: 2px; }
-.rojo { background: #C0392B; opacity: 0.6; }
-.azul { border: 2px solid #3498db; }
-.verde { background: #27ae60; opacity: 0.6; }
+/* Colores de la barra de estado */
+.res-status-bar.danger { background: var(--rojo); }   /* Suelo Conservación */
+.res-status-bar.success { background: var(--verde); } /* Suelo Urbano */
+.res-status-bar.warning { background: var(--naranja); color: white; } /* PDU */
+.res-status-bar.neutral { background: var(--gris-neutro); } /* Fuera CDMX */
 
-/* MAPA */
-#map { flex: 1; height: 100%; z-index: 1; }
+.res-content { padding: 15px; font-size: 13px; }
 
-/* MODAL (LA TABLA COMPLETA) */
-.modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6); z-index: 9999;
-    display: none; align-items: center; justify-content: center;
+.res-content label {
+    display: block;
+    font-size: 10px;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+    font-weight: bold;
 }
-.modal-content {
-    background: white; width: 90%; max-width: 800px; max-height: 90vh;
-    border-radius: 8px; display: flex; flex-direction: column;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+
+.res-value { margin-bottom: 15px; font-weight: 500; border-bottom: 1px solid #eee; padding-bottom: 5px;}
+.res-value.highlight { font-weight: 700; color: #333; font-size: 14px; border:none; }
+
+/* =========================================
+   6. LEYENDA (SIMBOLOGÍA)
+   ========================================= */
+.leyenda-box {
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
 }
-.modal-header {
-    padding: 15px 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;
-    background: var(--guinda); color: white; border-radius: 8px 8px 0 0;
+
+.leyenda-box h4 { margin: 0 0 10px 0; font-size: 12px; color: #888; text-transform: uppercase; }
+
+.item {
+    font-size: 12px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
 }
-.modal-header h3 { margin: 0; font-size: 16px; }
-.close-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
-.modal-body { padding: 20px; overflow-y: auto; flex: 1; }
 
-.info-clave { margin-bottom: 20px; font-size: 14px; padding: 10px; background: #f0f0f0; border-radius: 4px; }
-.columnas-info { display: flex; gap: 20px; }
-.col-prohibido, .col-permitido { flex: 1; }
-.col-prohibido h4 { color: var(--rojo-error); border-bottom: 2px solid var(--rojo-error); padding-bottom: 5px; margin-bottom: 10px; }
-.col-permitido h4 { color: var(--verde-ok); border-bottom: 2px solid var(--verde-ok); padding-bottom: 5px; margin-bottom: 10px; }
-ul { list-style: none; padding: 0; }
-li { margin-bottom: 8px; font-size: 12px; padding-left: 15px; position: relative; }
-.col-prohibido li::before { content: "🚫"; position: absolute; left: 0; }
-.col-permitido li::before { content: "✅"; position: absolute; left: 0; }
+.rect {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+    display: inline-block;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.1);
+}
 
-.modal-footer { padding: 10px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #ddd; }
+.linea-negra {
+    width: 20px; height: 4px; background: black; margin-right: 8px; display: inline-block;
+}
 
-/* RESPONSIVO */
+/* Colores leyenda */
+.rojo { background: var(--rojo); opacity: 0.6; }
+.azul { background: transparent; border: 2px solid #2980b9; }
+.verde { background: var(--verde); opacity: 0.6; }
+
+/* =========================================
+   7. ESTILOS DE IMPRESIÓN (PDF)
+   ========================================= */
+/* Por defecto, ocultamos el reporte en la pantalla */
+.print-only { display: none; }
+
+@media print {
+    /* 1. Ocultar la interfaz web */
+    .gob-header, .sidebar, .leaflet-control-zoom, .leaflet-control-layers, .leaflet-control-geocoder { 
+        display: none !important; 
+    }
+    
+    /* 2. Configuración de página */
+    @page { margin: 1cm; size: portrait; }
+    
+    body { 
+        height: auto; 
+        overflow: visible; 
+        display: block; 
+        background: white;
+        font-size: 12pt;
+    }
+    
+    /* 3. Mostrar el reporte */
+    .print-only { display: block; }
+    
+    /* Header del Reporte */
+    .report-header {
+        border-bottom: 4px solid var(--guinda);
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+    .report-header img { height: 70px; }
+    .report-header h2 { margin: 0; color: var(--guinda); font-size: 22px; font-weight: bold; }
+    .report-header p { margin: 0; font-size: 14px; color: #666; }
+
+    /* Metadatos (Fecha, Coords) */
+    .report-meta {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        font-size: 12px;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 4px;
+        background: #f9f9f9;
+    }
+
+    /* Mapa en el PDF (Forzamos visualización) */
+    #map {
+        display: block !important;
+        position: relative !important;
+        height: 350px !important;
+        width: 100% !important;
+        border: 2px solid #333;
+        margin-bottom: 20px;
+        z-index: 0;
+    }
+    
+    /* Diagnóstico y Tablas */
+    .report-diagnosis {
+        background: #fff;
+        border: 1px solid #eee;
+        padding: 0;
+    }
+    
+    #print-titulo-zona { color: var(--guinda); margin-bottom: 5px; font-size: 16px; }
+    #print-desc-zona { font-style: italic; margin-bottom: 15px; font-size: 12px; }
+
+    .tables-container {
+        display: flex;
+        gap: 20px;
+        margin-top: 15px;
+    }
+    
+    .tbl-box {
+        flex: 1;
+        font-size: 11px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px;
+    }
+    
+    .tbl-box h4 {
+        margin: 0 0 10px 0;
+        border-bottom: 2px solid #ccc;
+        padding-bottom: 5px;
+        text-align: center;
+    }
+    
+    .prohibido { background: #fff5f5; }
+    .prohibido h4 { color: var(--rojo); border-color: var(--rojo); }
+    
+    .permitido { background: #f0fff4; }
+    .permitido h4 { color: var(--verde); border-color: var(--verde); }
+    
+    ul { padding-left: 20px; margin: 0; }
+    li { margin-bottom: 4px; }
+    
+    /* Footer Legal */
+    .report-footer {
+        margin-top: 40px;
+        font-size: 10px;
+        color: #666;
+        text-align: justify;
+        border-top: 1px solid #ddd;
+        padding-top: 10px;
+    }
+}
+
+/* =========================================
+   8. RESPONSIVO (CELULARES)
+   ========================================= */
 @media (max-width: 768px) {
-    .main-wrapper { flex-direction: column-reverse; }
-    .sidebar { width: 100%; height: 45%; }
-    #map { height: 55%; }
-    .columnas-info { flex-direction: column; }
+    .main-wrapper { 
+        flex-direction: column-reverse; /* Panel abajo, Mapa arriba */
+    }
+    
+    .sidebar { 
+        width: 100%; 
+        height: 50%; /* Mitad pantalla */
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+    
+    #map { 
+        height: 50%; /* Mitad pantalla */
+    }
+    
+    .header-text { display: none; } /* Ocultar texto largo en móvil */
+    .gob-header { justify-content: center; }
 }
