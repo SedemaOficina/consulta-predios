@@ -1,132 +1,227 @@
-/* --- VARIABLES --- */
+/* --- VARIABLES MANUAL DE IDENTIDAD --- */
 :root {
-  --color-guinda: #9d2449;
-  --color-dorado: #b38e5d;
-  --color-gris: #54565a;
+  --color-guinda: #9d2148;
+  --color-dorado: #b28e5c;
+  --color-gris: #55585a;
+  --font-main: 'Roboto', sans-serif;
 }
 
 /* Base */
 body {
-  font-family: 'Montserrat', sans-serif;
-  color: #333;
+  font-family: var(--font-main);
+  color: var(--color-gris);
+  margin: 0;
+  padding: 0;
+  height: 100vh; /* Viewport height completo */
+  overflow: hidden; /* Evitar scroll en el body principal */
+  display: flex;
+  flex-direction: column;
 }
 
-/* Custom Scrollbar */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+/* Header */
+header {
+  background-color: var(--color-guinda);
+  color: white;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  z-index: 20;
+  flex-shrink: 0;
 }
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: #f1f1f1; 
+
+/* Layout Principal */
+#main-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #ccc; 
-  border-radius: 4px;
+
+/* Sidebar (Panel Izquierdo) */
+#sidebar {
+  width: 450px;
+  background: white;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  z-index: 15;
+  overflow-y: auto; /* Scroll interno */
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  border-right: 1px solid #e5e7eb;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--color-guinda); 
+
+/* Map (Panel Derecho) */
+#map {
+  flex: 1;
+  background: #e5e5e5;
+  z-index: 1;
 }
 
 /* Leaflet Overrides */
 .leaflet-control-geocoder {
   border-radius: 8px !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
   border: 1px solid #e5e7eb !important;
+  font-family: var(--font-main) !important;
+  z-index: 800;
 }
 
-/* Animaciones */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
+/* Estilos de botones custom */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-/* Acordeón */
-details > summary {
+.btn-primary {
+  background-color: var(--color-guinda);
+  color: white;
+  border: none;
+}
+.btn-primary:hover { background-color: #7d1d3a; }
+
+.btn-secondary {
+  background-color: white;
+  color: var(--color-gris);
+  border: 1px solid #d1d5db;
+}
+.btn-secondary:hover { border-color: var(--color-guinda); color: var(--color-guinda); }
+
+.btn-share {
+  background-color: #25D366; /* WhatsApp Greenish */
+  color: white;
+  border: none;
+}
+.btn-share:hover { background-color: #20bd5a; }
+
+/* Acordeones */
+details {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+}
+details summary {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  background-color: #f9fafb;
+  font-weight: 500;
+  font-size: 0.875rem;
   list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
-details > summary::-webkit-details-marker {
-  display: none;
-}
+details summary:hover { background-color: #f3f4f6; }
+details summary::-webkit-details-marker { display: none; }
+details[open] summary { border-bottom: 1px solid #e5e7eb; }
+details .content { padding: 1rem; font-size: 0.8rem; background: white; }
 
-/* Leaflet custom control styling */
-.leaflet-control-custom {
-  background: white;
-  border-radius: 4px;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.4);
-}
+/* Scrollbar Personalizado */
+#sidebar::-webkit-scrollbar { width: 6px; }
+#sidebar::-webkit-scrollbar-track { background: #f1f1f1; }
+#sidebar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+#sidebar::-webkit-scrollbar-thumb:hover { background: var(--color-guinda); }
 
-/* IMPRESIÓN OPTIMIZADA (Máx 2 hojas) */
-@media print {
-  @page { margin: 1cm; size: portrait; }
-  body { 
-    height: auto !important; 
-    overflow: visible !important; 
-    background: white !important; 
-    -webkit-print-color-adjust: exact !important; 
-    print-color-adjust: exact !important;
-    font-size: 10px !important; 
-    display: block !important;
+/* --- RESPONSIVO MÓVIL (Celulares) --- */
+@media (max-width: 768px) {
+  body {
+    height: 100%; /* Permitir que el contenido fluya */
+    overflow: auto; /* Scroll en el body para móviles */
   }
+
+  header {
+    padding: 0.75rem 1rem;
+    position: sticky;
+    top: 0;
+  }
+
+  #main-container {
+    flex-direction: column; /* Mapa arriba, Sidebar abajo */
+    height: auto;
+    overflow: visible;
+  }
+
+  /* El mapa toma el 50% de la altura de pantalla visible, o un fijo */
+  #map {
+    height: 50vh; 
+    width: 100%;
+    flex: none; /* No expandir */
+    position: relative;
+  }
+
+  /* El sidebar toma el resto y permite scroll */
+  #sidebar {
+    width: 100%;
+    height: auto;
+    min-height: 50vh;
+    box-shadow: none;
+    border-right: none;
+    border-top: 1px solid #e5e7eb;
+    overflow: visible; /* El scroll lo maneja el body */
+  }
+}
+
+/* --- IMPRESIÓN (PDF) --- */
+@media print {
+  @page { margin: 0.5cm; size: portrait; }
   
+  body, #main-container, #sidebar, #map {
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+    position: static !important;
+  }
+
   /* Reset Layout */
-  .flex-col, .md\:flex-row { display: block !important; }
+  #main-container { display: block !important; }
   
-  /* Ocultar elementos no deseados */
+  /* Ocultar elementos de UI */
   .no-print, 
-  .leaflet-control-zoom, 
-  .leaflet-control-layers,
-  .leaflet-control-geocoder,
-  #search-controls, 
-  #empty-state, 
-  #loading-screen,
+  .leaflet-control-container,
+  #search-section,
   button { 
     display: none !important; 
   }
-  
-  /* Mostrar footer de impresión */
-  .print-only { display: block !important; }
 
-  /* Ajuste Sidebar para Impresión */
-  #sidebar { 
-    width: 100% !important; 
-    height: auto !important; 
-    border: none !important; 
-    box-shadow: none !important; 
-    overflow: visible !important; 
-    display: block !important;
-    position: relative !important;
-  }
-  
-  /* Ajuste Header Impresión */
+  /* Header Impresión */
   header {
     background: white !important;
     color: black !important;
-    padding: 0 !important;
-    margin-bottom: 10px !important;
-    border-bottom: 2px solid var(--color-guinda) !important;
+    border-bottom: 3px solid var(--color-guinda);
+    margin-bottom: 1rem;
   }
 
-  /* Mapa Satelital en Impresión */
-  #map { 
-    height: 350px !important; 
-    border: 2px solid #000 !important;
-    margin-bottom: 20px !important;
-    page-break-inside: avoid !important;
+  /* Sidebar expandido */
+  #sidebar {
     width: 100% !important;
-    z-index: 0 !important;
+    border: none !important;
   }
-  
-  /* Contenedores de Texto */
-  #results-container {
-    padding-bottom: 0 !important;
+
+  /* Mapa Satelital Impreso */
+  #map {
+    height: 350px !important;
+    width: 100% !important;
+    border: 1px solid #000;
+    margin-bottom: 1rem;
   }
+
+  /* Asegurar detalles abiertos */
+  details { border: 1px solid #ccc !important; break-inside: avoid; }
+  details[open] summary { border-bottom: 1px solid #000; }
   
-  /* Listas compactas */
-  li { margin-bottom: 2px !important; }
-  
-  /* Forzar apertura de detalles para que se impriman */
-  details { display: block !important; }
-  details[open] > summary ~ * { display: block !important; }
+  /* Footer legal al final */
+  #legal-footer {
+    display: block !important;
+    font-size: 8pt;
+    margin-top: 20px;
+    border-top: 1px solid #ccc;
+    padding-top: 10px;
+  }
 }
