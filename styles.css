@@ -1,134 +1,74 @@
-/* --- VARIABLES Y FUENTES --- */
+/* --- VARIABLES --- */
 :root {
   --color-guinda: #9d2449;
   --color-dorado: #b38e5d;
   --color-gris: #54565a;
-  --color-verde: #28a745;
-  --color-rojo: #dc3545;
-  --color-alerta: #ffc107;
 }
 
+/* Base */
 body {
   font-family: 'Montserrat', sans-serif;
   color: #333;
-  margin: 0;
-  padding: 0;
-  height: 100vh;
-  overflow: hidden;
-}
-
-/* --- UTILIDADES --- */
-.hidden {
-  display: none !important;
 }
 
 /* Custom Scrollbar */
-::-webkit-scrollbar {
+.custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
-::-webkit-scrollbar-track {
+.custom-scrollbar::-webkit-scrollbar-track {
   background: #f1f1f1; 
 }
-::-webkit-scrollbar-thumb {
+.custom-scrollbar::-webkit-scrollbar-thumb {
   background: #ccc; 
   border-radius: 4px;
 }
-::-webkit-scrollbar-thumb:hover {
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--color-guinda); 
 }
 
-/* --- LEAFLET CUSTOMIZATON --- */
+/* Leaflet Overrides */
 .leaflet-control-geocoder {
   border-radius: 8px !important;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
   border: 1px solid #e5e7eb !important;
 }
 
-/* Botones personalizados del mapa */
-.leaflet-control-custom button {
-  width: 30px;
-  height: 30px;
-  background: white;
-  border: none;
-  border-radius: 2px;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.4);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s;
+/* Animaciones */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-.leaflet-control-custom button:hover {
-  background-color: #f3f4f6;
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
 }
 
-/* --- ACORDEÓN DE RESULTADOS --- */
+/* Acordeón */
 details > summary {
   list-style: none;
 }
 details > summary::-webkit-details-marker {
   display: none;
 }
-details[open] summary svg.chevron {
-  transform: rotate(180deg);
-}
 
-/* --- ESTILOS DE IMPRESIÓN --- */
+/* IMPRESIÓN */
 @media print {
-  @page { 
-    size: portrait; 
-    margin: 1cm; 
-  }
+  @page { margin: 1cm; size: portrait; }
+  body { height: auto; overflow: visible; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   
-  body { 
-    height: auto; 
-    overflow: visible; 
-    background: white;
-    -webkit-print-color-adjust: exact; 
-    print-color-adjust: exact;
-  }
+  /* Ocultar elementos */
+  .no-print, .leaflet-control, #empty-state, #loading-screen { display: none !important; }
+  
+  /* Mostrar */
+  .print-only { display: block !important; }
 
-  /* Ocultar elementos de interfaz no deseados */
-  .no-print, 
-  .leaflet-control,
-  .search-container,
-  .leaflet-control-zoom,
-  .leaflet-control-attribution { 
-    display: none !important; 
-  }
-
-  /* Mostrar solo elementos de impresión */
-  .print-only { 
-    display: block !important; 
-  }
-
-  /* Layout de impresión */
-  #app-container {
-    flex-direction: column;
-    height: auto;
-  }
-
-  #sidebar {
-    width: 100%;
-    height: auto;
-    overflow: visible;
-    border: none;
-    box-shadow: none;
-  }
-
-  #map-container {
-    height: 400px; /* Altura fija para el mapa en papel */
-    width: 100%;
+  /* Layout */
+  #sidebar { width: 100%; height: auto; border: none; box-shadow: none; overflow: visible; }
+  .h-screen { height: auto !important; }
+  
+  #map { 
+    height: 350px !important; 
     border: 1px solid #ccc;
     margin-bottom: 20px;
+    page-break-inside: avoid;
   }
-  
-  /* Ajuste de textos */
-  h1 { font-size: 16pt; color: var(--color-guinda) !important; }
-  h2 { font-size: 14pt; }
-  p, li { font-size: 10pt; }
-}
-
-.print-only {
-  display: none;
 }
