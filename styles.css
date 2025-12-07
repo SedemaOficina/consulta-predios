@@ -50,25 +50,33 @@ details > summary::-webkit-details-marker {
   display: none;
 }
 
+/* Leaflet custom control styling */
+.leaflet-control-custom {
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+}
+
 /* IMPRESIÓN */
 @media print {
   @page { margin: 1cm; size: portrait; }
   body { height: auto; overflow: visible; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   
-  /* Ocultar elementos */
-  .no-print, .leaflet-control, #empty-state, #loading-screen { display: none !important; }
+  /* Ocultar elementos no deseados */
+  .no-print, .leaflet-control, #search-controls, #empty-state, #loading-screen { display: none !important; }
   
-  /* Mostrar */
+  /* Mostrar footer de impresión */
   .print-only { display: block !important; }
 
-  /* Layout */
-  #sidebar { width: 100%; height: auto; border: none; box-shadow: none; overflow: visible; }
-  .h-screen { height: auto !important; }
+  /* Layout de impresión */
+  #sidebar { width: 100%; height: auto; border: none; box-shadow: none; overflow: visible; display: block; }
+  .h-screen { height: auto !important; display: block; }
   
   #map { 
     height: 350px !important; 
     border: 1px solid #ccc;
     margin-bottom: 20px;
     page-break-inside: avoid;
+    width: 100% !important;
   }
 }
