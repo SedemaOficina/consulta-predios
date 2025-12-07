@@ -12,8 +12,8 @@ body {
   color: var(--color-gris);
   margin: 0;
   padding: 0;
-  height: 100vh; /* Viewport height completo */
-  overflow: hidden; /* Evitar scroll en el body principal */
+  height: 100vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -42,7 +42,7 @@ header {
   background: white;
   box-shadow: 2px 0 10px rgba(0,0,0,0.1);
   z-index: 15;
-  overflow-y: auto; /* Scroll interno */
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -123,6 +123,16 @@ details summary::-webkit-details-marker { display: none; }
 details[open] summary { border-bottom: 1px solid #e5e7eb; }
 details .content { padding: 1rem; font-size: 0.8rem; background: white; }
 
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out forwards;
+}
+
 /* Scrollbar Personalizado */
 #sidebar::-webkit-scrollbar { width: 6px; }
 #sidebar::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -132,8 +142,8 @@ details .content { padding: 1rem; font-size: 0.8rem; background: white; }
 /* --- RESPONSIVO MÓVIL (Celulares) --- */
 @media (max-width: 768px) {
   body {
-    height: 100%; /* Permitir que el contenido fluya */
-    overflow: auto; /* Scroll en el body para móviles */
+    height: 100%;
+    overflow: auto;
   }
 
   header {
@@ -143,20 +153,18 @@ details .content { padding: 1rem; font-size: 0.8rem; background: white; }
   }
 
   #main-container {
-    flex-direction: column; /* Mapa arriba, Sidebar abajo */
+    flex-direction: column;
     height: auto;
     overflow: visible;
   }
 
-  /* El mapa toma el 50% de la altura de pantalla visible, o un fijo */
   #map {
     height: 50vh; 
     width: 100%;
-    flex: none; /* No expandir */
+    flex: none;
     position: relative;
   }
 
-  /* El sidebar toma el resto y permite scroll */
   #sidebar {
     width: 100%;
     height: auto;
@@ -164,7 +172,7 @@ details .content { padding: 1rem; font-size: 0.8rem; background: white; }
     box-shadow: none;
     border-right: none;
     border-top: 1px solid #e5e7eb;
-    overflow: visible; /* El scroll lo maneja el body */
+    overflow: visible;
   }
 }
 
@@ -179,10 +187,8 @@ details .content { padding: 1rem; font-size: 0.8rem; background: white; }
     position: static !important;
   }
 
-  /* Reset Layout */
   #main-container { display: block !important; }
   
-  /* Ocultar elementos de UI */
   .no-print, 
   .leaflet-control-container,
   #search-section,
@@ -190,7 +196,6 @@ details .content { padding: 1rem; font-size: 0.8rem; background: white; }
     display: none !important; 
   }
 
-  /* Header Impresión */
   header {
     background: white !important;
     color: black !important;
@@ -198,13 +203,11 @@ details .content { padding: 1rem; font-size: 0.8rem; background: white; }
     margin-bottom: 1rem;
   }
 
-  /* Sidebar expandido */
   #sidebar {
     width: 100% !important;
     border: none !important;
   }
 
-  /* Mapa Satelital Impreso */
   #map {
     height: 350px !important;
     width: 100% !important;
@@ -212,11 +215,9 @@ details .content { padding: 1rem; font-size: 0.8rem; background: white; }
     margin-bottom: 1rem;
   }
 
-  /* Asegurar detalles abiertos */
   details { border: 1px solid #ccc !important; break-inside: avoid; }
   details[open] summary { border-bottom: 1px solid #000; }
   
-  /* Footer legal al final */
   #legal-footer {
     display: block !important;
     font-size: 8pt;
