@@ -57,26 +57,76 @@ details > summary::-webkit-details-marker {
   box-shadow: 0 1px 5px rgba(0,0,0,0.4);
 }
 
-/* IMPRESIÓN */
+/* IMPRESIÓN OPTIMIZADA (Máx 2 hojas) */
 @media print {
   @page { margin: 1cm; size: portrait; }
-  body { height: auto; overflow: visible; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { 
+    height: auto !important; 
+    overflow: visible !important; 
+    background: white !important; 
+    -webkit-print-color-adjust: exact !important; 
+    print-color-adjust: exact !important;
+    font-size: 10px !important; 
+    display: block !important;
+  }
+  
+  /* Reset Layout */
+  .flex-col, .md\:flex-row { display: block !important; }
   
   /* Ocultar elementos no deseados */
-  .no-print, .leaflet-control, #search-controls, #empty-state, #loading-screen { display: none !important; }
+  .no-print, 
+  .leaflet-control-zoom, 
+  .leaflet-control-layers,
+  .leaflet-control-geocoder,
+  #search-controls, 
+  #empty-state, 
+  #loading-screen,
+  button { 
+    display: none !important; 
+  }
   
   /* Mostrar footer de impresión */
   .print-only { display: block !important; }
 
-  /* Layout de impresión */
-  #sidebar { width: 100%; height: auto; border: none; box-shadow: none; overflow: visible; display: block; }
-  .h-screen { height: auto !important; display: block; }
+  /* Ajuste Sidebar para Impresión */
+  #sidebar { 
+    width: 100% !important; 
+    height: auto !important; 
+    border: none !important; 
+    box-shadow: none !important; 
+    overflow: visible !important; 
+    display: block !important;
+    position: relative !important;
+  }
   
+  /* Ajuste Header Impresión */
+  header {
+    background: white !important;
+    color: black !important;
+    padding: 0 !important;
+    margin-bottom: 10px !important;
+    border-bottom: 2px solid var(--color-guinda) !important;
+  }
+
+  /* Mapa Satelital en Impresión */
   #map { 
     height: 350px !important; 
-    border: 1px solid #ccc;
-    margin-bottom: 20px;
-    page-break-inside: avoid;
+    border: 2px solid #000 !important;
+    margin-bottom: 20px !important;
+    page-break-inside: avoid !important;
     width: 100% !important;
+    z-index: 0 !important;
   }
+  
+  /* Contenedores de Texto */
+  #results-container {
+    padding-bottom: 0 !important;
+  }
+  
+  /* Listas compactas */
+  li { margin-bottom: 2px !important; }
+  
+  /* Forzar apertura de detalles para que se impriman */
+  details { display: block !important; }
+  details[open] > summary ~ * { display: block !important; }
 }
