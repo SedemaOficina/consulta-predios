@@ -1,17 +1,17 @@
 /* =========================================
-   1. VARIABLES Y CONFIGURACIÓN BASE
+   1. VARIABLES Y CONFIGURACIÓN GENERAL
    ========================================= */
 :root {
     --guinda: #9d2148;
     --dorado: #b28e5c;
-    --gris-claro: #f5f5f5;
+    --gris-fondo: #f5f5f5;
     --texto: #333;
     
-    /* Colores de Estado */
-    --rojo: #C0392B;
-    --verde: #27ae60;
-    --naranja: #d35400; /* Para PDU/Poblados */
-    --gris-neutro: #7f8c8d; /* Para Fuera de CDMX */
+    /* Colores de Estado (Semáforo) */
+    --rojo: #C0392B;    /* Prohibido */
+    --verde: #27ae60;   /* Permitido/Urbano */
+    --naranja: #d35400; /* PDU / Precaución */
+    --gris-neutro: #7f8c8d; /* Fuera de jurisdicción */
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -21,12 +21,13 @@ body {
     height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Evita doble scroll en la página */
+    overflow: hidden; /* Evita doble barra de desplazamiento */
     color: var(--texto);
+    background-color: white;
 }
 
 /* =========================================
-   2. ENCABEZADO (HEADER)
+   2. ENCABEZADO (HEADER WEB)
    ========================================= */
 .gob-header {
     height: 75px;
@@ -61,15 +62,16 @@ body {
 }
 
 /* =========================================
-   3. LAYOUT PRINCIPAL (SIDEBAR + MAPA)
+   3. LAYOUT PRINCIPAL (MAPA + SIDEBAR)
    ========================================= */
 .main-wrapper {
     display: flex;
-    flex: 1; /* Ocupa todo el espacio restante bajo el header */
+    flex: 1; /* Ocupa todo el espacio bajo el header */
     height: calc(100vh - 75px);
+    position: relative;
 }
 
-/* --- SIDEBAR IZQUIERDA --- */
+/* --- BARRA LATERAL (SIDEBAR) --- */
 .sidebar {
     width: 380px;
     background: white;
@@ -78,11 +80,12 @@ body {
     flex-direction: column;
     z-index: 1000;
     box-shadow: 4px 0 15px rgba(0,0,0,0.05);
+    flex-shrink: 0;
 }
 
 .sidebar-header {
     padding: 20px;
-    background: var(--gris-claro);
+    background: var(--gris-fondo);
     border-bottom: 1px solid #eee;
 }
 
@@ -91,19 +94,20 @@ body {
 
 .sidebar-body {
     padding: 20px;
-    overflow-y: auto; /* Scroll solo en el contenido si es muy largo */
+    overflow-y: auto;
     flex: 1;
 }
 
-/* --- MAPA DERECHA --- */
+/* --- MAPA --- */
 #map {
     flex: 1;
     height: 100%;
     z-index: 1;
+    background: #e5e9ec; /* Color de fondo mientras carga */
 }
 
 /* =========================================
-   4. CONTROLES Y BOTONES
+   4. CONTROLES DE UI (BOTONES E INPUTS)
    ========================================= */
 .control-group { margin-bottom: 20px; }
 
@@ -135,14 +139,12 @@ body {
     text-align: center; font-size: 11px; margin-top: 5px; color: #666; min-height: 15px;
 }
 
-/* DIVISOR */
 .divider {
     text-align: center; margin: 20px 0; font-size: 11px; color: #999;
     font-weight: bold; border-bottom: 1px solid #eee; line-height: 0.1em;
 }
 .divider span { background: white; padding: 0 10px; }
 
-/* INPUT BÚSQUEDA */
 .search-row { display: flex; gap: 5px; }
 
 .search-row input {
@@ -150,7 +152,7 @@ body {
     padding: 12px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    font-family: 'Montserrat';
+    font-family: 'Montserrat', sans-serif;
     font-size: 13px;
 }
 
@@ -165,7 +167,7 @@ body {
 }
 
 /* =========================================
-   5. PANEL DE RESULTADOS
+   5. PANEL DE RESULTADOS (TARJETA DIAGNÓSTICO)
    ========================================= */
 .result-container {
     margin-top: 20px;
@@ -174,7 +176,10 @@ body {
     overflow: hidden;
     background: white;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    animation: fadeIn 0.3s ease-in;
 }
+
+@keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
 
 .res-status-bar {
     padding: 12px;
@@ -183,13 +188,14 @@ body {
     font-weight: 800;
     font-size: 14px;
     letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
-/* Colores de la barra de estado */
-.res-status-bar.danger { background: var(--rojo); }   /* Suelo Conservación */
-.res-status-bar.success { background: var(--verde); } /* Suelo Urbano */
-.res-status-bar.warning { background: var(--naranja); color: white; } /* PDU */
-.res-status-bar.neutral { background: var(--gris-neutro); } /* Fuera CDMX */
+/* Colores de barra de estado */
+.res-status-bar.danger { background: var(--rojo); }
+.res-status-bar.success { background: var(--verde); }
+.res-status-bar.warning { background: var(--naranja); }
+.res-status-bar.neutral { background: var(--gris-neutro); }
 
 .res-content { padding: 15px; font-size: 13px; }
 
@@ -202,8 +208,26 @@ body {
     font-weight: bold;
 }
 
-.res-value { margin-bottom: 15px; font-weight: 500; border-bottom: 1px solid #eee; padding-bottom: 5px;}
-.res-value.highlight { font-weight: 700; color: #333; font-size: 14px; border:none; }
+.res-value { 
+    margin-bottom: 15px; 
+    font-weight: 500; 
+}
+.res-value.highlight { 
+    font-weight: 700; 
+    color: #333; 
+    font-size: 14px; 
+}
+
+/* Texto legal pequeño en pantalla */
+.legal-screen {
+    font-size: 10px;
+    color: #777;
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+    text-align: justify;
+    line-height: 1.3;
+}
 
 /* =========================================
    6. LEYENDA (SIMBOLOGÍA)
@@ -224,95 +248,99 @@ body {
 }
 
 .rect {
-    width: 18px;
-    height: 18px;
-    margin-right: 10px;
-    display: inline-block;
-    border-radius: 3px;
-    border: 1px solid rgba(0,0,0,0.1);
+    width: 18px; height: 18px; margin-right: 10px; display: inline-block; border-radius: 3px; border: 1px solid rgba(0,0,0,0.1);
 }
-
 .linea-negra {
     width: 20px; height: 4px; background: black; margin-right: 8px; display: inline-block;
 }
 
-/* Colores leyenda */
 .rojo { background: var(--rojo); opacity: 0.6; }
 .azul { background: transparent; border: 2px solid #2980b9; }
 .verde { background: var(--verde); opacity: 0.6; }
 
+
 /* =========================================
-   7. ESTILOS DE IMPRESIÓN (PDF)
+   7. DISEÑO DE REPORTE IMPRESO (PDF)
    ========================================= */
-/* Por defecto, ocultamos el reporte en la pantalla */
+/* Ocultar el reporte en la pantalla normal */
 .print-only { display: none; }
 
 @media print {
-    /* 1. Ocultar la interfaz web */
+    /* Ocultar la interfaz web (Header, Sidebar, Botones del mapa) */
     .gob-header, .sidebar, .leaflet-control-zoom, .leaflet-control-layers, .leaflet-control-geocoder { 
         display: none !important; 
     }
     
-    /* 2. Configuración de página */
-    @page { margin: 1cm; size: portrait; }
+    /* Configuración de la hoja */
+    @page { margin: 1.5cm; size: portrait; }
     
     body { 
         height: auto; 
         overflow: visible; 
         display: block; 
-        background: white;
-        font-size: 12pt;
+        background: white; 
+        font-size: 11pt;
+        color: black;
     }
     
-    /* 3. Mostrar el reporte */
+    /* Mostrar el contenedor del reporte */
     .print-only { display: block; }
     
-    /* Header del Reporte */
+    /* Header del PDF */
     .report-header {
         border-bottom: 4px solid var(--guinda);
-        padding-bottom: 10px;
+        padding-bottom: 15px;
         margin-bottom: 20px;
         display: flex;
         align-items: center;
         gap: 20px;
     }
-    .report-header img { height: 70px; }
-    .report-header h2 { margin: 0; color: var(--guinda); font-size: 22px; font-weight: bold; }
-    .report-header p { margin: 0; font-size: 14px; color: #666; }
+    .report-header img { height: 60px; }
+    .report-header h2 { margin: 0; color: var(--guinda); font-size: 20px; font-weight: bold; }
+    .report-header p { margin: 0; font-size: 12px; color: #666; }
 
-    /* Metadatos (Fecha, Coords) */
+    /* Metadatos */
     .report-meta {
         display: flex;
         justify-content: space-between;
         margin-bottom: 20px;
-        font-size: 12px;
-        border: 1px solid #ddd;
+        font-size: 11px;
+        border: 1px solid #ccc;
         padding: 10px;
         border-radius: 4px;
         background: #f9f9f9;
     }
-
-    /* Mapa en el PDF (Forzamos visualización) */
+    
+    /* Mapa en PDF */
+    /* Forzamos al mapa a comportarse como un bloque estático */
     #map {
         display: block !important;
         position: relative !important;
-        height: 350px !important;
+        height: 400px !important;
         width: 100% !important;
         border: 2px solid #333;
         margin-bottom: 20px;
         z-index: 0;
     }
     
-    /* Diagnóstico y Tablas */
+    /* Contenido del Diagnóstico */
     .report-diagnosis {
-        background: #fff;
-        border: 1px solid #eee;
-        padding: 0;
+        border: 1px solid #ccc;
+        padding: 0; /* Borde exterior */
     }
     
-    #print-titulo-zona { color: var(--guinda); margin-bottom: 5px; font-size: 16px; }
+    #print-titulo-zona { 
+        color: var(--guinda); 
+        margin-bottom: 5px; 
+        font-size: 16px; 
+        text-transform: uppercase;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+    }
+    
     #print-desc-zona { font-style: italic; margin-bottom: 15px; font-size: 12px; }
 
+    /* Tablas de Permitido / Prohibido */
     .tables-container {
         display: flex;
         gap: 20px;
@@ -321,8 +349,8 @@ body {
     
     .tbl-box {
         flex: 1;
-        font-size: 11px;
-        border: 1px solid #ddd;
+        font-size: 10px;
+        border: 1px solid #ccc;
         border-radius: 4px;
         padding: 10px;
     }
@@ -332,12 +360,14 @@ body {
         border-bottom: 2px solid #ccc;
         padding-bottom: 5px;
         text-align: center;
+        text-transform: uppercase;
     }
     
-    .prohibido { background: #fff5f5; }
+    /* Colores en impresión */
+    .prohibido { background: #fff0f0; }
     .prohibido h4 { color: var(--rojo); border-color: var(--rojo); }
     
-    .permitido { background: #f0fff4; }
+    .permitido { background: #f0fff0; }
     .permitido h4 { color: var(--verde); border-color: var(--verde); }
     
     ul { padding-left: 20px; margin: 0; }
@@ -346,32 +376,33 @@ body {
     /* Footer Legal */
     .report-footer {
         margin-top: 40px;
-        font-size: 10px;
-        color: #666;
+        font-size: 9px;
+        color: #333;
         text-align: justify;
-        border-top: 1px solid #ddd;
+        border-top: 2px solid #333;
         padding-top: 10px;
+        font-weight: 500;
     }
 }
 
 /* =========================================
-   8. RESPONSIVO (CELULARES)
+   8. RESPONSIVO (MÓVIL)
    ========================================= */
 @media (max-width: 768px) {
     .main-wrapper { 
-        flex-direction: column-reverse; /* Panel abajo, Mapa arriba */
+        flex-direction: column-reverse; /* Mapa arriba, Panel abajo */
     }
     
     .sidebar { 
         width: 100%; 
-        height: 50%; /* Mitad pantalla */
+        height: 50%; 
         box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
     }
     
     #map { 
-        height: 50%; /* Mitad pantalla */
+        height: 50%; 
     }
     
-    .header-text { display: none; } /* Ocultar texto largo en móvil */
-    .gob-header { justify-content: center; }
+    .header-text { display: none; } /* Ahorrar espacio en header */
+    .gob-header { justify-content: center; height: 60px; }
 }
