@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Visor de Consulta Ciudadana | SEDEMA</title>
     
-    <!-- Tailwind CSS (Estilos utilitarios rápidos) -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Leaflet CSS (Mapas) -->
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
-    <!-- Leaflet Geocoder CSS (Búsqueda) -->
+    <!-- Leaflet Geocoder CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     
     <!-- Estilos Personalizados -->
@@ -43,14 +43,16 @@
     <div id="sidebar" class="w-full md:w-[450px] bg-white shadow-xl z-20 flex flex-col h-[50vh] md:h-full overflow-hidden border-r border-gray-200 print:w-full print:h-auto print:shadow-none print:border-none">
         
         <!-- Header -->
-        <header class="p-6 bg-[#9d2449] text-white shrink-0 shadow-md z-10 relative overflow-hidden print:bg-white print:text-black print:p-0 print:border-b print:border-black print:mb-4">
+        <header class="p-6 bg-[#9d2449] text-white shrink-0 shadow-md z-10 relative overflow-hidden print:bg-white print:text-black print:p-0 print:border-b-2 print:border-[#9d2449] print:mb-2">
             <div class="flex items-center gap-4 mb-2 relative z-10">
-                <div class="w-14 h-14 bg-white rounded-lg flex items-center justify-center p-1 shadow-sm shrink-0 print:border print:border-gray-300">
-                     <!-- Asegúrate de tener logo-sedema.png en la raíz -->
+                <div class="w-14 h-14 bg-white rounded-lg flex items-center justify-center p-1 shadow-sm shrink-0 print:hidden">
                      <img src="logo-sedema.png" alt="CDMX" class="w-full h-full object-contain" onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\'text-[#9d2449] font-bold text-xl\'>CDMX</span>'">
                 </div>
+                <!-- Logo para Impresión -->
+                <img src="logo-sedema.png" alt="CDMX" class="hidden print:block w-16 h-16 object-contain mr-4">
+                
                 <div>
-                    <h1 class="text-xl font-bold leading-tight font-serif tracking-tight text-white print:text-black">VISOR DE CONSULTA CIUDADANA</h1>
+                    <h1 class="text-xl font-bold leading-tight font-serif tracking-tight text-white print:text-black print:text-lg">VISOR DE CONSULTA CIUDADANA</h1>
                     <p class="text-[10px] text-[#e0e0e0] uppercase tracking-wider font-medium mt-1 print:text-gray-600">Secretaría del Medio Ambiente CDMX</p>
                 </div>
             </div>
@@ -118,7 +120,7 @@
             </div>
 
             <!-- Results Container -->
-            <div id="results-container" class="hidden space-y-6 animate-fade-in pb-10">
+            <div id="results-container" class="hidden space-y-6 animate-fade-in pb-10 print:pb-0 print:space-y-4">
                 <!-- Content injected via JS -->
             </div>
 
@@ -138,20 +140,20 @@
         </div>
 
         <!-- Print Footer -->
-        <div class="print-only hidden p-8 border-t border-gray-300 mt-auto">
-            <p class="text-xs text-gray-500 text-justify font-serif disclaimer-text"></p>
-            <div class="flex justify-between items-end mt-4">
-               <p class="text-[10px] text-gray-400">Generado por Visor de Consulta Ciudadana SEDEMA.</p>
-               <div class="w-20 h-10 border border-gray-300"></div> 
+        <div class="print-only hidden p-4 border-t border-gray-300 mt-auto">
+            <p class="text-[10px] text-gray-500 text-justify font-serif disclaimer-text leading-tight"></p>
+            <div class="flex justify-between items-end mt-2">
+               <p class="text-[9px] text-gray-400">Generado por Visor de Consulta Ciudadana SEDEMA.</p>
+               <div class="w-16 h-8 border border-gray-300"></div> 
             </div>
          </div>
     </div>
 
     <!-- MAP CONTAINER -->
-    <div class="flex-1 relative bg-gray-200 h-[50vh] md:h-full print:h-[400px] print:w-full print:border print:border-gray-300 print:mb-6">
+    <div class="flex-1 relative bg-gray-200 h-[50vh] md:h-full print:h-[300px] print:w-full print:border print:border-gray-300 print:mb-4">
         <div id="map" class="h-full w-full z-10"></div>
         
-        <!-- Legend Overlay -->
+        <!-- Legend Overlay (No Print) -->
         <div class="absolute bottom-6 left-6 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-gray-200 z-[400] text-xs space-y-2 pointer-events-none select-none no-print">
             <h4 class="font-bold text-[#9d2449] mb-1 font-serif border-b border-gray-100 pb-1">Simbología</h4>
             <div class="flex items-center gap-2">
@@ -167,7 +169,7 @@
                 <span>Zonificación (Clic para detalle)</span>
             </div>
             <div class="mt-2 pt-2 border-t border-gray-100 text-[10px] text-gray-500 italic">
-                * Active capas en control superior derecho
+                * Capas activas. Clic en polígono para más datos.
             </div>
         </div>
     </div>
@@ -192,11 +194,27 @@
             "El Suelo de Conservación definido por las barrancas estará regulado por la zonificación Forestal de Conservación FC.",
             "Las disposiciones de la presente regulación no prejuzgan sobre la propiedad de la tierra."
         ];
+        
+        // Colors for Zoning Categories
+        const ZONE_COLORS = {
+            'AE': '#84cc16',   // Agroecológico (Lime)
+            'AEE': '#65a30d',  // Agroecológico Especial
+            'AF': '#10b981',   // Agroforestal (Emerald)
+            'AFE': '#059669',  // Agroforestal Especial
+            'FC': '#15803d',   // Forestal Conservación (Green)
+            'FCE': '#166534',  // Forestal Cons. Esp
+            'FP': '#14532d',   // Forestal Protección (Dark Green)
+            'FPE': '#064e3b',  // Forestal Prot. Esp
+            'ANP': '#0e7490',  // ANP (Cyan)
+            'PDU': '#6b7280',  // PDU (Gray)
+            'DEFAULT': '#3b82f6' // Blue default
+        };
 
         // --- STATE ---
         let map, marker, layers = {};
         let loadedData = {};
         let currentAnalysis = null;
+        let baseLayers = {};
 
         // --- INIT ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -212,6 +230,16 @@
 
             // Icons
             lucide.createIcons();
+            
+            // Print Events to toggle Satellite
+            window.addEventListener('beforeprint', () => {
+                if(baseLayers.satellite) baseLayers.satellite.addTo(map);
+                map.invalidateSize();
+            });
+            window.addEventListener('afterprint', () => {
+                if(baseLayers.light) baseLayers.light.addTo(map);
+                map.invalidateSize();
+            });
             
             // Load Data
             loadAllData();
@@ -267,20 +295,27 @@
             map = L.map('map', { zoomControl: false }).setView([19.4326, -99.1332], 11);
             L.control.zoom({ position: 'topright' }).addTo(map);
 
-            // Base Layer
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            // Base Layers
+            baseLayers.light = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                 attribution: 'OpenStreetMap, CARTO',
                 maxZoom: 20
             }).addTo(map);
+            
+            baseLayers.satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Esri, Maxar, Earthstar Geographics',
+                maxZoom: 19
+            });
 
             const overlayMaps = {};
 
             // 1. Context Layers
             if (loadedData.edomex.features.length) {
-                overlayMaps["Edo. Mex"] = L.geoJSON(loadedData.edomex, { style: { color: '#9ca3af', dashArray: '4,4', fill: false }, interactive: false });
+                const edomex = L.geoJSON(loadedData.edomex, { style: { color: '#9ca3af', dashArray: '4,4', fill: false }, interactive: false }).addTo(map);
+                overlayMaps["Edo. Mex"] = edomex;
             }
             if (loadedData.morelos.features.length) {
-                overlayMaps["Morelos"] = L.geoJSON(loadedData.morelos, { style: { color: '#9ca3af', dashArray: '4,4', fill: false }, interactive: false });
+                const morelos = L.geoJSON(loadedData.morelos, { style: { color: '#9ca3af', dashArray: '4,4', fill: false }, interactive: false }).addTo(map);
+                overlayMaps["Morelos"] = morelos;
             }
 
             // 2. CDMX
@@ -291,29 +326,36 @@
             // 3. Suelo de Conservación
             if (loadedData.sc.features.length) {
                 overlayMaps["Suelo Conservación"] = L.geoJSON(loadedData.sc, {
-                    style: { color: '#9d2449', weight: 1, fillColor: '#9d2449', fillOpacity: 0.15 },
+                    style: { color: '#9d2449', weight: 1, fillColor: '#9d2449', fillOpacity: 0.1 },
                     interactive: false
                 }).addTo(map);
             }
 
-            // 4. Zonificación (INTERACTIVA)
+            // 4. Zonificación (INTERACTIVA & COLOREADA)
             if (loadedData.zoning.features.length) {
                 const zLayer = L.geoJSON(loadedData.zoning, {
-                    style: { color: '#3b82f6', weight: 1, dashArray: '3,3', fillOpacity: 0 },
-                    interactive: true, // Key change: allow clicks
+                    style: (feature) => {
+                        const key = feature.properties.CLAVE || 'DEFAULT';
+                        const color = ZONE_COLORS[key] || ZONE_COLORS.DEFAULT;
+                        return { 
+                            color: color, 
+                            weight: 1, 
+                            dashArray: '2,2', 
+                            fillColor: color,
+                            fillOpacity: 0.15 // Slight fill for aesthetics
+                        };
+                    },
+                    interactive: true,
                     onEachFeature: (feature, layer) => {
                         const name = feature.properties.PGOEDF || feature.properties.UGA || feature.properties.CLAVE;
-                        if (name) layer.bindTooltip(name, { sticky: true, className: 'bg-white px-1 border border-blue-200 text-[10px]' });
+                        if (name) layer.bindTooltip(name, { sticky: true, className: 'bg-white px-1 border border-gray-200 text-[10px]' });
                         
-                        // Handle click on specific zoning polygon
                         layer.on('click', (e) => {
-                            // Stop propagation so map click doesn't fire immediately after (optional, but cleaner)
                             L.DomEvent.stop(e); 
-                            // Analyze the clicked point
                             analyzeLocation(e.latlng.lat, e.latlng.lng);
                         });
                     }
-                }).addTo(map);
+                }).addTo(map); // Active by default
                 overlayMaps["Zonificación"] = zLayer;
             }
 
@@ -328,7 +370,11 @@
                 }).addTo(map);
             }
 
-            L.control.layers(null, overlayMaps, { collapsed: true }).addTo(map);
+            L.control.layers(
+                { "Mapa Base": baseLayers.light, "Satélite": baseLayers.satellite }, 
+                overlayMaps, 
+                { collapsed: true }
+            ).addTo(map);
 
             // Controls
             addResetControl();
@@ -361,6 +407,7 @@
                 allowedActivities: [],
                 conditionedActivities: [],
                 prohibitedActivities: [],
+                hasHumanSettlementAlert: false, // Flag for highlighting
                 timestamp: new Date().toLocaleString()
             };
 
@@ -401,6 +448,14 @@
                     loadedData.rules.forEach(row => {
                         const val = (row[result.zoningKey] || '').trim().toUpperCase();
                         const act = `${row.SECTOR} - ${row.ACTIVIDAD_GENERAL}: ${row.ACTIVIDAD_ESPECIFICA}`;
+                        
+                        // Check specifically for Human Settlements to highlight
+                        if (row.ACTIVIDAD_ESPECIFICA && row.ACTIVIDAD_ESPECIFICA.includes("Nuevos Asentamientos Humanos")) {
+                            if (val === 'A' || val === 'C' || val === 'P') {
+                                result.hasHumanSettlementAlert = true; // Use this to trigger specific UI logic
+                            }
+                        }
+
                         if (val === 'A') result.allowedActivities.push(act);
                         else if (val === 'C') result.conditionedActivities.push(act);
                         else if (val === 'P') result.prohibitedActivities.push(act);
@@ -439,54 +494,54 @@
             let statusHtml = '';
             if (result.status === 'CONSERVATION_SOIL') {
                 statusHtml = `
-                <div class="bg-red-50 border-l-8 border-red-700 p-5 rounded-lg shadow-sm">
+                <div class="bg-red-50 border-l-8 border-red-700 p-4 rounded-lg shadow-sm print:border-l-4 print:p-2">
                     <div class="flex gap-3">
-                        <i data-lucide="alert-triangle" class="text-red-700 h-6 w-6 mt-1 shrink-0"></i>
+                        <i data-lucide="alert-triangle" class="text-red-700 h-6 w-6 mt-1 shrink-0 print:h-4 print:w-4"></i>
                         <div>
-                            <h2 class="text-lg font-bold uppercase text-red-800">Zona Restringida</h2>
-                            <p class="text-sm mt-1 text-gray-800">Predio en Suelo de Conservación. Aplican restricciones ambientales.</p>
+                            <h2 class="text-lg font-bold uppercase text-red-800 print:text-sm">Zona Restringida</h2>
+                            <p class="text-sm mt-1 text-gray-800 print:text-xs">Predio en Suelo de Conservación. Aplican restricciones ambientales.</p>
                         </div>
                     </div>
                 </div>`;
             } else if (result.status === 'URBAN_SOIL') {
                 statusHtml = `
-                <div class="bg-green-50 border-l-8 border-green-600 p-5 rounded-lg shadow-sm">
+                <div class="bg-green-50 border-l-8 border-green-600 p-4 rounded-lg shadow-sm print:border-l-4 print:p-2">
                     <div class="flex gap-3">
-                        <i data-lucide="check-circle" class="text-green-700 h-6 w-6 mt-1 shrink-0"></i>
+                        <i data-lucide="check-circle" class="text-green-700 h-6 w-6 mt-1 shrink-0 print:h-4 print:w-4"></i>
                         <div>
-                            <h2 class="text-lg font-bold uppercase text-green-800">Suelo Urbano</h2>
-                            <p class="text-sm mt-1 text-gray-800">Fuera de la capa de conservación. Consulte SEDUVI.</p>
+                            <h2 class="text-lg font-bold uppercase text-green-800 print:text-sm">Suelo Urbano</h2>
+                            <p class="text-sm mt-1 text-gray-800 print:text-xs">Fuera de la capa de conservación. Consulte SEDUVI.</p>
                         </div>
                     </div>
                 </div>`;
             } else {
                 statusHtml = `
-                <div class="bg-gray-100 border-l-8 border-gray-400 p-5 rounded-lg shadow-sm">
+                <div class="bg-gray-100 border-l-8 border-gray-400 p-4 rounded-lg shadow-sm print:border-l-4 print:p-2">
                     <div class="flex gap-3">
-                        <i data-lucide="x-circle" class="text-gray-600 h-6 w-6 mt-1 shrink-0"></i>
+                        <i data-lucide="x-circle" class="text-gray-600 h-6 w-6 mt-1 shrink-0 print:h-4 print:w-4"></i>
                         <div>
-                            <h2 class="text-lg font-bold uppercase text-gray-800">Fuera de Jurisdicción</h2>
-                            <p class="text-sm mt-1 text-gray-800">Punto fuera de CDMX. ${result.outsideContext || ''}</p>
+                            <h2 class="text-lg font-bold uppercase text-gray-800 print:text-sm">Fuera de Jurisdicción</h2>
+                            <p class="text-sm mt-1 text-gray-800 print:text-xs">Punto fuera de CDMX. ${result.outsideContext || ''}</p>
                         </div>
                     </div>
                 </div>`;
             }
 
             let detailsHtml = `
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div class="bg-gray-50 p-3 rounded border border-gray-200">
+                <div class="grid grid-cols-2 gap-4 text-sm print:gap-2 print:text-xs print:my-2">
+                    <div class="bg-gray-50 p-3 rounded border border-gray-200 print:p-1">
                         <span class="block text-[10px] uppercase font-bold text-gray-500">Alcaldía</span>
                         <span class="font-semibold">${result.alcaldia || '-'}</span>
                     </div>
-                    <div class="bg-gray-50 p-3 rounded border border-gray-200">
+                    <div class="bg-gray-50 p-3 rounded border border-gray-200 print:p-1">
                          <span class="block text-[10px] uppercase font-bold text-gray-500">Coordenadas</span>
                          <span class="font-mono text-xs">${result.coordinate.lat.toFixed(5)}, ${result.coordinate.lng.toFixed(5)}</span>
                     </div>
                     ${result.zoningKey ? `
-                    <div class="col-span-2 bg-gray-50 p-3 rounded border border-gray-200">
+                    <div class="col-span-2 bg-gray-50 p-3 rounded border border-gray-200 print:p-1">
                         <span class="block text-[10px] uppercase font-bold text-gray-500">Zonificación</span>
                         <div class="flex items-center gap-2 mt-1">
-                            <span class="bg-[#b38e5d] text-white px-2 py-0.5 rounded text-xs font-bold">${result.zoningKey}</span>
+                            <span class="bg-[${ZONE_COLORS[result.zoningKey] || ZONE_COLORS.DEFAULT}] text-white px-2 py-0.5 rounded text-xs font-bold print:border print:border-black print:text-black print:bg-white">${result.zoningKey}</span>
                             <span class="font-semibold">${result.zoningName}</span>
                         </div>
                     </div>` : ''}
@@ -496,20 +551,41 @@
             if (result.status === 'CONSERVATION_SOIL') {
                 const createSection = (title, list, color, icon, open=false) => {
                     if (!list.length) return '';
+                    
+                    // Logic to extract and highlight "Nuevos Asentamientos Humanos"
+                    let highlightedItem = null;
+                    const filteredList = list.filter(item => {
+                        if (item.includes("Nuevos Asentamientos Humanos")) {
+                            highlightedItem = item;
+                            return false;
+                        }
+                        return true;
+                    });
+                    
+                    // Re-insert at the top with special styling if found
+                    const displayList = highlightedItem ? [highlightedItem, ...filteredList] : filteredList;
+
                     let bgH = color === 'green' ? 'bg-green-200/60 text-green-900' : (color === 'amber' ? 'bg-amber-200/60 text-amber-900' : 'bg-red-200/60 text-red-900');
                     let bgB = color === 'green' ? 'bg-green-50/50' : (color === 'amber' ? 'bg-amber-50/50' : 'bg-red-50/50');
+                    
                     return `
-                    <details class="group rounded-lg border border-gray-200 overflow-hidden mb-3 shadow-sm ${bgB}" ${open ? 'open' : ''}>
-                        <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none ${bgH} hover:opacity-90">
+                    <details class="group rounded-lg border border-gray-200 overflow-hidden mb-3 shadow-sm ${bgB} print:border-black print:mb-2" ${open ? 'open' : ''}>
+                        <summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none ${bgH} hover:opacity-90 print:p-1 print:bg-gray-200 print:text-black">
                             <div class="flex items-center gap-2 font-bold text-sm">
-                                <i data-lucide="${icon}" class="h-4 w-4"></i>
+                                <i data-lucide="${icon}" class="h-4 w-4 print:hidden"></i>
                                 <span>${title} <span class="text-xs font-normal opacity-90">(${list.length})</span></span>
                             </div>
-                            <i data-lucide="chevron-down" class="h-4 w-4 transition-transform group-open:rotate-180"></i>
+                            <i data-lucide="chevron-down" class="h-4 w-4 transition-transform group-open:rotate-180 print:hidden"></i>
                         </summary>
-                        <div class="px-4 py-3 bg-white border-t border-gray-100">
-                            <ul class="list-disc pl-5 text-xs text-gray-600 space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
-                                ${list.map(i => `<li>${i}</li>`).join('')}
+                        <div class="px-4 py-3 bg-white border-t border-gray-100 print:p-1">
+                            <ul class="list-disc pl-5 text-xs text-gray-600 space-y-2 max-h-60 overflow-y-auto custom-scrollbar print:max-h-none print:overflow-visible print:space-y-1">
+                                ${displayList.map(item => {
+                                    // Special styling for the settlement activity
+                                    if(item.includes("Nuevos Asentamientos Humanos")) {
+                                        return `<li class="font-bold text-red-700 bg-red-50 p-1 rounded border border-red-200 print:border-black print:text-black print:font-bold">${item.toUpperCase()} (REVISE NORMATIVIDAD)</li>`;
+                                    }
+                                    return `<li>${item}</li>`;
+                                }).join('')}
                             </ul>
                         </div>
                     </details>`;
@@ -517,22 +593,22 @@
 
                 accordionHtml = `
                     <div class="pt-2">
-                        <h3 class="text-sm font-bold text-gray-800 mb-3 border-b pb-1">Regulación de Uso de Suelo</h3>
+                        <h3 class="text-sm font-bold text-gray-800 mb-3 border-b pb-1 print:mb-1 print:text-xs">Regulación de Uso de Suelo</h3>
                         ${createSection('PERMITIDAS', result.allowedActivities, 'green', 'check-circle', true)}
-                        ${createSection('CONDICIONADAS', result.conditionedActivities, 'amber', 'alert-circle')}
-                        ${createSection('PROHIBIDAS', result.prohibitedActivities, 'red', 'x-circle')}
+                        ${createSection('CONDICIONADAS', result.conditionedActivities, 'amber', 'alert-circle', true)} 
+                        ${createSection('PROHIBIDAS', result.prohibitedActivities, 'red', 'x-circle', false)}
                     </div>
                 `;
             }
 
             let notesHtml = `
-                <div class="mt-6 border-t border-gray-200 pt-4">
-                    <h4 class="text-xs font-bold text-[#9d2449] uppercase mb-2">Notas Importantes</h4>
-                    <ul class="list-disc pl-4 space-y-2">
-                        ${NOTES.map(n => `<li class="text-[10px] text-gray-600 text-justify">${n}</li>`).join('')}
+                <div class="mt-6 border-t border-gray-200 pt-4 print:mt-2 print:pt-2">
+                    <h4 class="text-xs font-bold text-[#9d2449] uppercase mb-2 print:text-[10px]">Notas Importantes</h4>
+                    <ul class="list-disc pl-4 space-y-2 print:space-y-1">
+                        ${NOTES.map(n => `<li class="text-[10px] text-gray-600 text-justify print:text-[8px]">${n}</li>`).join('')}
                     </ul>
                 </div>
-                <div class="text-right text-[10px] text-gray-400 border-t border-gray-100 pt-3 mt-4">
+                <div class="text-right text-[10px] text-gray-400 border-t border-gray-100 pt-3 mt-4 print:text-[8px] print:mt-2 print:pt-1">
                     Folio: ${Date.now().toString().slice(-6)} <br> Fecha: ${result.timestamp}
                 </div>
             `;
@@ -562,7 +638,6 @@
             // Regex logic similar to previous steps
             const decimalMatch = text.match(/([-+]?\d{1,3}\.\d+)[,;\s]+([-+]?\d{1,3}\.\d+)/);
             if (decimalMatch) {
-                // Simple heuristic check for Lat/Lng swap in Mexico
                 let v1 = parseFloat(decimalMatch[1]), v2 = parseFloat(decimalMatch[2]);
                 if (v1 < -80 && v2 > 14) { analyzeLocation(v2, v1); return; } // Lng, Lat
                 analyzeLocation(v1, v2);
