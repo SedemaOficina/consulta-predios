@@ -88,27 +88,24 @@ body {
     overflow: auto;
   }
   
-  /* Main App Container */
   #root > div {
     flex-direction: column !important;
     height: auto !important;
     overflow: visible !important;
   }
 
-  /* Mapa en mobile */
   #root > div > div:last-child { 
     height: 50vh !important;
-    order: 1;
+    order: 2;
     min-height: 350px;
   }
 
-  /* Sidebar en mobile */
   #root > div > div:first-child {
     width: 100% !important;
     height: auto !important;
-    order: 2;
+    order: 1;
     border-right: none;
-    border-top: 4px solid var(--color-guinda);
+    border-top: 0;
   }
 }
 
@@ -126,7 +123,6 @@ body {
     background: white;
   }
 
-  /* Ocultar elementos interactivos / de pantalla */
   .no-print, 
   .leaflet-control-container, 
   header, 
@@ -134,14 +130,12 @@ body {
     display: none !important;
   }
 
-  /* Layout principal para impresión */
   #root > div {
     display: block !important;
     height: auto !important;
     overflow: visible !important;
   }
 
-  /* Ajuste del mapa para impresión */
   #map-wrapper {
     height: 400px !important;
     width: 100% !important;
@@ -151,7 +145,6 @@ body {
     page-break-inside: avoid;
   }
 
-  /* Forzar leyenda visible en impresión */
   .print-legend {
     position: absolute !important;
     bottom: 10px !important;
@@ -167,7 +160,6 @@ body {
     display: block !important;
   }
 
-  /* Sidebar en impresión */
   #sidebar-wrapper {
     width: 100% !important;
     height: auto !important;
@@ -176,14 +168,12 @@ body {
     box-shadow: none !important;
   }
 
-  /* Forzar layout en dos columnas donde se usa grid cols-1 md:cols-2 */
   .grid-cols-1.md\:grid-cols-2 {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
     gap: 1rem;
   }
 
-  /* Detalles desplegables */
   details {
     border: 1px solid #eee !important;
     margin-bottom: 10px;
@@ -194,12 +184,10 @@ body {
     border-bottom: 1px solid #eee;
   }
 
-  /* Asegurar legibilidad de texto */
   p, li, span, h1, h2, h3, h4 {
     color: black !important;
   }
 
-  /* Encabezado institucional simulado en el reporte */
   #results-container::before {
     content: "Visor de Consulta Ciudadana SEDEMA - Reporte Generado";
     display: block;
