@@ -42,7 +42,7 @@
             LIMITES_EDOMEX: './limites_edomex.geojson',
             LIMITES_MORELOS: './limites_morelos.geojson',
             SUELO_CONSERVACION: './suelo-de-conservacion-2020.geojson',
-            ZONIFICACION: './zoonificación_pgoedf_2000.geojson', 
+            ZONIFICACION: './zoonificación_pgoedf_2000.geojson',
             USOS_SUELO_CSV: './usos_suelo.csv'
         };
 
@@ -51,11 +51,11 @@
         const LEGAL_NOTES = [
             "Adicionalmente a lo dispuesto en la tabla de usos del suelo, para cualquier obra o actividad que se pretenda desarrollar se deberán contemplar los criterios y lineamientos señalados en el programa de Ordenamiento Ecológico.",
             "Los usos del suelo no identificados en esta tabla deberán cumplir con los permisos y autorizaciones en materia urbana y ambiental aplicables.",
-            "En las Areas Naturales Protegidas (ANP) regirá la zonificación especificada en su respectivo Programa de Manejo.",
+            "En las Áreas Naturales Protegidas (ANP) regirá la zonificación especificada en su respectivo Programa de Manejo.",
             "El Suelo de Conservación definido por las barrancas estará regulado por la zonificación Forestal de Conservación FC."
         ];
 
-        const INITIAL_CENTER = [19.3200, -99.1500]; 
+        const INITIAL_CENTER = [19.3200, -99.1500];
         const INITIAL_ZOOM = 10;
 
         const CONTACT_INFO = {
@@ -119,19 +119,19 @@
             },
             {
                 q: "3. ¿Cómo se representa la Zonificación?",
-                a: "La zonificación se muestra mediante una nomenclatura, que determina la zona, los niveles y porcentaje de área libre que debe tener. Ejemplo: H / 3 / 40 / B (H=Habitacional, 3=niveles máximos de construcción, 40=porcentaje de área libre y en este caso B=1 vivienda por cada 100 metros cuadrados de terreno."
+                a: "La zonificación se muestra mediante una nomenclatura, que determina la zona, los niveles y porcentaje de área libre que debe tener. Ejemplo: H / 3 / 40 / B (H=Habitacional, 3=niveles máximos de construcción, 40=porcentaje de área libre y en este caso B=1 vivienda por cada 100 m² de terreno)."
             },
             {
                 q: "4. ¿Qué es Uso del Suelo?",
-                a: "Es la capacidad permitida de uso o utilización asignada a un predio, de acuerdo a la zonificación establecida en los Programas Delegacionales de Desarrollo Urbano y/o Programas Parciales de Desarrollo Urbano, Ejemplo: Habitacional Unifamiliar, Recauderías, Tiendas de Abarrotes, Centros Comerciales, Madererías, Consultorios para Nutriólogos, Casetas de Vigilancia, Clínicas, Escuelas Primarias, etc."
+                a: "Es la capacidad permitida de uso o utilización asignada a un predio, de acuerdo a la zonificación establecida en los Programas Delegacionales de Desarrollo Urbano y/o Programas Parciales de Desarrollo Urbano."
             },
             {
                 q: "5. ¿Cuáles son los Usos del Suelo que le aplican a mi predio?",
-                a: "El Sistema de Información Geográfica SIG - CiudadMX es el medio por el cual puede realizar la consulta para saber los Usos del Suelo que le aplican a su predio. La consulta se hace ingresando la cuenta catastral el cual desplegará un cuadro de información del predio y seleccionando el enlace de normatividad de Uso del Suelo, en el apartado de 'Zonificación', donde se muestra la liga 'Ver Tabla de Uso', al seleccionarla mostrará los usos permitidos que le corresponden al predio."
+                a: "El Sistema de Información Geográfica SIG - CiudadMX es el medio por el cual puede realizar la consulta para saber los Usos del Suelo que le aplican a su predio."
             },
             {
                 q: "6. ¿Para qué sirve conocer el Uso del Suelo de mi Predio?",
-                a: "Informarse sobre los usos permitidos en el predio, para los asuntos relacionados con la renta y/o compraventa de un predio y/o inmueble, para establecer un comercio, industria, infraestructura, servicio o vivienda, etc. Para obtener un documento oficial que avale los usos permitidos que le corresponden al predio, deberá tramitar el Certificado Único de Zonificación de Uso del Suelo, ya sea presencial o digital."
+                a: "Para conocer los usos permitidos y condicionados, así como restricciones, con fines de renta, compraventa, construcción o instalación de actividades."
             },
             {
                 q: "7. ¿Cómo sé qué tipo de negocio o servicio puedo establecer en mi Predio?",
@@ -139,23 +139,23 @@
             },
             {
                 q: "8. ¿En todos los Predios se puede construir vivienda?",
-                a: "No, sólo en aquellos predios que tengan permitido el Uso Habitacional, el cual puede ser consultado en el Sistema de Información Geográfica."
+                a: "No, sólo en aquellos predios que tengan permitido el Uso Habitacional."
             },
             {
                 q: "9. ¿Cómo puedo ubicar mi Predio?",
-                a: "Puede ubicar su predio ingresando las coordenadas geográficas, buscando por dirección (calle y número) o navegando manualmente en el mapa interactivo."
+                a: "Puede ubicar su predio ingresando coordenadas, dirección o navegando manualmente en el mapa interactivo."
             },
             {
                 q: "10. ¿Por qué no aparece mi Cuenta Catastral o mi Predio?",
-                a: "Puede deberse a que la base de datos catastral no esté actualizada en esta versión de consulta o que el predio se encuentre en una zona limítrofe sin regularización definitiva."
+                a: "Puede deberse a desactualización de la base de datos, ubicación en zona limítrofe o falta de regularización."
             },
             {
-                q: "11. ¿Puede tener mi predio más de una Zonificación en el Sistema de Información Geográfica?",
-                a: "Sí, es posible si el predio atraviesa límites territoriales de diferentes zonas o programas parciales, aunque generalmente aplica una zonificación dominante."
+                q: "11. ¿Puede tener mi predio más de una Zonificación?",
+                a: "Sí, en casos donde atraviesa límites de distintas zonas o programas parciales."
             },
             {
-                q: "12. ¿Puede un predio no tener Uso del Suelo en el Sistema?",
-                a: `Si, esto es factible debido a que en los programas delegacionales o parciales:<br/><br/>
+                q: "12. ¿Puede un predio no tener Uso del Suelo en el sistema?",
+                a: `Sí, por ejemplo cuando:<br/><br/>
                 a) No se ubica el predio en una zonificación existente.<br/>
                 b) No hay uso de suelo permitido para la zonificación.<br/>
                 c) No existe zonificación.<br/>
@@ -322,7 +322,7 @@
                     dataCache.rules.forEach(row => {
                         const rawValue = row[result.zoningKey] || '';
                         const ruleValue = rawValue.trim().toUpperCase();
-                        
+
                         const sector = row.Sector || row.SECTOR || '';
                         const actGen = row.Act_general || row.ACT_GENERAL || '';
                         const actEsp = row.Act_especifica || row.ACT_ESPECIFICA || '';
@@ -356,14 +356,13 @@
             return result;
         };
 
-        /* --- COMPONENTE ActivitySection CON FILTRO Y TABLA --- */
+        /* --- SECTION DE ACTIVIDADES: TABLA + FILTRO --- */
 
         const ActivitySection = ({ title, activities, icon, headerClass, bgClass, defaultOpen }) => {
             const [filter, setFilter] = useState('');
 
             if (!activities || activities.length === 0) return null;
 
-            const norm = (s) => (s || '').toString().toLowerCase();
             const filtered = activities.filter(a => {
                 const haystack = `${a.sector} ${a.general} ${a.specific}`.toLowerCase();
                 return haystack.includes(filter.toLowerCase());
@@ -399,9 +398,15 @@
                             <table className="min-w-full border-collapse text-[10px] text-gray-700">
                                 <thead>
                                     <tr className="bg-gray-50">
-                                        <th className="border border-gray-200 px-2 py-1 text-left font-semibold">Sector</th>
-                                        <th className="border border-gray-200 px-2 py-1 text-left font-semibold">Actividad general</th>
-                                        <th className="border border-gray-200 px-2 py-1 text-left font-semibold">Actividad específica</th>
+                                        <th className="border border-gray-200 px-2 py-1 text-left font-semibold">
+                                            Sector
+                                        </th>
+                                        <th className="border border-gray-200 px-2 py-1 text-left font-semibold">
+                                            Actividad general
+                                        </th>
+                                        <th className="border border-gray-200 px-2 py-1 text-left font-semibold">
+                                            Actividad específica
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -509,6 +514,7 @@
                   className="flex flex-col h-full bg-white relative w-full md:w-[450px] shadow-xl z-20 border-r border-gray-200 overflow-y-auto custom-scrollbar"
                 >
                     <div id="results-container" className="flex-1 p-5 space-y-6 bg-white">
+                        {/* BUSCADOR */}
                         <div className="space-y-3 no-print border-b border-gray-100 pb-5">
                             <div className="grid grid-cols-1 gap-2">
                                 <form onSubmit={handleManualInput} className="flex relative group">
@@ -519,7 +525,7 @@
                                         value={inputStr}
                                         onChange={(e) => setInputStr(e.target.value)}
                                     />
-                                    <button className="bg-gray-100 px-3 border-y border-r border-gray-300 rounded-r text-xs text-gray-600 hover:bg-gray-200 transition-colors">
+                                    <button className="px-3 border-y border-r border-gray-300 rounded-r text-xs text-white bg-[#9d2449] hover:bg-[#7d1d3a] transition-colors">
                                         Ir
                                     </button>
                                 </form>
@@ -538,19 +544,20 @@
                             <div className="flex gap-2">
                                 <button
                                     onClick={handleGPS}
-                                    className="flex-1 py-2 bg-gray-800 text-white rounded text-xs flex items-center justify-center gap-2 hover:bg-gray-700 transition-colors shadow-sm"
+                                    className="flex-1 py-2 bg-[#9d2449] text-white rounded text-xs flex items-center justify-center gap-2 hover:bg-[#7d1d3a] transition-colors shadow-sm"
                                 >
                                     <Icons.Navigation className="h-3 w-3" /> Mi Ubicación
                                 </button>
                                 <button
                                     onClick={() => { setInputStr(''); setAddressStr(''); onReset(); }}
-                                    className="px-3 bg-gray-100 border rounded hover:bg-white text-gray-600 transition-colors"
+                                    className="px-3 bg-gray-100 border rounded text-xs text-gray-600 hover:bg-white transition-colors"
                                 >
                                     <Icons.RotateCcw className="h-4 w-4" />
                                 </button>
                             </div>
                         </div>
 
+                        {/* RESULTADO */}
                         {analysis ? (
                             <div className="animate-in duration-300">
                                 <div className="flex justify-between items-center no-print mb-2">
@@ -632,41 +639,38 @@
                                     )}
                                 </div>
 
+                                {/* ACTIVIDADES: PROHIBIDAS -> PERMITIDAS -> CONDICIONADAS (APILADAS) */}
                                 {analysis.status === 'CONSERVATION_SOIL' && (
                                     <div className="mt-6">
                                         <h3 className="text-xs font-bold text-gray-800 mb-3 border-b pb-2 flex items-center gap-2">
                                             <Icons.Map className="h-3 w-3" /> REGULACIÓN DE USO DE SUELO
                                         </h3>
-                                        
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="space-y-3">
-                                                <ActivitySection 
-                                                    title="PROHIBIDAS" 
-                                                    activities={analysis.prohibitedActivities} 
-                                                    icon={<Icons.XCircle className="h-3 w-3" />}
-                                                    headerClass="text-red-900 bg-red-50 border-red-100"
-                                                    bgClass="bg-white"
-                                                    defaultOpen={true}
-                                                />
-                                                <ActivitySection 
-                                                    title="CONDICIONADAS" 
-                                                    activities={analysis.conditionedActivities} 
-                                                    icon={<Icons.AlertCircle className="h-3 w-3" />}
-                                                    headerClass="text-amber-900 bg-amber-50 border-amber-100"
-                                                    bgClass="bg-white"
-                                                    defaultOpen={false}
-                                                />
-                                            </div>
-                                            <div>
-                                                <ActivitySection 
-                                                    title="PERMITIDAS" 
-                                                    activities={analysis.allowedActivities} 
-                                                    icon={<Icons.CheckCircle className="h-3 w-3" />}
-                                                    headerClass="text-green-900 bg-green-50 border-green-100"
-                                                    bgClass="bg-white"
-                                                    defaultOpen={true}
-                                                />
-                                            </div>
+
+                                        <div className="space-y-3">
+                                            <ActivitySection 
+                                                title="PROHIBIDAS" 
+                                                activities={analysis.prohibitedActivities} 
+                                                icon={<Icons.XCircle className="h-3 w-3" />}
+                                                headerClass="text-red-900 bg-red-50 border-red-100"
+                                                bgClass="bg-white"
+                                                defaultOpen={true}
+                                            />
+                                            <ActivitySection 
+                                                title="PERMITIDAS" 
+                                                activities={analysis.allowedActivities} 
+                                                icon={<Icons.CheckCircle className="h-3 w-3" />}
+                                                headerClass="text-green-900 bg-green-50 border-green-100"
+                                                bgClass="bg-white"
+                                                defaultOpen={true}
+                                            />
+                                            <ActivitySection 
+                                                title="CONDICIONADAS" 
+                                                activities={analysis.conditionedActivities} 
+                                                icon={<Icons.AlertCircle className="h-3 w-3" />}
+                                                headerClass="text-amber-900 bg-amber-50 border-amber-100"
+                                                bgClass="bg-white"
+                                                defaultOpen={false}
+                                            />
                                         </div>
                                     </div>
                                 )}
@@ -706,7 +710,8 @@
                         )}
                     </div>
 
-                    <div className="px-5 py-4 border-b border-gray-200 bg-white">
+                    {/* PIE LATERAL */}
+                    <div className="px-5 py-4 border-t border-gray-200 bg-white">
                         {analysis && (
                             <div className="flex gap-3 mb-4 no-print">
                                 <button
@@ -735,7 +740,8 @@
                         </p>
                     </div>
 
-                    <div className="px-5 py-4 no-print bg-gray-50 border-b border-gray-200">
+                    {/* GALERÍA */}
+                    <div className="px-5 py-4 no-print bg-gray-50 border-t border-gray-200">
                         <h4 className="text-[10px] font-bold text-gray-500 uppercase mb-2 tracking-wider">
                             Galería de Actividades
                         </h4>
@@ -779,6 +785,7 @@
                         </div>
                     </div>
 
+                    {/* PREGUNTAS FRECUENTES (COLAPSABLE GENERAL + INDIVIDUALES) */}
                     <div className="px-5 py-5 bg-white no-print">
                         <details className="group border border-gray-200 rounded-md bg-white">
                             <summary className="flex items-center justify-between px-3 py-2 cursor-pointer select-none bg-gray-50 group-hover:bg-gray-100 transition-colors">
@@ -806,6 +813,7 @@
                     </div>
                 </div>
 
+                {/* MODAL GALERÍA */}
                 {selectedItem && (
                     <div 
                         className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 animate-in duration-200"
@@ -847,7 +855,17 @@
             );
         };
 
-        /* --- ESTILOS DE ZONIFICACIÓN --- */
+        /* --- PALETA DE ZONIFICACIÓN (COLORES FIJOS POR CLAVE) --- */
+
+        const ZONING_FIXED_COLORS = {
+            PE: '#0072B2',   // Preservación Ecológica
+            RE: '#009E73',   // Rescate Ecológico
+            FC: '#005F2F',   // Forestal de Conservación
+            PRA: '#D55E00',  // Producción Rural Agroindustrial
+            HR: '#E69F00',   // Habitacional Rural
+            HRB: '#E69F00',  // Habitacional Rural de Baja Densidad
+            ER: '#CC79A7'    // Equipamiento Rural
+        };
 
         const ZONING_COLORS = [
           '#1f77b4',
@@ -861,7 +879,9 @@
         ];
 
         const getZoningColor = (claveRaw) => {
-          const clave = (claveRaw || 'DEFAULT').toString();
+          const clave = (claveRaw || 'DEFAULT').toString().toUpperCase();
+          if (ZONING_FIXED_COLORS[clave]) return ZONING_FIXED_COLORS[clave];
+
           let hash = 0;
           for (let i = 0; i < clave.length; i++) {
             hash = ((hash << 5) - hash) + clave.charCodeAt(i);
@@ -881,7 +901,7 @@
             weight: 1.2,
             dashArray: '3, 3',
             fillColor: color,
-            fillOpacity: 0.18
+            fillOpacity: 0.25
           };
         };
 
@@ -925,37 +945,24 @@
                 window.L.control.zoom({ position: 'topright' }).addTo(map);
                 mapInstance.current = map;
 
-                // Capas base
                 const satellite = window.L.tileLayer(
                     'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                    {
-                        attribution: 'Tiles &copy; Esri',
-                        maxZoom: 19
-                    }
+                    { attribution: 'Tiles &copy; Esri', maxZoom: 19 }
                 );
 
                 const osm = window.L.tileLayer(
                     'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    {
-                        attribution: '&copy; OpenStreetMap contributors',
-                        maxZoom: 19
-                    }
+                    { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19 }
                 );
 
                 const carto = window.L.tileLayer(
                     'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-                    {
-                        attribution: '&copy; OpenStreetMap contributors & Carto',
-                        maxZoom: 19
-                    }
+                    { attribution: '&copy; OpenStreetMap contributors & Carto', maxZoom: 19 }
                 );
 
                 const reference = window.L.tileLayer(
                     'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-                    {
-                        maxZoom: 19,
-                        opacity: 0.7
-                    }
+                    { maxZoom: 19, opacity: 0.7 }
                 );
 
                 const baseMaps = {
@@ -1023,6 +1030,7 @@
                                 };
                             }
                         });
+
                         const legendItems = Object.values(unique).sort((a, b) => a.key.localeCompare(b.key));
                         setZoningLegend(legendItems);
 
@@ -1049,6 +1057,7 @@
 
                     if (layersRef.current['zoning']) layersRef.current['zoning'].bringToFront();
                     if (layersRef.current['alcaldias']) layersRef.current['alcaldias'].bringToFront();
+
                     setIsMapLoading(false);
                 };
 
@@ -1120,7 +1129,6 @@
                 });
             }, [visibleLayers, isMapLoading]);
 
-            // Aplicar filtros de categorías de zonificación
             useEffect(() => {
                 if (!layersRef.current['zoning'] || !mapInstance.current) return;
                 const group = layersRef.current['zoning'];
@@ -1176,18 +1184,19 @@
             }, [location, analysisStatus]);
 
             return (
-                <div id="map-wrapper" className="flex-1 relative bg-gray-200 h-[50vh] md:h-full">
+                <div id="map-wrapper" className="flex-1 relative bg-gray-200 min-h-[300px]">
                     <div id="map-container-div" className="h-full w-full relative group bg-gray-900">
                         {isMapLoading && (
                             <div className="absolute inset-0 z-[1000] bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center text-[#9d2449]">
                                 <Icons.Loader2 className="h-10 w-10 animate-spin mb-3" />
                                 <span className="text-sm font-bold font-serif tracking-wide">
-                                    Cargando Mapa Satelital...
+                                    Cargando Mapa...
                                 </span>
                             </div>
                         )}
                         <div ref={mapRef} className="h-full w-full z-10" />
 
+                        {/* LEYENDA */}
                         <div
                             className={`absolute bottom-8 left-4 bg-white shadow-xl border border-gray-200 z-[400] transition-all duration-300 ease-in-out rounded-lg overflow-hidden print-legend ${isLegendOpen ? 'w-72' : 'w-auto'}`}
                             onMouseEnter={() => setIsLegendOpen(true)}
@@ -1208,6 +1217,7 @@
                             </button>
 
                             <div className={`p-3 space-y-3 bg-white/95 backdrop-blur-sm ${!isLegendOpen ? 'hidden print:block' : ''}`}>
+                                {/* Suelo de Conservación */}
                                 <div
                                     className="flex items-center justify-between cursor-pointer group p-1"
                                     onClick={(e) => toggleLayer('sc', e)}
@@ -1225,13 +1235,14 @@
                                     </button>
                                 </div>
 
+                                {/* PGOEDF Zonificación + categorías */}
                                 <div
                                     className="cursor-pointer group p-1 border border-transparent rounded"
                                     onClick={(e) => toggleLayer('zoning', e)}
                                 >
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-5 h-5 bg-gradient-to-r from-[#1f77b4] via-[#ff7f0e] to-[#2ca02c] border border-gray-300 rounded-sm shrink-0"></div>
+                                            <div className="w-5 h-5 bg-gradient-to-r from-[#0072B2] via-[#009E73] to-[#D55E00] border border-gray-300 rounded-sm shrink-0"></div>
                                             <span className="text-xs text-gray-800 font-bold">PGOEDF – Zonificación</span>
                                         </div>
                                         <button className="text-gray-400 group-hover:text-[#00eaff] no-print">
@@ -1298,6 +1309,7 @@
                                     )}
                                 </div>
 
+                                {/* Alcaldías */}
                                 <div
                                     className="flex items-center justify-between cursor-pointer group p-1"
                                     onClick={(e) => toggleLayer('alcaldias', e)}
@@ -1315,6 +1327,7 @@
                                     </button>
                                 </div>
 
+                                {/* EdoMex */}
                                 <div
                                     className="flex items-center justify-between cursor-pointer group p-1"
                                     onClick={(e) => toggleLayer('edomex', e)}
@@ -1332,6 +1345,7 @@
                                     </button>
                                 </div>
 
+                                {/* Morelos */}
                                 <div
                                     className="flex items-center justify-between cursor-pointer group p-1"
                                     onClick={(e) => toggleLayer('morelos', e)}
@@ -1349,6 +1363,7 @@
                                     </button>
                                 </div>
 
+                                {/* Estatus predio */}
                                 <div className="pt-2 mt-2 border-t border-gray-100">
                                     <div className="text-[10px] text-gray-500 font-bold mb-2 uppercase">
                                         Estatus Predio
@@ -1375,7 +1390,7 @@
             );
         };
 
-        /* --- APP: HEADER CON LOGO IZQUIERDA + TEL/HORARIO DERECHA --- */
+        /* --- APP (HEADER GUINDA + LAYOUT) --- */
 
         const App = () => {
             const [loading, setLoading] = useState(true);
@@ -1410,7 +1425,7 @@
             }
 
             return (
-                <div className="flex flex-col h-screen overflow-hidden">
+                <div className="min-h-screen flex flex-col">
                     <header className="bg-[#9d2449] text-white border-b border-gray-300 flex items-center justify-between px-6 py-2">
                         <div className="flex items-center gap-3">
                             <div className="bg-white rounded-md px-2 py-1 flex items-center shadow-sm">
