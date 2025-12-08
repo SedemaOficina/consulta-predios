@@ -12,8 +12,8 @@ body {
   color: var(--color-gris);
   margin: 0;
   padding: 0;
-  min-height: 100vh;
-  overflow: auto;
+  height: 100vh;
+  overflow: hidden; /* Importante para que la app controle el scroll */
 }
 
 /* Scrollbar Customization */
@@ -33,16 +33,22 @@ body {
 
 /* Tooltips Leaflet */
 .leaflet-tooltip.custom-tooltip {
-  background-color: transparent;
-  border: none;
-  box-shadow: none;
+  background-color: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
   color: #fff;
-  font-weight: bold;
-  font-size: 10px;
-  text-shadow: 1px 1px 2px black;
+  font-weight: 500;
+  font-size: 11px;
+  padding: 2px 6px;
+  text-shadow: none;
+}
+.leaflet-tooltip-left:before, .leaflet-tooltip-right:before {
+  border-left-color: rgba(0,0,0,0.8);
+  border-right-color: rgba(0,0,0,0.8);
 }
 
-/* Leaflet Geocoder Override (ya no se usa la lupita pero no estorba) */
+/* Leaflet Geocoder Override */
 .leaflet-control-geocoder {
   border-radius: 8px !important;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
@@ -57,170 +63,102 @@ body {
   color: var(--color-guinda);
   font-weight: 700;
 }
-
 .faq-content ul {
   list-style-type: disc;
   padding-left: 20px;
 }
 
 /* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.animate-in { animation: fadeIn 0.3s ease-out forwards, slideUp 0.4s ease-out forwards; }
+
+/* --- ESTRUCTURA APP --- */
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Combinación de fade + slide en una sola clase */
-.animate-in {
-  animation: fadeIn 0.3s ease-out forwards, slideUp 0.4s ease-out forwards;
-}
-
-/* --- MAPA: ALTURA Y OVERLAYS --- */
-
-/* Contenedor del mapa (derecha) */
+/* --- MAPA --- */
 #map-wrapper {
-  height: calc(100vh - 56px) !important; /* 56px ≈ altura del header */
-  min-height: 400px;
   position: relative;
-  background: #e5e7eb;
+  height: 100%;
+  width: 100%;
+  z-index: 1;
 }
 
-/* Contenedor interno de Leaflet */
 #map-container-div {
-  height: 100% !important;
-  width: 100% !important;
-  position: relative;
-}
-
-/* Controles de Leaflet por encima del canvas */
-.leaflet-control-container {
-  z-index: 600 !important;
+  height: 100%;
+  width: 100%;
 }
 
 /* Contenedores de leyenda sobre el mapa */
-.legend-container,
-.print-legend {
-  z-index: 9999 !important;
+.legend-container, .print-legend {
+  z-index: 999 !important;
 }
 
 /* --- RESPONSIVE MOBILE --- */
 @media (max-width: 768px) {
-  body {
-    min-height: 100vh;
-    overflow: auto;
+  /* Sidebar se convierte en un panel sobrepuesto */
+  #sidebar-wrapper {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 2000; /* Por encima del mapa */
+    transform: translateX(-100%); /* Oculto por defecto */
+    transition: transform 0.3s ease-in-out;
+  }
+
+  #sidebar-wrapper.mobile-visible {
+    transform: translateX(0);
+  }
+
+  /* El mapa ocupa todo el espacio */
+  #map-wrapper {
+    height: 100% !important;
+    flex: 1;
   }
   
-  #root > div {
-    flex-direction: column !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  #root > div > div:last-child { 
-    height: 50vh !important;
-    order: 2;
-    min-height: 300px;
-  }
-
-  #root > div > div:first-child {
-    width: 100% !important;
-    height: auto !important;
-    order: 1;
-    border-right: none;
-    border-top: 0;
+  /* Botones e Inputs más grandes para touch */
+  input[type="text"], button {
+    min-height: 44px; /* Tamaño mínimo recomendado Apple/Google */
   }
 }
 
 /* --- PRINT STYLES (PDF) --- */
 @media print {
-  @page { 
-    size: portrait; 
-    margin: 1cm; 
-  }
-
-  body {
-    height: auto !important;
-    overflow: visible !important;
-    display: block !important;
-    background: white;
-  }
-
-  .no-print, 
-  .leaflet-control-container, 
-  header, 
-  ::-webkit-scrollbar {
-    display: none !important;
-  }
-
-  #root > div {
-    display: block !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-
+  @page { size: portrait; margin: 1cm; }
+  body { height: auto !important; overflow: visible !important; display: block !important; background: white; }
+  .no-print, .leaflet-control-container, header, ::-webkit-scrollbar, #mobile-fab { display: none !important; }
+  
+  #root > div { display: block !important; height: auto !important; overflow: visible !important; }
+  
   #map-wrapper {
     height: 400px !important;
     width: 100% !important;
-    position: relative !important;
     border: 1px solid #ccc;
     margin-bottom: 20px;
     page-break-inside: avoid;
   }
-
+  
+  #sidebar-wrapper {
+    position: static !important;
+    transform: none !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+  }
+  
   .print-legend {
     position: absolute !important;
     bottom: 10px !important;
     left: 10px !important;
-    width: auto !important;
     display: block !important;
     background: white !important;
     border: 1px solid #ccc !important;
-    z-index: 9999 !important;
-  }
-
-  .print-legend > div {
-    display: block !important;
-  }
-
-  #sidebar-wrapper {
-    width: 100% !important;
-    height: auto !important;
-    border: none !important;
-    overflow: visible !important;
-    box-shadow: none !important;
-  }
-
-  .grid-cols-1.md\:grid-cols-2 {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 1rem;
-  }
-
-  details {
-    border: 1px solid #eee !important;
-    margin-bottom: 10px;
-    break-inside: avoid;
-  }
-  
-  details[open] summary {
-    border-bottom: 1px solid #eee;
-  }
-
-  p, li, span, h1, h2, h3, h4 {
-    color: black !important;
-  }
-
-  #results-container::before {
-    content: "Visor de Consulta Ciudadana SEDEMA - Reporte Generado";
-    display: block;
-    font-size: 16pt;
-    font-weight: bold;
-    color: var(--color-guinda) !important;
-    margin-bottom: 10px;
-    border-bottom: 2px solid var(--color-guinda);
   }
 }
