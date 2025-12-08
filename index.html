@@ -34,7 +34,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        /* --- CONSTANTS --- */
+        /* --- CONSTANTES --- */
 
         const DATA_FILES = {
             LIMITES_CDMX: './limites_cdmx.geojson',
@@ -163,7 +163,7 @@
             }
         ];
 
-        /* --- ICONS (SVG Components) --- */
+        /* --- ICONOS (SVG) --- */
         const Icons = {
             Search: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>,
             MapPin: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>,
@@ -191,7 +191,8 @@
             Loader2: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
         };
 
-        /* --- GEO UTILS & SERVICE --- */
+        /* --- GEO UTILS --- */
+
         const isPointInPolygon = (point, feature) => {
             const { lat, lng } = point;
             const { type, coordinates } = feature.geometry;
@@ -337,7 +338,7 @@
             return result;
         };
 
-        /* --- COMPONENTS --- */
+        /* --- COMPONENTE ActivitySection --- */
 
         const ActivitySection = ({ title, activities, icon, headerClass, bgClass, defaultOpen }) => {
             if (!activities || activities.length === 0) return null;
@@ -357,6 +358,8 @@
                 </details>
             );
         };
+
+        /* --- SIDEBAR --- */
 
         const Sidebar = ({ analysis, onLocationSelect, currentLocation, onReset }) => {
             const [inputStr, setInputStr] = useState('');
@@ -411,10 +414,10 @@
 
             return (
                 <>
-             <div
-  id="sidebar-wrapper"
-  className="flex flex-col h-full bg-white relative w-full md:w-[450px] shadow-xl z-20 border-r border-gray-200 overflow-y-auto custom-scrollbar"
->
+                <div
+                  id="sidebar-wrapper"
+                  className="flex flex-col h-full bg-white relative w-full md:w-[450px] shadow-xl z-20 border-r border-gray-200 overflow-y-auto custom-scrollbar"
+                >
                     <header className="px-6 py-5 bg-[#9d2449] text-white shrink-0 shadow-lg z-20 flex items-center gap-5 relative">
                         <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-transparent pointer-events-none"></div>
                         <img 
@@ -431,33 +434,57 @@
                         </div>
                     </header>
 
-                   <div id="results-container" className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar bg-white">
+                    <div id="results-container" className="flex-1 p-5 space-y-6 bg-white">
                         <div className="space-y-3 no-print border-b border-gray-100 pb-5">
                             <div className="grid grid-cols-1 gap-2">
                                 <form onSubmit={handleManualInput} className="flex relative group">
-                                    <input type="text" placeholder="Coordenadas (Lat, Lng)" className="w-full pl-3 pr-2 py-2 border border-gray-300 rounded-l text-sm focus:border-[#9d2449] focus:outline-none transition-colors" value={inputStr} onChange={(e) => setInputStr(e.target.value)} />
-                                    <button className="bg-gray-100 px-3 border-y border-r border-gray-300 rounded-r text-xs text-gray-600 hover:bg-gray-200 transition-colors">Ir</button>
+                                    <input
+                                        type="text"
+                                        placeholder="Coordenadas (Lat, Lng)"
+                                        className="w-full pl-3 pr-2 py-2 border border-gray-300 rounded-l text-sm focus:border-[#9d2449] focus:outline-none transition-colors"
+                                        value={inputStr}
+                                        onChange={(e) => setInputStr(e.target.value)}
+                                    />
+                                    <button className="bg-gray-100 px-3 border-y border-r border-gray-300 rounded-r text-xs text-gray-600 hover:bg-gray-200 transition-colors">
+                                        Ir
+                                    </button>
                                 </form>
                                 <form onSubmit={handleAddressSearch} className="flex relative">
-                                    <input type="text" placeholder="Dirección..." className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded text-sm focus:border-[#9d2449] focus:outline-none transition-colors" value={addressStr} onChange={(e) => setAddressStr(e.target.value)} disabled={isSearchingAddr} />
+                                    <input
+                                        type="text"
+                                        placeholder="Dirección..."
+                                        className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded text-sm focus:border-[#9d2449] focus:outline-none transition-colors"
+                                        value={addressStr}
+                                        onChange={(e) => setAddressStr(e.target.value)}
+                                        disabled={isSearchingAddr}
+                                    />
                                     <Icons.Search className="absolute right-2 top-2.5 h-4 w-4 text-gray-400" />
                                 </form>
                             </div>
                             <div className="flex gap-2">
-                                <button onClick={handleGPS} className="flex-1 py-2 bg-gray-800 text-white rounded text-xs flex items-center justify-center gap-2 hover:bg-gray-700 transition-colors shadow-sm">
+                                <button
+                                    onClick={handleGPS}
+                                    className="flex-1 py-2 bg-gray-800 text-white rounded text-xs flex items-center justify-center gap-2 hover:bg-gray-700 transition-colors shadow-sm"
+                                >
                                     <Icons.Navigation className="h-3 w-3" /> Mi Ubicación
                                 </button>
-                                <button onClick={() => { setInputStr(''); setAddressStr(''); onReset(); }} className="px-3 bg-gray-100 border rounded hover:bg-white text-gray-600 transition-colors">
+                                <button
+                                    onClick={() => { setInputStr(''); setAddressStr(''); onReset(); }}
+                                    className="px-3 bg-gray-100 border rounded hover:bg-white text-gray-600 transition-colors"
+                                >
                                     <Icons.RotateCcw className="h-4 w-4" />
                                 </button>
                             </div>
                         </div>
 
                         {analysis ? (
-                            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <div className="animate-in duration-300">
                                 <div className="flex justify-between items-center no-print mb-2">
                                     <span className="text-[10px] text-gray-400 font-mono">FOLIO: {Date.now().toString().slice(-6)}</span>
-                                    <button onClick={onReset} className="text-xs font-bold text-[#9d2449] flex items-center gap-1 uppercase hover:underline">
+                                    <button
+                                        onClick={onReset}
+                                        className="text-xs font-bold text-[#9d2449] flex items-center gap-1 uppercase hover:underline"
+                                    >
                                         <Icons.RotateCcw className="h-3 w-3" /> Nueva Consulta
                                     </button>
                                 </div>
@@ -468,9 +495,15 @@
                                 }`}>
                                     <div className="flex gap-4">
                                         <div className="mt-1">
-                                            {analysis.status === 'CONSERVATION_SOIL' && <Icons.AlertTriangle className="h-6 w-6 text-red-700" />}
-                                            {analysis.status === 'URBAN_SOIL' && <Icons.CheckCircle className="h-6 w-6 text-green-700" />}
-                                            {(analysis.status === 'OUTSIDE_CDMX' || analysis.status === 'LOADING') && <Icons.Info className="h-6 w-6 text-gray-600" />}
+                                            {analysis.status === 'CONSERVATION_SOIL' && (
+                                                <Icons.AlertTriangle className="h-6 w-6 text-red-700" />
+                                            )}
+                                            {analysis.status === 'URBAN_SOIL' && (
+                                                <Icons.CheckCircle className="h-6 w-6 text-green-700" />
+                                            )}
+                                            {(analysis.status === 'OUTSIDE_CDMX' || analysis.status === 'LOADING') && (
+                                                <Icons.Info className="h-6 w-6 text-gray-600" />
+                                            )}
                                         </div>
                                         <div>
                                             <h2 className={`text-lg font-bold uppercase tracking-tight ${
@@ -478,7 +511,7 @@
                                                 analysis.status === 'URBAN_SOIL' ? 'text-green-900' : 'text-gray-800'
                                             }`}>
                                                 {analysis.status === 'CONSERVATION_SOIL' ? 'Zona Restringida' :
-                                                analysis.status === 'URBAN_SOIL' ? 'Suelo Urbano' : 'Fuera de CDMX'}
+                                                 analysis.status === 'URBAN_SOIL' ? 'Suelo Urbano' : 'Fuera de CDMX'}
                                             </h2>
                                             <p className="text-sm mt-1 text-gray-800 text-justify leading-relaxed">
                                                 {analysis.status === 'CONSERVATION_SOIL' 
@@ -493,21 +526,33 @@
 
                                 <div className="grid grid-cols-2 gap-3 text-xs mb-6">
                                     <div className="bg-white p-3 rounded border border-gray-200 shadow-sm">
-                                        <span className="block text-gray-500 text-[10px] font-bold uppercase tracking-wide mb-1">Alcaldía</span>
-                                        <span className="font-semibold text-gray-800 text-sm">{analysis.alcaldia || 'No identificada'}</span>
+                                        <span className="block text-gray-500 text-[10px] font-bold uppercase tracking-wide mb-1">
+                                            Alcaldía
+                                        </span>
+                                        <span className="font-semibold text-gray-800 text-sm">
+                                            {analysis.alcaldia || 'No identificada'}
+                                        </span>
                                     </div>
                                     <div className="bg-white p-3 rounded border border-gray-200 shadow-sm">
-                                        <span className="block text-gray-500 text-[10px] font-bold uppercase tracking-wide mb-1">Coordenadas</span>
+                                        <span className="block text-gray-500 text-[10px] font-bold uppercase tracking-wide mb-1">
+                                            Coordenadas
+                                        </span>
                                         <span className="font-mono text-gray-600 text-[11px]">
                                             {analysis.coordinate.lat.toFixed(5)}, {analysis.coordinate.lng.toFixed(5)}
                                         </span>
                                     </div>
                                     {analysis.zoningKey && (
                                         <div className="col-span-2 bg-white p-3 rounded border border-gray-200 shadow-sm">
-                                            <span className="block text-gray-500 text-[10px] font-bold uppercase tracking-wide mb-1">Zonificación Ecológica</span>
+                                            <span className="block text-gray-500 text-[10px] font-bold uppercase tracking-wide mb-1">
+                                                Zonificación Ecológica
+                                            </span>
                                             <div className="flex items-center gap-3">
-                                                <span className="bg-[#b38e5d] text-white px-2 py-0.5 rounded text-xs font-bold">{analysis.zoningKey}</span>
-                                                <span className="font-medium text-gray-800 text-sm leading-tight">{analysis.zoningName}</span>
+                                                <span className="bg-[#b38e5d] text-white px-2 py-0.5 rounded text-xs font-bold">
+                                                    {analysis.zoningKey}
+                                                </span>
+                                                <span className="font-medium text-gray-800 text-sm leading-tight">
+                                                    {analysis.zoningName}
+                                                </span>
                                             </div>
                                         </div>
                                     )}
@@ -553,7 +598,9 @@
                                 )}
 
                                 <div className="mt-8 border-t border-dashed border-gray-300 pt-4">
-                                    <h4 className="text-[10px] font-bold text-gray-500 uppercase mb-2">Fuentes y Referencias</h4>
+                                    <h4 className="text-[10px] font-bold text-gray-500 uppercase mb-2">
+                                        Fuentes y Referencias
+                                    </h4>
                                     <ul className="text-[10px] text-gray-500 space-y-1">
                                         <li>• Programa General de Ordenamiento Ecológico del DF (2000)</li>
                                         <li>• Sistema de Información Geográfica SEDEMA</li>
@@ -564,7 +611,11 @@
                                 <div className="mt-4 border-t border-dashed border-gray-300 pt-4 bg-gray-50 p-3 rounded text-justify">
                                     <h4 className="text-[10px] font-bold text-[#9d2449] uppercase mb-1">Aviso Legal</h4>
                                     <ul className="list-disc pl-3 space-y-1">
-                                        {LEGAL_NOTES.map((note, i) => <li key={i} className="text-[9px] text-gray-500">{note}</li>)}
+                                        {LEGAL_NOTES.map((note, i) => (
+                                            <li key={i} className="text-[9px] text-gray-500">
+                                                {note}
+                                            </li>
+                                        ))}
                                     </ul>
                                 </div>
                             </div>
@@ -574,7 +625,9 @@
                                     <Icons.MapPin className="h-10 w-10 text-gray-400" />
                                 </div>
                                 <h3 className="text-gray-800 font-bold mb-1">Bienvenido al Visor</h3>
-                                <p className="text-sm text-gray-500 max-w-xs">Seleccione un punto en el mapa o busque una dirección para consultar la normativa ambiental.</p>
+                                <p className="text-sm text-gray-500 max-w-xs">
+                                    Seleccione un punto en el mapa o busque una dirección para consultar la normativa ambiental.
+                                </p>
                             </div>
                         )}
                     </div>
@@ -582,10 +635,16 @@
                     <div className="px-5 py-4 border-b border-gray-200 bg-white">
                         {analysis && (
                             <div className="flex gap-3 mb-5 no-print">
-                                <button onClick={() => window.print()} className="flex-1 py-2.5 bg-white border border-[#9d2449] text-[#9d2449] rounded-md text-xs font-bold hover:bg-[#9d2449] hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm">
+                                <button
+                                    onClick={() => window.print()}
+                                    className="flex-1 py-2.5 bg-white border border-[#9d2449] text-[#9d2449] rounded-md text-xs font-bold hover:bg-[#9d2449] hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm"
+                                >
                                     <Icons.Printer className="h-4 w-4" /> IMPRIMIR
                                 </button>
-                                <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Consulta SEDEMA: ' + analysis.alcaldia)}`, '_blank')} className="flex-1 py-2.5 bg-[#9d2449] text-white rounded-md text-xs font-bold hover:bg-[#7d1d3a] transition-all flex items-center justify-center gap-2 shadow-sm">
+                                <button
+                                    onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Consulta SEDEMA: ' + (analysis.alcaldia || ''))}`, '_blank')}
+                                    className="flex-1 py-2.5 bg-[#9d2449] text-white rounded-md text-xs font-bold hover:bg-[#7d1d3a] transition-all flex items-center justify-center gap-2 shadow-sm"
+                                >
                                     <Icons.Share2 className="h-4 w-4" /> COMPARTIR
                                 </button>
                             </div>
@@ -601,11 +660,15 @@
                                 <span>{CONTACT_INFO.hours}</span>
                             </div>
                         </div>
-                        <p className="mt-3 text-[9px] text-justify leading-tight opacity-60 italic border-t border-gray-100 pt-2">{LEGAL_DISCLAIMER}</p>
+                        <p className="mt-3 text-[9px] text-justify leading-tight opacity-60 italic border-t border-gray-100 pt-2">
+                            {LEGAL_DISCLAIMER}
+                        </p>
                     </div>
 
                     <div className="px-5 py-4 no-print bg-gray-50 border-b border-gray-200">
-                        <h4 className="text-[10px] font-bold text-gray-500 uppercase mb-2 tracking-wider">Galería de Actividades</h4>
+                        <h4 className="text-[10px] font-bold text-gray-500 uppercase mb-2 tracking-wider">
+                            Galería de Actividades
+                        </h4>
                         <div className="grid grid-cols-3 gap-2">
                             {GALLERY_ITEMS.map((item, i) => (
                                 <button 
@@ -615,7 +678,11 @@
                                 >
                                     {item.type === 'video' ? (
                                         <>
-                                            <img src={`https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`} alt={item.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity" />
+                                            <img
+                                                src={`https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`}
+                                                alt={item.title}
+                                                className="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity"
+                                            />
                                             <div className="absolute inset-0 flex items-center justify-center">
                                                 <div className="bg-white/20 p-2 rounded-full backdrop-blur-sm group-hover:scale-110 transition-transform">
                                                     <Icons.Play className="h-5 w-5 text-white fill-white" />
@@ -624,13 +691,19 @@
                                         </>
                                     ) : (
                                         <>
-                                            <img src={item.src} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                            <img
+                                                src={item.src}
+                                                alt={item.title}
+                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                            />
                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                 <Icons.ZoomIn className="text-white h-5 w-5" />
                                             </div>
                                         </>
                                     )}
-                                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent text-white text-[8px] p-1.5 pt-4 truncate font-medium">{item.title}</div>
+                                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent text-white text-[8px] p-1.5 pt-4 truncate font-medium">
+                                        {item.title}
+                                    </div>
                                 </button>
                             ))}
                         </div>
@@ -644,7 +717,9 @@
                             {FAQ_ITEMS.map((faq, i) => (
                                 <details key={i} className="group border border-gray-100 rounded-md overflow-hidden bg-white">
                                     <summary className="flex items-start justify-between p-3 cursor-pointer select-none bg-gray-50 group-hover:bg-gray-100 transition-colors">
-                                        <span className="text-[11px] font-bold text-gray-700 pr-2 leading-tight">{faq.q}</span>
+                                        <span className="text-[11px] font-bold text-gray-700 pr-2 leading-tight">
+                                            {faq.q}
+                                        </span>
                                         <Icons.ChevronDown className="h-3 w-3 text-gray-400 group-open:rotate-180 transition-transform mt-0.5 shrink-0" />
                                     </summary>
                                     <div className="p-3 bg-white border-t border-gray-100 text-[11px] text-gray-600 leading-relaxed text-justify faq-content">
@@ -658,7 +733,7 @@
 
                 {selectedItem && (
                     <div 
-                        className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+                        className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 animate-in duration-200"
                         onClick={() => setSelectedItem(null)}
                     >
                         <button 
@@ -667,13 +742,28 @@
                         >
                             <Icons.X className="h-8 w-8" />
                         </button>
-                        <div className="w-full max-w-4xl max-h-[90vh] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                        <div
+                            className="w-full max-w-4xl max-h-[90vh] flex items-center justify-center"
+                            onClick={(e) => e.stopPropagation()}
+                        >
                             {selectedItem.type === 'video' ? (
                                 <div className="w-full aspect-video bg-black rounded-lg overflow-hidden shadow-2xl">
-                                    <iframe width="100%" height="100%" src={`https://www.youtube.com/embed/${selectedItem.videoId}?autoplay=1&rel=0`} title={selectedItem.title} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+                                    <iframe
+                                        width="100%"
+                                        height="100%"
+                                        src={`https://www.youtube.com/embed/${selectedItem.videoId}?autoplay=1&rel=0`}
+                                        title={selectedItem.title}
+                                        frameBorder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                    ></iframe>
                                 </div>
                             ) : (
-                                <img src={selectedItem.src} alt={selectedItem.title} className="max-w-full max-h-[90vh] rounded-lg shadow-2xl object-contain" />
+                                <img
+                                    src={selectedItem.src}
+                                    alt={selectedItem.title}
+                                    className="max-w-full max-h-[90vh] rounded-lg shadow-2xl object-contain"
+                                />
                             )}
                         </div>
                     </div>
@@ -681,43 +771,47 @@
                 </>
             );
         };
-/* --- ESTILOS DE ZONIFICACIÓN --- */
-const ZONING_COLORS = [
-  '#1f77b4', // azul
-  '#ff7f0e', // naranja
-  '#2ca02c', // verde
-  '#d62728', // rojo
-  '#9467bd', // morado
-  '#8c564b', // café
-  '#e377c2', // rosa
-  '#17becf'  // turquesa
-];
 
-const getZoningColor = (claveRaw) => {
-  const clave = (claveRaw || 'DEFAULT').toString();
-  // hash simple para repartir claves en la paleta
-  let hash = 0;
-  for (let i = 0; i < clave.length; i++) {
-    hash = ((hash << 5) - hash) + clave.charCodeAt(i);
-    hash |= 0; // Convertir a 32 bits
-  }
-  const index = Math.abs(hash) % ZONING_COLORS.length;
-  return ZONING_COLORS[index];
-};
+        /* --- ESTILOS DE ZONIFICACIÓN --- */
 
-const getZoningStyle = (feature) => {
-  const props = feature.properties || {};
-  const clave = props.CLAVE || props.PGOEDF || props.UGA || 'DEFAULT';
-  const color = getZoningColor(clave);
+        const ZONING_COLORS = [
+          '#1f77b4', // azul
+          '#ff7f0e', // naranja
+          '#2ca02c', // verde
+          '#d62728', // rojo
+          '#9467bd', // morado
+          '#8c564b', // café
+          '#e377c2', // rosa
+          '#17becf'  // turquesa
+        ];
 
-  return {
-    color,               // color del contorno
-    weight: 1.2,
-    dashArray: '3, 3',
-    fillColor: color,    // mismo color al relleno
-    fillOpacity: 0.18,   // buena transparencia
-  };
-};
+        const getZoningColor = (claveRaw) => {
+          const clave = (claveRaw || 'DEFAULT').toString();
+          let hash = 0;
+          for (let i = 0; i < clave.length; i++) {
+            hash = ((hash << 5) - hash) + clave.charCodeAt(i);
+            hash |= 0;
+          }
+          const index = Math.abs(hash) % ZONING_COLORS.length;
+          return ZONING_COLORS[index];
+        };
+
+        const getZoningStyle = (feature) => {
+          const props = feature.properties || {};
+          const clave = props.CLAVE || props.PGOEDF || props.UGA || 'DEFAULT';
+          const color = getZoningColor(clave);
+
+          return {
+            color,
+            weight: 1.2,
+            dashArray: '3, 3',
+            fillColor: color,
+            fillOpacity: 0.18,
+          };
+        };
+
+        /* --- MAPVIEWER --- */
+
         const MapViewer = ({ location, onLocationSelect, onReset, analysisStatus }) => {
             const mapRef = useRef(null);
             const mapInstance = useRef(null);
@@ -753,33 +847,43 @@ const getZoningStyle = (feature) => {
                     const cachedData = dataCache;
                     const contextGroup = window.L.layerGroup();
                     if (cachedData.edomex?.features?.length) {
-                        contextGroup.addLayer(window.L.geoJSON(cachedData.edomex, { style: { color: '#fbbf24', weight: 1, dashArray: '4, 4', fillOpacity: 0.1 }, interactive: false }));
+                        contextGroup.addLayer(
+                            window.L.geoJSON(cachedData.edomex, {
+                                style: { color: '#fbbf24', weight: 1, dashArray: '4, 4', fillOpacity: 0.1 },
+                                interactive: false
+                            })
+                        );
                     }
                     layersRef.current['context'] = contextGroup;
 
                     if (cachedData.sc?.features?.length) {
-                        layersRef.current['sc'] = window.L.geoJSON(cachedData.sc, { style: { color: '#d6d6d6', weight: 1, opacity: 0.6, fillColor: '#9d2449', fillOpacity: 0.1 } });
+                        layersRef.current['sc'] = window.L.geoJSON(cachedData.sc, {
+                            style: { color: '#d6d6d6', weight: 1, opacity: 0.6, fillColor: '#9d2449', fillOpacity: 0.1 }
+                        });
                     }
 
-                   if (cachedData.zoning?.features?.length) {
-  layersRef.current['zoning'] = window.L.geoJSON(cachedData.zoning, {
-    style: getZoningStyle,
-    onEachFeature: (feature, layer) => {
-      if (feature.properties) {
-        const name = feature.properties.PGOEDF || feature.properties.UGA || feature.properties.CLAVE;
-        if (name) {
-          layer.bindTooltip(name, {
-            sticky: true,
-            className: 'custom-tooltip'
-          });
-        }
-      }
-    }
-  });
-}
+                    if (cachedData.zoning?.features?.length) {
+                      layersRef.current['zoning'] = window.L.geoJSON(cachedData.zoning, {
+                        style: getZoningStyle,
+                        onEachFeature: (feature, layer) => {
+                          if (feature.properties) {
+                            const name = feature.properties.PGOEDF || feature.properties.UGA || feature.properties.CLAVE;
+                            if (name) {
+                              layer.bindTooltip(name, {
+                                sticky: true,
+                                className: 'custom-tooltip'
+                              });
+                            }
+                          }
+                        }
+                      });
+                    }
 
                     if (cachedData.alcaldias?.features?.length) {
-                        layersRef.current['alcaldias'] = window.L.geoJSON(cachedData.alcaldias, { style: { color: '#ffffff', weight: 2, dashArray: '8, 4', fillOpacity: 0 }, interactive: false });
+                        layersRef.current['alcaldias'] = window.L.geoJSON(cachedData.alcaldias, {
+                            style: { color: '#ffffff', weight: 2, dashArray: '8, 4', fillOpacity: 0 },
+                            interactive: false
+                        });
                     }
 
                     Object.entries(visibleLayers).forEach(([key, isVisible]) => {
@@ -803,7 +907,13 @@ const getZoningStyle = (feature) => {
 
                 if (window.L.Control.Geocoder) {
                     const geocoder = window.L.Control.Geocoder.nominatim();
-                    window.L.Control.geocoder({ geocoder, defaultMarkGeocode: false, placeholder: "Buscar ubicación...", errorMessage: "No encontrado.", showResultIcons: true })
+                    window.L.Control.geocoder({
+                        geocoder,
+                        defaultMarkGeocode: false,
+                        placeholder: "Buscar ubicación...",
+                        errorMessage: "No encontrado.",
+                        showResultIcons: true
+                    })
                     .on('markgeocode', function(e) {
                         const latlng = e.geocode.center;
                         handleMapClick({ latlng });
@@ -849,7 +959,9 @@ const getZoningStyle = (feature) => {
                             if (key === 'alcaldias') layer.bringToFront();
                         }
                     } else {
-                        if (mapInstance.current.hasLayer(layer)) mapInstance.current.removeLayer(layer);
+                        if (mapInstance.current.hasLayer(layer)) {
+                            mapInstance.current.removeLayer(layer);
+                        }
                     }
                 });
             }, [visibleLayers, isMapLoading]);
@@ -874,7 +986,14 @@ const getZoningStyle = (feature) => {
                     markerInstance.current.setLatLng([lat, lng]);
                     markerInstance.current.setStyle({ fillColor: color, color: 'white' });
                 } else {
-                    markerInstance.current = window.L.circleMarker([lat, lng], { radius: 12, fillColor: color, color: '#fff', weight: 3, opacity: 1, fillOpacity: 0.9 }).addTo(mapInstance.current);
+                    markerInstance.current = window.L.circleMarker([lat, lng], {
+                        radius: 12,
+                        fillColor: color,
+                        color: '#fff',
+                        weight: 3,
+                        opacity: 1,
+                        fillOpacity: 0.9
+                    }).addTo(mapInstance.current);
                 }
                 mapInstance.current.setView([lat, lng], 16);
             }, [location, analysisStatus]);
@@ -885,46 +1004,88 @@ const getZoningStyle = (feature) => {
                         {isMapLoading && (
                             <div className="absolute inset-0 z-[1000] bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center text-[#9d2449]">
                                 <Icons.Loader2 className="h-10 w-10 animate-spin mb-3" />
-                                <span className="text-sm font-bold font-serif tracking-wide">Cargando Mapa Satelital...</span>
+                                <span className="text-sm font-bold font-serif tracking-wide">
+                                    Cargando Mapa Satelital...
+                                </span>
                             </div>
                         )}
                         <div ref={mapRef} className="h-full w-full z-10" />
-                        <div className={`absolute bottom-8 left-4 bg-white shadow-xl border border-gray-200 z-[400] transition-all duration-300 ease-in-out rounded-lg overflow-hidden print-legend ${isLegendOpen ? 'w-64' : 'w-auto'}`} onMouseEnter={() => setIsLegendOpen(true)}>
-                            <button onClick={() => setIsLegendOpen(!isLegendOpen)} className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors border-b border-gray-100 no-print">
+
+                        <div
+                            className={`absolute bottom-8 left-4 bg-white shadow-xl border border-gray-200 z-[400] transition-all duration-300 ease-in-out rounded-lg overflow-hidden print-legend ${isLegendOpen ? 'w-64' : 'w-auto'}`}
+                            onMouseEnter={() => setIsLegendOpen(true)}
+                        >
+                            <button
+                                onClick={() => setIsLegendOpen(!isLegendOpen)}
+                                className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors border-b border-gray-100 no-print"
+                            >
                                 <div className="flex items-center gap-2 text-sm font-bold text-[#9d2449] font-serif">
                                     <Icons.Layers className="h-4 w-4" />
                                     {isLegendOpen && <span>Capas y Simbología</span>}
                                 </div>
-                                {isLegendOpen ? <Icons.ChevronDown className="h-4 w-4 text-gray-500" /> : <Icons.ChevronUp className="h-4 w-4 text-gray-500" />}
+                                {isLegendOpen ? (
+                                    <Icons.ChevronDown className="h-4 w-4 text-gray-500" />
+                                ) : (
+                                    <Icons.ChevronUp className="h-4 w-4 text-gray-500" />
+                                )}
                             </button>
+
                             <div className={`p-3 space-y-3 bg-white/95 backdrop-blur-sm ${!isLegendOpen ? 'hidden print:block' : ''}`}>
-                                <div className="flex items-center justify-between cursor-pointer group p-1" onClick={(e) => toggleLayer('sc', e)}>
+                                <div
+                                    className="flex items-center justify-between cursor-pointer group p-1"
+                                    onClick={(e) => toggleLayer('sc', e)}
+                                >
                                     <div className="flex items-center gap-3">
                                         <div className="w-5 h-5 rounded bg-[#9d2449]/30 border border-[#9d2449] shrink-0"></div>
                                         <span className="text-xs text-gray-800 font-bold">Suelo de Conservación</span>
                                     </div>
-                                    <button className="text-gray-400 group-hover:text-[#9d2449] no-print">{visibleLayers.sc ? <Icons.Eye className="h-3 w-3" /> : <Icons.EyeOff className="h-3 w-3" />}</button>
+                                    <button className="text-gray-400 group-hover:text-[#9d2449] no-print">
+                                        {visibleLayers.sc ? (
+                                            <Icons.Eye className="h-3 w-3" />
+                                        ) : (
+                                            <Icons.EyeOff className="h-3 w-3" />
+                                        )}
+                                    </button>
                                 </div>
-                               <div className="flex items-center justify-between cursor-pointer group p-1" onClick={(e) => toggleLayer('zoning', e)}>
-  <div className="flex items-center gap-3">
-    <div className="w-5 h-5 bg-gradient-to-r from-[#1f77b4] via-[#ff7f0e] to-[#2ca02c] border border-gray-300 rounded-sm shrink-0"></div>
-    <span className="text-xs text-gray-800 font-bold">Zonificación ecológica</span>
-  </div>
-  <button className="text-gray-400 group-hover:text-[#00eaff] no-print">
-    {visibleLayers.zoning ? <Icons.Eye className="h-3 w-3" /> : <Icons.EyeOff className="h-3 w-3" />}
-  </button>
-</div>
-                                    <button className="text-gray-400 group-hover:text-[#00eaff] no-print">{visibleLayers.zoning ? <Icons.Eye className="h-3 w-3" /> : <Icons.EyeOff className="h-3 w-3" />}</button>
+
+                                <div
+                                    className="flex items-center justify-between cursor-pointer group p-1"
+                                    onClick={(e) => toggleLayer('zoning', e)}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-5 h-5 bg-gradient-to-r from-[#1f77b4] via-[#ff7f0e] to-[#2ca02c] border border-gray-300 rounded-sm shrink-0"></div>
+                                        <span className="text-xs text-gray-800 font-bold">Zonificación ecológica</span>
+                                    </div>
+                                    <button className="text-gray-400 group-hover:text-[#00eaff] no-print">
+                                        {visibleLayers.zoning ? (
+                                            <Icons.Eye className="h-3 w-3" />
+                                        ) : (
+                                            <Icons.EyeOff className="h-3 w-3" />
+                                        )}
+                                    </button>
                                 </div>
-                                <div className="flex items-center justify-between cursor-pointer group p-1" onClick={(e) => toggleLayer('alcaldias', e)}>
+
+                                <div
+                                    className="flex items-center justify-between cursor-pointer group p-1"
+                                    onClick={(e) => toggleLayer('alcaldias', e)}
+                                >
                                     <div className="flex items-center gap-3">
                                         <div className="w-5 h-5 bg-transparent border-2 border-white shadow-sm shrink-0"></div>
                                         <span className="text-xs text-gray-800 font-bold">Límites Alcaldías</span>
                                     </div>
-                                    <button className="text-gray-400 group-hover:text-gray-600 no-print">{visibleLayers.alcaldias ? <Icons.Eye className="h-3 w-3" /> : <Icons.EyeOff className="h-3 w-3" />}</button>
+                                    <button className="text-gray-400 group-hover:text-gray-600 no-print">
+                                        {visibleLayers.alcaldias ? (
+                                            <Icons.Eye className="h-3 w-3" />
+                                        ) : (
+                                            <Icons.EyeOff className="h-3 w-3" />
+                                        )}
+                                    </button>
                                 </div>
+
                                 <div className="pt-2 mt-2 border-t border-gray-100">
-                                    <div className="text-[10px] text-gray-500 font-bold mb-2 uppercase">Estatus Predio</div>
+                                    <div className="text-[10px] text-gray-500 font-bold mb-2 uppercase">
+                                        Estatus Predio
+                                    </div>
                                     <div className="space-y-1.5">
                                         <div className="flex items-center gap-2">
                                             <span className="w-3 h-3 rounded-full bg-[#22c55e] border border-white shadow-sm shrink-0"></span>
@@ -942,6 +1103,8 @@ const getZoningStyle = (feature) => {
                 </div>
             );
         };
+
+        /* --- APP --- */
 
         const App = () => {
             const [loading, setLoading] = useState(true);
@@ -967,7 +1130,9 @@ const getZoningStyle = (feature) => {
                 return (
                     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 text-[#9d2449]">
                         <Icons.Loader2 className="h-12 w-12 animate-spin mb-4" />
-                        <h2 className="text-xl font-semibold font-serif">Cargando datos geográficos SEDEMA...</h2>
+                        <h2 className="text-xl font-semibold font-serif">
+                            Cargando datos geográficos SEDEMA...
+                        </h2>
                         <p className="text-sm text-gray-500 mt-2">Por favor espere.</p>
                     </div>
                 );
