@@ -83,30 +83,27 @@ body {
 
 /* Contenedor del mapa (derecha) */
 #map-wrapper {
-  /* Ocupa toda la ventana menos el header (~56px de alto) */
   height: calc(100vh - 56px) !important;
   min-height: 400px;
   position: relative;
-  background: #e5e7eb; /* gris suave de fondo mientras cargan tiles */
+  background: #e5e7eb;
 }
 
-/* Div interno del mapa (Leaflet) */
 #map-container-div {
   height: 100% !important;
   width: 100% !important;
   position: relative;
 }
 
-/* Asegurar que los controles de Leaflet estén por encima del canvas */
 .leaflet-control-container {
   z-index: 600 !important;
 }
 
-/* Cualquier contenedor de leyenda / print-legend por encima del mapa */
 .legend-container,
 .print-legend {
   z-index: 9999 !important;
 }
+
 
 /* --- RESPONSIVE MOBILE --- */
 @media (max-width: 768px) {
