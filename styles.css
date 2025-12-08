@@ -79,20 +79,57 @@ body {
   animation: fadeIn 0.3s ease-out forwards, slideUp 0.4s ease-out forwards;
 }
 
+/* --- MAPA: ALTURA Y OVERLAYS --- */
+
+/* Contenedor del mapa (derecha) */
+#map-wrapper {
+  /* Ocupa toda la ventana menos el header (~56px de alto) */
+  height: calc(100vh - 56px) !important;
+  min-height: 400px;
+  position: relative;
+  background: #e5e7eb; /* gris suave de fondo mientras cargan tiles */
+}
+
+/* Div interno del mapa (Leaflet) */
+#map-container-div {
+  height: 100% !important;
+  width: 100% !important;
+  position: relative;
+}
+
+/* Asegurar que los controles de Leaflet estén por encima del canvas */
+.leaflet-control-container {
+  z-index: 600 !important;
+}
+
+/* Cualquier contenedor de leyenda / print-legend por encima del mapa */
+.legend-container,
+.print-legend {
+  z-index: 9999 !important;
+}
+
 /* --- RESPONSIVE MOBILE --- */
 @media (max-width: 768px) {
+  body {
+    min-height: 100vh;
+    overflow: auto;
+  }
+  
+  /* Contenedor principal de la app (el que envuelve sidebar + mapa) */
   #root > div {
     flex-direction: column !important;
     height: auto !important;
     overflow: visible !important;
   }
 
+  /* Mapa en mobile: mitad de pantalla aprox. */
   #root > div > div:last-child { 
     height: 50vh !important;
     order: 2;
     min-height: 300px;
   }
 
+  /* Sidebar en mobile: arriba del mapa */
   #root > div > div:first-child {
     width: 100% !important;
     height: auto !important;
@@ -129,29 +166,15 @@ body {
     overflow: visible !important;
   }
 
- /* --- FIX MAP HEIGHT --- */
-#map-wrapper {
-    height: calc(100vh - 56px) !important; 
-    min-height: 400px;
-    position: relative;
-}
-
-/* Ensure leaflet map container expands fully */
-#map-container-div {
-    height: 100% !important;
+  #map-wrapper {
+    height: 400px !important;
     width: 100% !important;
-    position: relative;
-}
+    position: relative !important;
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+    page-break-inside: avoid;
+  }
 
-/* Z-index fixes */
-.leaflet-control-container {
-    z-index: 600 !important;
-}
-
-.legend-container,
-.print-legend {
-    z-index: 9999 !important;
-}
   .print-legend {
     position: absolute !important;
     bottom: 10px !important;
