@@ -15,12 +15,14 @@
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    
+    <!-- Tus estilos -->
     <link rel="stylesheet" href="styles.css" />
     
     <!-- Libraries -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-   
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    
     <!-- React & Babel (for JSX) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -117,11 +119,11 @@
             },
             {
                 q: "3. ¿Cómo se representa la Zonificación?",
-                a: "La zonificación se muestra mediante una nomenclatura, que determina la zona, los niveles y porcentaje de área libre que debe tener. Ejemplo: H / 3 / 40 / B (H=Habitacional, 3=niveles máximos de construcción, 40=porcentaje de área libre y en este caso B=1 vivienda por cada 100 m² de terreno)."
+                a: "La zonificación se muestra mediante una nomenclatura, que determina la zona, los niveles y porcentaje de área libre que debe tener. Ejemplo: H / 3 / 40 / B."
             },
             {
                 q: "4. ¿Qué es Uso del Suelo?",
-                a: "Es la capacidad permitida de uso o utilización asignada a un predio, de acuerdo a la zonificación establecida en los Programas Delegacionales de Desarrollo Urbano y/o Programas Parciales de Desarrollo Urbano."
+                a: "Es la capacidad permitida de uso o utilización asignada a un predio, de acuerdo a la zonificación establecida en los programas de desarrollo urbano."
             },
             {
                 q: "5. ¿Cuáles son los Usos del Suelo que le aplican a mi predio?",
@@ -129,7 +131,7 @@
             },
             {
                 q: "6. ¿Para qué sirve conocer el Uso del Suelo de mi Predio?",
-                a: "Para conocer los usos permitidos y condicionados, así como restricciones, con fines de renta, compraventa, construcción o instalación de actividades."
+                a: "Para conocer usos permitidos, restringidos y prohibidos con fines de compraventa, construcción o instalación de actividades."
             },
             {
                 q: "7. ¿Cómo sé qué tipo de negocio o servicio puedo establecer en mi Predio?",
@@ -190,7 +192,7 @@
             Loader2: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
         };
 
-        /* --- GEO UTILS --- */
+        /* --- UTILIDADES GEO --- */
 
         const isPointInPolygon = (point, feature) => {
             const { lat, lng } = point;
@@ -279,12 +281,13 @@
                 isRestricted: false,
                 allowedActivities: [],
                 prohibitedActivities: [],
-                
                 timestamp: new Date().toLocaleString(),
                 coordinate: coord
             };
 
-            const inCDMX = dataCache.cdmx?.features.length ? findFeatureContainingPoint(coord, dataCache.cdmx) : null;
+            const inCDMX = dataCache.cdmx?.features.length
+                ? findFeatureContainingPoint(coord, dataCache.cdmx)
+                : null;
 
             if (dataCache.cdmx?.features.length && !inCDMX) {
                 result.status = 'OUTSIDE_CDMX';
@@ -296,7 +299,9 @@
             }
 
             const alcaldiaFeature = findFeatureContainingPoint(coord, dataCache.alcaldias);
-            if (alcaldiaFeature) result.alcaldia = alcaldiaFeature.properties.NOMBRE || alcaldiaFeature.properties.NOMGEO;
+            if (alcaldiaFeature) {
+                result.alcaldia = alcaldiaFeature.properties.NOMBRE || alcaldiaFeature.properties.NOMGEO;
+            }
 
             const scFeature = findFeatureContainingPoint(coord, dataCache.sc);
             if (!scFeature) {
@@ -308,7 +313,6 @@
             result.isRestricted = true;
 
             const zoningFeature = findFeatureContainingPoint(coord, dataCache.zoning);
-            
             if (zoningFeature) {
                 const clave = zoningFeature.properties.CLAVE;
                 const nombre = zoningFeature.properties.PGOEDF || zoningFeature.properties.UGA;
@@ -316,7 +320,9 @@
                 result.zoningName = nombre;
 
                 if (result.zoningKey && dataCache.rules) {
-                    const allowed = [], prohibited = [], conditioned = [];
+                    const allowed = [];
+                    const prohibited = [];
+
                     dataCache.rules.forEach(row => {
                         const rawValue = row[result.zoningKey] || '';
                         const ruleValue = rawValue.trim().toUpperCase();
@@ -338,12 +344,15 @@
 
                         if (isEmpty) return;
 
-                        if (ruleValue === 'A') allowed.push(activityObj);
-                                               else if (ruleValue === 'P') prohibited.push(activityObj);
+                        if (ruleValue === 'A') {
+                            allowed.push(activityObj);
+                        } else if (ruleValue === 'P') {
+                            prohibited.push(activityObj);
+                        }
                     });
+
                     result.allowedActivities = allowed;
                     result.prohibitedActivities = prohibited;
-                    result.conditionedActivities = conditioned;
                 }
             } else {
                 result.zoningName = scFeature.properties.PGOEDF || "Sin zonificación específica detectada";
@@ -353,7 +362,7 @@
             return result;
         };
 
-        /* --- SECTION DE ACTIVIDADES: TABLA + FILTRO --- */
+        /* --- TABLA DE ACTIVIDADES CON FILTRO --- */
 
         const ActivitySection = ({ title, activities, icon, headerClass, bgClass, defaultOpen }) => {
             const [filter, setFilter] = useState('');
@@ -636,34 +645,30 @@
                                     )}
                                 </div>
 
-                                {/* ACTIVIDADES: PROHIBIDAS -> PERMITIDAS -> CONDICIONADAS (APILADAS) */}
-                               {analysis.status === 'CONSERVATION_SOIL' && (
-  <div className="mt-6">
-    <h3 className="text-xs font-bold text-gray-800 mb-3 border-b pb-2 flex items-center gap-2">
-      <Icons.Map className="h-3 w-3" /> REGULACIÓN DE USO DE SUELO
-    </h3>
+                                {/* ACTIVIDADES: PROHIBIDAS Y PERMITIDAS APILADAS */}
+                                {analysis.status === 'CONSERVATION_SOIL' && (
+                                    <div className="mt-6">
+                                        <h3 className="text-xs font-bold text-gray-800 mb-3 border-b pb-2 flex items-center gap-2">
+                                            <Icons.Map className="h-3 w-3" /> REGULACIÓN DE USO DE SUELO
+                                        </h3>
 
-    <div className="space-y-3">
-      <ActivitySection 
-        title="PROHIBIDAS" 
-        activities={analysis.prohibitedActivities} 
-        icon={<Icons.XCircle className="h-3 w-3" />}
-        headerClass="text-red-900 bg-red-50 border-red-100"
-        bgClass="bg-white"
-        defaultOpen={true}
-      />
-      <ActivitySection 
-        title="PERMITIDAS" 
-        activities={analysis.allowedActivities} 
-        icon={<Icons.CheckCircle className="h-3 w-3" />}
-        headerClass="text-green-900 bg-green-50 border-green-100"
-        bgClass="bg-white"
-        defaultOpen={true}
-      />
-    </div>
-  </div>
-)}
-                                        
+                                        <div className="space-y-3">
+                                            <ActivitySection 
+                                                title="PROHIBIDAS" 
+                                                activities={analysis.prohibitedActivities} 
+                                                icon={<Icons.XCircle className="h-3 w-3" />}
+                                                headerClass="text-red-900 bg-red-50 border-red-100"
+                                                bgClass="bg-white"
+                                                defaultOpen={true}
+                                            />
+                                            <ActivitySection 
+                                                title="PERMITIDAS" 
+                                                activities={analysis.allowedActivities} 
+                                                icon={<Icons.CheckCircle className="h-3 w-3" />}
+                                                headerClass="text-green-900 bg-green-50 border-green-100"
+                                                bgClass="bg-white"
+                                                defaultOpen={true}
+                                            />
                                         </div>
                                     </div>
                                 )}
@@ -778,7 +783,7 @@
                         </div>
                     </div>
 
-                    {/* PREGUNTAS FRECUENTES (COLAPSABLE GENERAL + INDIVIDUALES) */}
+                    {/* PREGUNTAS FRECUENTES */}
                     <div className="px-5 py-5 bg-white no-print">
                         <details className="group border border-gray-200 rounded-md bg-white">
                             <summary className="flex items-center justify-between px-3 py-2 cursor-pointer select-none bg-gray-50 group-hover:bg-gray-100 transition-colors">
@@ -848,70 +853,55 @@
             );
         };
 
-        /* --- PALETA DE ZONIFICACIÓN (COLORES FIJOS POR CLAVE) --- */
+        /* --- PALETA DE ZONIFICACIÓN FIJA --- */
 
         const ZONING_FIXED_COLORS = {
-            PE: '#0072B2',   // Preservación Ecológica
-            RE: '#009E73',   // Rescate Ecológico
-            FC: '#005F2F',   // Forestal de Conservación
-            PRA: '#D55E00',  // Producción Rural Agroindustrial
-            HR: '#E69F00',   // Habitacional Rural
-            HRB: '#E69F00',  // Habitacional Rural de Baja Densidad
-            ER: '#CC79A7'    // Equipamiento Rural
+            PE:  '#0072B2', // Preservación Ecológica
+            RE:  '#009E73', // Rescate Ecológico
+            FC:  '#005F2F', // Forestal de Conservación
+            PRA: '#D55E00', // Producción Rural Agroindustrial
+            HR:  '#E69F00', // Habitacional Rural
+            HRB: '#E69F00', // Habitacional Rural de Baja Densidad
+            ER:  '#CC79A7'  // Equipamiento Rural
         };
 
-       /* --- PALETA DE ZONIFICACIÓN --- */
-const ZONING_FIXED_COLORS = {
-  PE:  '#0072B2', // Preservación Ecológica
-  RE:  '#009E73', // Rescate Ecológico
-  FC:  '#005F2F', // Forestal de Conservación
-  PRA: '#D55E00', // Producción Rural Agroindustrial
-  HR:  '#E69F00', // Habitacional Rural
-  HRB: '#E69F00', // Habitacional Rural de Baja Densidad
-  ER:  '#CC79A7'  // Equipamiento Rural
-};
+        const ZONING_COLORS = [
+          '#1f77b4',
+          '#ff7f0e',
+          '#2ca02c',
+          '#d62728',
+          '#9467bd',
+          '#8c564b',
+          '#e377c2',
+          '#17becf'
+        ];
 
-const ZONING_COLORS = [
-  '#1f77b4',
-  '#ff7f0e',
-  '#2ca02c',
-  '#d62728',
-  '#9467bd',
-  '#8c564b',
-  '#e377c2',
-  '#17becf'
-];
+        const getZoningColor = (claveRaw) => {
+          const clave = (claveRaw || 'DEFAULT').toString().toUpperCase();
+          if (ZONING_FIXED_COLORS[clave]) return ZONING_FIXED_COLORS[clave];
 
-const getZoningColor = (claveRaw) => {
-  const clave = (claveRaw || 'DEFAULT').toString().toUpperCase();
+          let hash = 0;
+          for (let i = 0; i < clave.length; i++) {
+            hash = ((hash << 5) - hash) + clave.charCodeAt(i);
+            hash |= 0;
+          }
+          const index = Math.abs(hash) % ZONING_COLORS.length;
+          return ZONING_COLORS[index];
+        };
 
-  // Paleta fija por CLAVE
-  if (ZONING_FIXED_COLORS[clave]) return ZONING_FIXED_COLORS[clave];
+        const getZoningStyle = (feature) => {
+          const props = feature.properties || {};
+          const clave = props.CLAVE || props.PGOEDF || props.UGA || 'DEFAULT';
+          const color = getZoningColor(clave);
 
-  // Fallback hash si aparece una clave nueva
-  let hash = 0;
-  for (let i = 0; i < clave.length; i++) {
-    hash = ((hash << 5) - hash) + clave.charCodeAt(i);
-    hash |= 0;
-  }
-  const index = Math.abs(hash) % ZONING_COLORS.length;
-  return ZONING_COLORS[index];
-};
-
-const getZoningStyle = (feature) => {
-  const props = feature.properties || {};
-  const clave = props.CLAVE || props.PGOEDF || props.UGA || 'DEFAULT';
-  const color = getZoningColor(clave);
-
-  return {
-    color,
-    weight: 1.2,
-    dashArray: '3, 3',
-    fillColor: color,
-    fillOpacity: 0.25
-  };
-};
-          
+          return {
+            color,
+            weight: 1.2,
+            dashArray: '3, 3',
+            fillColor: color,
+            fillOpacity: 0.25
+          };
+        };
 
         /* --- MAPVIEWER --- */
 
@@ -981,46 +971,35 @@ const getZoningStyle = (feature) => {
 
                 satellite.addTo(map);
                 reference.addTo(map);
-
                 window.L.control.layers(baseMaps, null, { position: 'topright' }).addTo(map);
 
                 setIsMapLoading(true);
 
                 const initLayers = () => {
-    const cachedData = dataCache;
-    // ... todo lo que ya tienes para edomex, morelos, sc, zoning, alcaldias ...
+                    const { edomex, morelos, sc, zoning, alcaldias } = dataCache;
 
-    Object.entries(visibleLayers).forEach(([key, isVisible]) => {
-        if (isVisible && layersRef.current[key]) {
-            layersRef.current[key].addTo(map);
-            if (key === 'sc') layersRef.current[key].bringToBack();
-        }
-    });
+                    if (edomex?.features?.length) {
+                        layersRef.current['edomex'] = window.L.geoJSON(edomex, {
+                            style: { color: '#fbbf24', weight: 1, dashArray: '4, 4', fillOpacity: 0.05 },
+                            interactive: false
+                        });
+                    }
 
-    if (layersRef.current['zoning']) layersRef.current['zoning'].bringToFront();
-    if (layersRef.current['alcaldias']) layersRef.current['alcaldias'].bringToFront();
-
-    // 👇 AÑADE ESTA LÍNEA
-    map.invalidateSize(true);
-
-    setIsMapLoading(false);
-};
-
-                    if (cachedData.morelos?.features?.length) {
-                        layersRef.current['morelos'] = window.L.geoJSON(cachedData.morelos, {
+                    if (morelos?.features?.length) {
+                        layersRef.current['morelos'] = window.L.geoJSON(morelos, {
                             style: { color: '#a855f7', weight: 1, dashArray: '4, 4', fillOpacity: 0.05 },
                             interactive: false
                         });
                     }
 
-                    if (cachedData.sc?.features?.length) {
-                        layersRef.current['sc'] = window.L.geoJSON(cachedData.sc, {
+                    if (sc?.features?.length) {
+                        layersRef.current['sc'] = window.L.geoJSON(sc, {
                             style: { color: '#d6d6d6', weight: 1, opacity: 0.6, fillColor: '#9d2449', fillOpacity: 0.1 }
                         });
                     }
 
-                    if (cachedData.zoning?.features?.length) {
-                        layersRef.current['zoning'] = window.L.geoJSON(cachedData.zoning, {
+                    if (zoning?.features?.length) {
+                        layersRef.current['zoning'] = window.L.geoJSON(zoning, {
                             style: getZoningStyle,
                             onEachFeature: (feature, layer) => {
                                 if (feature.properties) {
@@ -1036,7 +1015,7 @@ const getZoningStyle = (feature) => {
                         });
 
                         const unique = {};
-                        cachedData.zoning.features.forEach(f => {
+                        zoning.features.forEach(f => {
                             const props = f.properties || {};
                             const clave = props.CLAVE;
                             if (!clave) return;
@@ -1059,8 +1038,8 @@ const getZoningStyle = (feature) => {
                         setZoningFilters(initialFilters);
                     }
 
-                    if (cachedData.alcaldias?.features?.length) {
-                        layersRef.current['alcaldias'] = window.L.geoJSON(cachedData.alcaldias, {
+                    if (alcaldias?.features?.length) {
+                        layersRef.current['alcaldias'] = window.L.geoJSON(alcaldias, {
                             style: { color: '#ffffff', weight: 2, dashArray: '8, 4', fillOpacity: 0 },
                             interactive: false
                         });
@@ -1076,6 +1055,7 @@ const getZoningStyle = (feature) => {
                     if (layersRef.current['zoning']) layersRef.current['zoning'].bringToFront();
                     if (layersRef.current['alcaldias']) layersRef.current['alcaldias'].bringToFront();
 
+                    map.invalidateSize(true);
                     setIsMapLoading(false);
                 };
 
@@ -1085,15 +1065,6 @@ const getZoningStyle = (feature) => {
                         initLayers();
                     }
                 }, 500);
-
-              
-                    .on('markgeocode', function(e) {
-                        const latlng = e.geocode.center;
-                        handleMapClick({ latlng });
-                        map.setView(latlng, 16);
-                    })
-                    .addTo(map);
-                }
 
                 if (onReset) {
                     const resetBtn = window.L.control({ position: 'topleft' });
@@ -1206,13 +1177,11 @@ const getZoningStyle = (feature) => {
                         )}
                         <div ref={mapRef} className="h-full w-full z-10" />
 
-                        {/* LEYENDA */}
+                        {/* LEYENDA SOBRE EL MAPA */}
                         <div
                             className={`absolute bottom-8 left-4 bg-white shadow-xl border border-gray-200 z-[400] transition-all duration-300 ease-in-out rounded-lg overflow-hidden print-legend ${isLegendOpen ? 'w-72' : 'w-auto'}`}
                             onMouseEnter={() => setIsLegendOpen(true)}
                         >
-
-                       
                             <button
                                 onClick={() => setIsLegendOpen(!isLegendOpen)}
                                 className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors border-b border-gray-100 no-print"
@@ -1247,7 +1216,7 @@ const getZoningStyle = (feature) => {
                                     </button>
                                 </div>
 
-                                {/* PGOEDF Zonificación + categorías */}
+                                {/* PGOEDF – Zonificación */}
                                 <div
                                     className="cursor-pointer group p-1 border border-transparent rounded"
                                     onClick={(e) => toggleLayer('zoning', e)}
@@ -1375,7 +1344,7 @@ const getZoningStyle = (feature) => {
                                     </button>
                                 </div>
 
-                                {/* Estatus predio */}
+                                {/* Estatus Predio */}
                                 <div className="pt-2 mt-2 border-t border-gray-100">
                                     <div className="text-[10px] text-gray-500 font-bold mb-2 uppercase">
                                         Estatus Predio
@@ -1402,7 +1371,7 @@ const getZoningStyle = (feature) => {
             );
         };
 
-        /* --- APP (HEADER GUINDA + LAYOUT) --- */
+        /* --- APP PRINCIPAL --- */
 
         const App = () => {
             const [loading, setLoading] = useState(true);
