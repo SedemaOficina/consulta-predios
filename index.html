@@ -31,25 +31,25 @@
 <body>
     <div id="root"></div>
 
-    <script type="text/babel">
+  <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        /* --- LOGICA DE COLORES DE ZONIFICACIÓN (GLOBAL) --- */
-        const ZONING_FIXED_COLORS = {
-            PE:  '#0072B2', // Preservación Ecológica
-            RE:  '#009E73', // Rescate Ecológico
-            FC:  '#005F2F', // Forestal de Conservación (Verde Oscuro)
-            PRA: '#D55E00', // Producción Rural Agroindustrial
-            HR:  '#E69F00', // Habitacional Rural
-            HRB: '#E69F00', // Habitacional Rural de Baja Densidad
-            ER:  '#CC79A7'  // Equipamiento Rural
+        /* --- 1. DEFINICIÓN DE CATEGORÍAS Y COLORES PARA LA LEYENDA --- */
+        const ZONING_CAT_INFO = {
+            'PE':  { color: '#0072B2', label: 'Preservación Ecológica' },
+            'RE':  { color: '#009E73', label: 'Rescate Ecológico' },
+            'FC':  { color: '#005F2F', label: 'Forestal de Conservación' },
+            'PRA': { color: '#D55E00', label: 'Producción Rural Agro' },
+            'HR':  { color: '#E69F00', label: 'Habitacional Rural' },
+            'HRB': { color: '#F0E442', label: 'Hab. Rural Baja Densidad' }, // Ajusté un poco el color para diferenciar
+            'ER':  { color: '#CC79A7', label: 'Equipamiento Rural' }
         };
 
         const ZONING_COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#17becf'];
 
         const getZoningColor = (claveRaw) => {
           const clave = (claveRaw || 'DEFAULT').toString().toUpperCase().trim();
-          if (ZONING_FIXED_COLORS[clave]) return ZONING_FIXED_COLORS[clave];
+          if (ZONING_CAT_INFO[clave]) return ZONING_CAT_INFO[clave].color;
 
           let hash = 0;
           for (let i = 0; i < clave.length; i++) {
@@ -66,11 +66,12 @@
           const color = getZoningColor(clave);
 
           return {
-            color,
+            color: color,
             weight: 1.2,
             dashArray: '3, 3',
             fillColor: color,
-            fillOpacity: 0.25
+            fillOpacity: 0.25,
+            interactive: true // Por defecto interactivo
           };
         };
 
@@ -93,7 +94,6 @@
         const FAQ_ITEMS = [
             { q: "1. ¿Qué beneficios obtengo del Sistema?", a: "Conocer la información normativa urbana y ambiental..." },
             { q: "2. ¿Qué es Zonificación?", a: "La zonificación es la clasificación de áreas dentro de un territorio..." },
-            // ... (resto de tus preguntas frecuentes, acortadas para el ejemplo)
         ];
 
         /* --- ICONOS (SVG) --- */
@@ -196,7 +196,6 @@
             const scFeature = findFeatureContainingPoint(coord, dataCache.sc);
             if (!scFeature) {
                 result.status = 'URBAN_SOIL';
-                // Lógica de PDU (simulada)
                 return result;
             }
 
@@ -267,12 +266,6 @@
             const [inputStr, setInputStr] = useState('');
             const [addressStr, setAddressStr] = useState('');
 
-            useEffect(() => {
-                if (analysis) {
-                   // Scroll al tope de resultados si es necesario
-                }
-            }, [analysis]);
-
             const handleManualInput = (e) => {
                 e.preventDefault();
                 const parts = inputStr.split(',').map(s => parseFloat(s.trim()));
@@ -295,7 +288,6 @@
             };
 
             const copyToClipboard = () => {
-                const url = window.location.href; // O generar link con parámetros
                 navigator.clipboard.writeText(`Consulta SEDEMA: ${analysis.alcaldia}, Zonificación: ${analysis.zoningKey || 'N/A'}. Coordenadas: ${analysis.coordinate.lat}, ${analysis.coordinate.lng}`);
                 alert("Información copiada al portapapeles");
             };
@@ -501,10 +493,26 @@
             const mapInstance = useRef(null);
             const layersRef = useRef({});
             const markerRef = useRef(null);
-            const [visibleLayers, setVisibleLayers] = useState({ sc: true, zoning: true, alcaldias: true, edomex: true, morelos: true });
+            
+            // Inicializar el estado de capas incluyendo cada categoría de zonificación
+            const [visibleLayers, setVisibleLayers] = useState(() => {
+                const defaults = { sc: true, zoning: true, alcaldias: true, edomex: true, morelos: true };
+                // Agregar cada categoría de zonificación como activa por defecto
+                Object.keys(ZONING_CAT_INFO).forEach(key => defaults[key] = true);
+                return defaults;
+            });
+            
             const [isLegendOpen, setIsLegendOpen] = useState(true);
 
             const toggleLayer = (k) => setVisibleLayers(p => ({...p, [k]: !p[k]}));
+
+            // Toggle para el grupo completo de zonificación (activa/desactiva todo)
+            const toggleAllZoning = () => {
+                const newState = !visibleLayers.zoning;
+                const updates = { zoning: newState };
+                Object.keys(ZONING_CAT_INFO).forEach(key => updates[key] = newState);
+                setVisibleLayers(p => ({...p, ...updates}));
+            };
 
             useEffect(() => {
                 if (!mapRef.current || mapInstance.current) return;
@@ -526,7 +534,7 @@
                             if (!data?.features?.length) return;
                             const l = window.L.geoJSON(data, {
                                 style: style,
-                                interactive: !!tooltipField,
+                                interactive: true,
                                 onEachFeature: (feature, layer) => {
                                     if (tooltipField && feature.properties) {
                                         const val = feature.properties[tooltipField] || feature.properties.NOMBRE || feature.properties.NOMGEO;
@@ -539,13 +547,20 @@
 
                         addLayer('edomex', edomex, { color: '#fbbf24', weight: 1, dashArray: '4, 4', fillOpacity: 0.1 }, 'NOMGEO');
                         addLayer('morelos', morelos, { color: '#a855f7', weight: 1, dashArray: '4, 4', fillOpacity: 0.1 }, 'NOMGEO');
-                        addLayer('sc', sc, { color: '#d6d6d6', weight: 1, fillColor: '#9d2449', fillOpacity: 0.1 }, null); // Sin tooltip SC para no saturar
+                        addLayer('sc', sc, { color: '#d6d6d6', weight: 1, fillColor: '#9d2449', fillOpacity: 0.1, interactive: false }, null); 
                         addLayer('zoning', zoning, getZoningStyle, 'PGOEDF'); 
-                        addLayer('alcaldias', alcaldias, { color: '#ffffff', weight: 2, dashArray: '8, 4', fillOpacity: 0 }, 'NOMBRE'); // Tooltip añadido
+                        addLayer('alcaldias', alcaldias, { color: '#ffffff', weight: 2, dashArray: '8, 4', fillOpacity: 0 }, 'NOMBRE');
 
                         // Render inicial
-                        Object.keys(visibleLayers).forEach(k => { if(layersRef.current[k]) layersRef.current[k].addTo(map); });
+                        Object.keys(visibleLayers).forEach(k => { 
+                            // Solo añadir las capas generales al mapa, las subcategorías se manejan vía estilo
+                            if(['sc','zoning','alcaldias','edomex','morelos'].includes(k) && layersRef.current[k]) {
+                                layersRef.current[k].addTo(map);
+                            }
+                        });
+                        
                         if(layersRef.current.sc) layersRef.current.sc.bringToBack();
+                        if(layersRef.current.zoning) layersRef.current.zoning.bringToBack(); // Zoning sobre SC
                         if(layersRef.current.alcaldias) layersRef.current.alcaldias.bringToFront();
                     }
                 }, 500);
@@ -554,18 +569,57 @@
                 return () => { map.remove(); mapInstance.current = null; };
             }, []);
 
-            // Control de capas
+            // Control de capas y visibilidad granular de zonificación
             useEffect(() => {
                 if(!mapInstance.current) return;
-                Object.entries(visibleLayers).forEach(([k, v]) => {
+                
+                // 1. Manejo de Capas Generales (Agregar/Quitar del mapa)
+                ['sc', 'alcaldias', 'edomex', 'morelos', 'zoning'].forEach(k => {
                     const l = layersRef.current[k];
                     if(!l) return;
-                    if(v && !mapInstance.current.hasLayer(l)) mapInstance.current.addLayer(l);
-                    else if(!v && mapInstance.current.hasLayer(l)) mapInstance.current.removeLayer(l);
+                    
+                    // Si la capa general está activa en el estado y no está en el mapa, añadirla
+                    if(visibleLayers[k] && !mapInstance.current.hasLayer(l)) {
+                        mapInstance.current.addLayer(l);
+                        if(k === 'alcaldias') l.bringToFront();
+                        if(k === 'sc') l.bringToBack();
+                        if(k === 'zoning') { l.bringToBack(); if(layersRef.current.sc) layersRef.current.sc.bringToBack(); }
+                    } 
+                    // Si está desactivada y está en el mapa, quitarla
+                    else if(!visibleLayers[k] && mapInstance.current.hasLayer(l)) {
+                        mapInstance.current.removeLayer(l);
+                    }
                 });
+
+                // 2. Manejo Granular de Categorías dentro de la capa "Zoning"
+                if(layersRef.current.zoning && mapInstance.current.hasLayer(layersRef.current.zoning)) {
+                    layersRef.current.zoning.eachLayer(layer => {
+                        const clave = layer.feature.properties.CLAVE;
+                        // Si la capa general "zoning" está off, todo off. Si está on, revisamos la categoría individual.
+                        const isVisible = visibleLayers.zoning && (visibleLayers[clave] !== false); 
+                        
+                        if (isVisible) {
+                            // Restaurar estilo original
+                            const originalStyle = getZoningStyle(layer.feature);
+                            layer.setStyle({ 
+                                fillOpacity: 0.25, 
+                                opacity: 1, 
+                                interactive: true 
+                            });
+                        } else {
+                            // Ocultar visualmente y desactivar interacción
+                            layer.setStyle({ 
+                                fillOpacity: 0, 
+                                opacity: 0, 
+                                interactive: false 
+                            });
+                        }
+                    });
+                }
+
             }, [visibleLayers]);
 
-            // Marcador y Zoom
+            // Marcador y Zoom (Igual que antes)
             useEffect(() => {
                 if(!mapInstance.current) return;
                 if(!location) {
@@ -583,41 +637,97 @@
                 <div id="map-wrapper">
                     <div id="map-container-div" ref={mapRef} className="h-full w-full bg-gray-200" />
                     
-                    {/* LEYENDA COMPACTA */}
-                    <div className={`absolute bottom-8 left-4 bg-white shadow-xl rounded-lg z-[999] overflow-hidden transition-all ${isLegendOpen ? 'w-64' : 'w-10 h-10 rounded-full flex items-center justify-center'}`}>
+                    {/* LEYENDA EXTENDIDA */}
+                    <div className={`absolute bottom-8 left-4 bg-white shadow-xl rounded-lg z-[999] overflow-hidden transition-all flex flex-col max-h-[70vh] ${isLegendOpen ? 'w-72' : 'w-10 h-10 rounded-full flex items-center justify-center'}`}>
                         {isLegendOpen ? (
-                            <div>
-                                <div className="flex justify-between items-center p-2 bg-gray-50 border-b cursor-pointer" onClick={() => setIsLegendOpen(false)}>
-                                    <span className="text-xs font-bold text-gray-700">Simbología</span>
-                                    <Icons.ChevronDown className="h-3 w-3" />
+                            <div className="flex flex-col h-full">
+                                <div className="flex justify-between items-center p-3 bg-gray-50 border-b cursor-pointer shrink-0" onClick={() => setIsLegendOpen(false)}>
+                                    <span className="text-sm font-bold text-gray-700">Capas y Simbología</span>
+                                    <Icons.ChevronDown className="h-4 w-4" />
                                 </div>
-                                <div className="p-2 space-y-2 bg-white/95">
-                                    <div className="flex items-center justify-between cursor-pointer" onClick={() => toggleLayer('sc')}>
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-4 h-4 bg-[#9d2449]/30 border border-[#9d2449] rounded-sm"></span>
-                                            <span className="text-[10px] font-medium">Suelo Conservación</span>
+                                
+                                <div className="p-3 space-y-3 overflow-y-auto custom-scrollbar flex-1">
+                                    {/* Capas Generales */}
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('sc')}>
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-4 h-4 bg-[#9d2449]/30 border border-[#9d2449] rounded-sm"></span>
+                                                <span className="text-xs font-medium text-gray-700">Suelo de Conservación</span>
+                                            </div>
+                                            {visibleLayers.sc ? <Icons.Eye className="h-3 w-3 text-gray-400"/> : <Icons.EyeOff className="h-3 w-3 text-gray-300"/>}
                                         </div>
-                                        {visibleLayers.sc ? <Icons.Eye className="h-3 w-3 text-gray-400"/> : <Icons.EyeOff className="h-3 w-3 text-gray-300"/>}
-                                    </div>
-                                    <div className="flex items-center justify-between cursor-pointer" onClick={() => toggleLayer('zoning')}>
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-4 h-4 bg-gradient-to-r from-blue-400 to-green-400 border border-gray-300 rounded-sm"></span>
-                                            <span className="text-[10px] font-medium">Zonificación</span>
+
+                                        <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('alcaldias')}>
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-4 h-4 bg-white border-2 border-gray-500 border-dashed rounded-sm"></span>
+                                                <span className="text-xs font-medium text-gray-700">Límites Alcaldías</span>
+                                            </div>
+                                            {visibleLayers.alcaldias ? <Icons.Eye className="h-3 w-3 text-gray-400"/> : <Icons.EyeOff className="h-3 w-3 text-gray-300"/>}
                                         </div>
-                                        {visibleLayers.zoning ? <Icons.Eye className="h-3 w-3 text-gray-400"/> : <Icons.EyeOff className="h-3 w-3 text-gray-300"/>}
-                                    </div>
-                                    {/* ALCALDIAS: Icono corregido para contraste */}
-                                    <div className="flex items-center justify-between cursor-pointer" onClick={() => toggleLayer('alcaldias')}>
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-4 h-4 bg-white/20 border-2 border-gray-500 border-dashed rounded-sm"></span>
-                                            <span className="text-[10px] font-medium">Alcaldías</span>
+
+                                        {/* Nuevas capas Estado de México y Morelos */}
+                                        <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('edomex')}>
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-4 h-4 bg-[#fbbf24]/20 border border-[#fbbf24] border-dashed rounded-sm"></span>
+                                                <span className="text-xs font-medium text-gray-700">Estado de México</span>
+                                            </div>
+                                            {visibleLayers.edomex ? <Icons.Eye className="h-3 w-3 text-gray-400"/> : <Icons.EyeOff className="h-3 w-3 text-gray-300"/>}
                                         </div>
-                                        {visibleLayers.alcaldias ? <Icons.Eye className="h-3 w-3 text-gray-400"/> : <Icons.EyeOff className="h-3 w-3 text-gray-300"/>}
+
+                                        <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('morelos')}>
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-4 h-4 bg-[#a855f7]/20 border border-[#a855f7] border-dashed rounded-sm"></span>
+                                                <span className="text-xs font-medium text-gray-700">Estado de Morelos</span>
+                                            </div>
+                                            {visibleLayers.morelos ? <Icons.Eye className="h-3 w-3 text-gray-400"/> : <Icons.EyeOff className="h-3 w-3 text-gray-300"/>}
+                                        </div>
                                     </div>
+
+                                    <hr className="border-gray-100"/>
+
+                                    {/* Sección Zonificación Desplegable */}
+                                    <details className="group" open>
+                                        <summary className="flex items-center justify-between cursor-pointer list-none py-1">
+                                            <div className="flex items-center gap-2">
+                                                <Icons.Layers className="h-4 w-4 text-gray-500"/>
+                                                <span className="text-xs font-bold text-gray-700">Zonificación PGOEDF</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                 {/* Toggle Maestro para Zonificación */}
+                                                <div onClick={(e) => { e.preventDefault(); toggleAllZoning(); }} className="cursor-pointer">
+                                                    {visibleLayers.zoning ? <Icons.Eye className="h-3 w-3 text-gray-400 hover:text-gray-600"/> : <Icons.EyeOff className="h-3 w-3 text-gray-300 hover:text-gray-500"/>}
+                                                </div>
+                                                <Icons.ChevronDown className="h-3 w-3 text-gray-400 group-open:rotate-180 transition-transform"/>
+                                            </div>
+                                        </summary>
+                                        
+                                        <div className="mt-2 pl-2 space-y-1.5 border-l-2 border-gray-100 ml-1.5">
+                                            {Object.entries(ZONING_CAT_INFO).map(([key, info]) => (
+                                                <div 
+                                                    key={key} 
+                                                    className={`flex items-center justify-between p-1 rounded cursor-pointer text-[10px] ${!visibleLayers.zoning ? 'opacity-50 pointer-events-none' : 'hover:bg-gray-50'}`}
+                                                    onClick={() => toggleLayer(key)}
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <span 
+                                                            className="w-3 h-3 rounded-sm shadow-sm flex-shrink-0" 
+                                                            style={{ backgroundColor: info.color }}
+                                                        ></span>
+                                                        <span className="text-gray-600 leading-tight">{info.label} ({key})</span>
+                                                    </div>
+                                                    {visibleLayers[key] ? (
+                                                        <Icons.CheckCircle className="h-3 w-3 text-green-600"/>
+                                                    ) : (
+                                                        <div className="h-3 w-3 rounded-full border border-gray-300"></div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </details>
                                 </div>
                             </div>
                         ) : (
-                            <button onClick={() => setIsLegendOpen(true)} className="w-full h-full flex items-center justify-center bg-white hover:bg-gray-50">
+                            <button onClick={() => setIsLegendOpen(true)} className="w-full h-full flex items-center justify-center bg-white hover:bg-gray-50" title="Abrir Simbología">
                                 <Icons.Layers className="h-5 w-5 text-[#9d2449]" />
                             </button>
                         )}
@@ -637,7 +747,7 @@
             const handleSelect = async (coord) => {
                 setLocation(coord);
                 setAnalysis(await analyzeLocation(coord));
-                setMobileSidebarOpen(true); // En móvil, abrir sidebar al seleccionar
+                setMobileSidebarOpen(true); 
             };
 
             const handleReset = () => {
@@ -672,7 +782,6 @@
                             analysisStatus={analysis?.status}
                         />
 
-                        {/* Botón Flotante Móvil "Ver Detalles / Mapa" */}
                         {!mobileSidebarOpen && analysis && (
                             <button 
                                 id="mobile-fab"
