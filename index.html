@@ -171,6 +171,34 @@
             } catch (error) { return false; }
         };
 
+       const loadData = async () => {
+            try {
+                const fetchJson = async (url) => (await fetch(url)).json().catch(() => ({ type: "FeatureCollection", features: [] }));
+                
+                // MODIFICACIÓN: Agregamos encoding: "UTF-8" para que lea bien "específica"
+                const fetchCsv = async (url) => new Promise((resolve) => Papa.parse(url, { 
+                    download: true, 
+                    header: true, 
+                    skipEmptyLines: true, 
+                    encoding: "UTF-8", 
+                    complete: (r) => resolve(r.data), 
+                    error: () => resolve([]) 
+                }));
+
+                const [cdmx, alcaldias, edomex, morelos, sc, zoning, rules] = await Promise.all([
+                    fetchJson(DATA_FILES.LIMITES_CDMX),
+                    fetchJson(DATA_FILES.LIMITES_ALCALDIAS),
+                    fetchJson(DATA_FILES.LIMITES_EDOMEX),
+                    fetchJson(DATA_FILES.LIMITES_MORELOS),
+                    fetchJson(DATA_FILES.SUELO_CONSERVACION),
+                    fetchJson(DATA_FILES.ZONIFICACION),
+                    fetchCsv(DATA_FILES.USOS_SUELO_CSV)
+                ]);
+                dataCache = { cdmx, alcaldias, edomex, morelos, sc, zoning, rules };
+                return true;
+            } catch (error) { return false; }
+        };
+
         const analyzeLocation = async (coord) => {
             const result = {
                 status: 'LOADING',
@@ -204,21 +232,33 @@
 
             const zoningFeature = findFeatureContainingPoint(coord, dataCache.zoning);
             if (zoningFeature) {
+                // Normalizamos la clave (ej. HRB -> HRB)
                 result.zoningKey = zoningFeature.properties.CLAVE;
                 result.zoningName = zoningFeature.properties.PGOEDF || zoningFeature.properties.UGA;
 
                 if (result.zoningKey && dataCache.rules) {
                     const allowed = [], prohibited = [];
+                    
                     dataCache.rules.forEach(row => {
+                        // 1. BUSCAR LA CLAVE DE ZONIFICACIÓN EN EL CSV
+                        // Tu CSV tiene claves como: AEE, AE, AFE, AF...
+                        // El mapa tiene claves como: PE, RE, HR...
+                        // A veces coinciden, a veces no. Aquí intentamos leer la columna que coincida con la clave del mapa.
                         const ruleValue = (row[result.zoningKey] || '').trim().toUpperCase();
-                        if (!ruleValue) return;
+                        
+                        if (!ruleValue) return; // Si esa celda está vacía, saltamos
+
+                        // 2. MAPEO EXACTO DE TUS ENCABEZADOS DEL CSV
+                        // Aquí corregimos para que lea "ector", "Actividad general", etc.
                         const activityObj = {
-                            sector: (row.Sector || row.SECTOR || '').trim(),
-                            general: (row.Act_general || row.ACT_GENERAL || '').trim(),
-                            specific: (row.Act_especifica || row.ACT_ESPECIFICA || '').trim()
+                            sector: (row['Sector'] || row['ector'] || row['SECTOR'] || '').trim(),
+                            general: (row['Actividad general'] || row['Act_general'] || '').trim(),
+                            specific: (row['Actividad específica'] || row['Actividad especifica'] || row['Act_especifica'] || '').trim()
                         };
-                        if (ruleValue === 'A') allowed.push(activityObj);
-                        else if (ruleValue === 'P') prohibited.push(activityObj);
+
+                        if (ruleValue === 'A') allowed.push(activityObj); // A = Autorizado / Permitido
+                        else if (ruleValue === 'P') prohibited.push(activityObj); // P = Prohibido
+                        // Nota: Si usas 'C' (Condicionado) u otros, agrégalos aquí.
                     });
                     result.allowedActivities = allowed;
                     result.prohibitedActivities = prohibited;
@@ -232,28 +272,60 @@
 
         /* --- COMPONENTES --- */
 
-        const ActivitySection = ({ title, activities, icon, headerClass, bgClass, defaultOpen }) => {
+       const ActivitySection = ({ title, activities, icon, headerClass, bgClass, defaultOpen }) => {
             const [filter, setFilter] = useState('');
+            
             if (!activities || activities.length === 0) return null;
-            const filtered = activities.filter(a => `${a.sector} ${a.general} ${a.specific}`.toLowerCase().includes(filter.toLowerCase()));
+            
+            const filtered = activities.filter(a => 
+                `${a.sector} ${a.general} ${a.specific}`.toLowerCase().includes(filter.toLowerCase())
+            );
+
             return (
                 <details className={`group rounded-lg border border-gray-200 overflow-hidden mb-3 shadow-sm ${bgClass}`} open={defaultOpen}>
                     <summary className={`flex items-center justify-between px-3 py-2 cursor-pointer ${headerClass} hover:opacity-90`}>
-                        <div className="flex items-center gap-2 font-bold text-xs">{icon}<span>{title} <span className="text-[10px] font-normal">({activities.length})</span></span></div>
+                        <div className="flex items-center gap-2 font-bold text-xs">
+                            {icon}
+                            <span>{title} <span className="text-[10px] font-normal">({activities.length})</span></span>
+                        </div>
                         <Icons.ChevronDown className="h-3 w-3 group-open:rotate-180 transition-transform"/>
                     </summary>
+                    
                     <div className="px-3 py-2 bg-white border-t border-gray-100">
-                        <input type="text" value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Filtrar..." className="w-full px-2 py-1 mb-2 border rounded text-[10px] focus:outline-none focus:border-[#9d2449]" />
-                        <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                            <table className="min-w-full text-[10px] text-gray-700">
-                                <tbody>
+                        {/* Buscador */}
+                        <input 
+                            type="text" 
+                            value={filter} 
+                            onChange={(e) => setFilter(e.target.value)} 
+                            placeholder="Buscar actividad..." 
+                            className="w-full px-2 py-1.5 mb-2 border border-gray-300 rounded text-[11px] focus:outline-none focus:border-[#9d2449]" 
+                        />
+                        
+                        {/* Tabla con Encabezados */}
+                        <div className="max-h-60 overflow-y-auto custom-scrollbar border rounded border-gray-100">
+                            <table className="min-w-full text-[10px] text-left">
+                                <thead className="bg-gray-100 text-gray-600 font-bold sticky top-0 shadow-sm">
+                                    <tr>
+                                        <th className="px-2 py-2 w-1/4">Sector</th>
+                                        <th className="px-2 py-2 w-1/3">Actividad General</th>
+                                        <th className="px-2 py-2">Actividad Específica</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
                                     {filtered.map((a, i) => (
-                                        <tr key={i} className="odd:bg-white even:bg-gray-50 border-b border-gray-50">
-                                            <td className="px-1 py-1 align-top font-semibold">{a.sector}</td>
-                                            <td className="px-1 py-1 align-top">{a.general}</td>
-                                            <td className="px-1 py-1 align-top text-gray-500">{a.specific}</td>
+                                        <tr key={i} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-2 py-1.5 align-top font-semibold text-gray-700">{a.sector}</td>
+                                            <td className="px-2 py-1.5 align-top text-gray-600">{a.general}</td>
+                                            <td className="px-2 py-1.5 align-top text-gray-500 italic">{a.specific}</td>
                                         </tr>
                                     ))}
+                                    {filtered.length === 0 && (
+                                        <tr>
+                                            <td colSpan="3" className="p-4 text-center text-gray-400 italic">
+                                                No se encontraron resultados con ese filtro.
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
