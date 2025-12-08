@@ -5,579 +5,1082 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Visor de Consulta Ciudadana | SEDEMA</title>
     
-    <!-- Tailwind CSS (CDN para estilos rápidos) -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Fonts: Roboto (Identidad Institucional) -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,400&display=swap" rel="stylesheet">
     
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     
-    <!-- Estilos Propios -->
-    <link rel="stylesheet" href="styles.css">
-
-    <!-- Librerías JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Libraries -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- React & Babel (for JSX) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* --- STYLES --- */
+        :root {
+            --color-guinda: #9d2449;
+            --color-dorado: #b38e5d;
+            --color-gris: #54565a;
+            --font-main: 'Roboto', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-main);
+            color: var(--color-gris);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+        /* Tooltips */
+        .leaflet-tooltip.custom-tooltip {
+            background-color: transparent;
+            border: none;
+            box-shadow: none;
+            color: #fff;
+            font-weight: bold;
+            font-size: 10px;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        /* Geocoder Override */
+        .leaflet-control-geocoder {
+            border-radius: 8px !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+            border: none !important;
+        }
+
+        /* FAQ Styling */
+        .faq-content strong {
+            display: block;
+            margin-top: 8px;
+            margin-bottom: 4px;
+            color: var(--color-guinda);
+            font-weight: 700;
+        }
+        .faq-content ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { animation: fadeIn 0.3s ease-out forwards; }
+        .slide-in-bottom { animation: slideUp 0.4s ease-out forwards; }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            body { height: 100%; overflow: auto; }
+            #root > div { flex-direction: column !important; height: auto !important; overflow: visible !important; }
+            #map-wrapper { height: 50vh !important; order: 1; min-height: 350px; }
+            #sidebar-wrapper { width: 100% !important; height: auto !important; order: 2; border-right: none; border-top: 4px solid var(--color-guinda); }
+        }
+
+        /* Print */
+        @media print {
+            @page { size: portrait; margin: 0.5cm; }
+            body { height: auto !important; overflow: visible !important; display: block !important; background: white; }
+            .no-print, .leaflet-control-container, header, ::-webkit-scrollbar { display: none !important; }
+            #root > div { display: block !important; height: auto !important; overflow: visible !important; }
+            #map-wrapper { height: 400px !important; width: 100% !important; position: relative !important; border: 1px solid #ccc; margin-bottom: 20px; page-break-inside: avoid; }
+            .print-legend { position: absolute !important; bottom: 10px !important; left: 10px !important; width: auto !important; display: block !important; background: white !important; border: 1px solid #ccc !important; z-index: 9999 !important; }
+            .print-legend > div { display: block !important; }
+            #sidebar-wrapper { width: 100% !important; height: auto !important; border: none !important; overflow: visible !important; box-shadow: none !important; }
+            .activity-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 1rem; }
+            details { border: 1px solid #eee !important; margin-bottom: 10px; break-inside: avoid; }
+            details[open] summary { border-bottom: 1px solid #eee; }
+            p, li, span, h1, h2, h3, h4 { color: black !important; }
+            #results-container::before { content: "Consulta Ciudadana SEDEMA - Reporte Generado"; display: block; font-size: 16pt; font-weight: bold; color: var(--color-guinda) !important; margin-bottom: 10px; border-bottom: 2px solid var(--color-guinda); }
+        }
+    </style>
 <script type="importmap">
 {
   "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
     "react/": "https://aistudiocdn.com/react@^19.2.1/",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0"
+    "react": "https://aistudiocdn.com/react@^19.2.1",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/"
   }
 }
 </script>
 </head>
 <body>
+    <div id="root"></div>
 
-    <!-- Header Institucional -->
-    <header>
-        <div class="flex items-center gap-4 max-w-7xl mx-auto">
-            <div class="w-12 h-12 bg-white rounded p-1 shadow-sm shrink-0 flex items-center justify-center overflow-hidden">
-                <img src="./logo-sedema.png" alt="CDMX" class="w-full h-full object-contain" onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\'text-xs font-bold text-gray-800\'>CDMX</span>'">
-            </div>
-            <div>
-                <h1 class="text-lg md:text-xl font-bold leading-tight tracking-tight">VISOR DE CONSULTA CIUDADANA</h1>
-                <p class="text-[10px] md:text-xs text-white/80 uppercase tracking-wider font-medium">Secretaría del Medio Ambiente CDMX</p>
-            </div>
-        </div>
-    </header>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
 
-    <!-- Contenedor Principal -->
-    <div id="main-container">
-        
-        <!-- Mapa (Ordenado visualmente según CSS: Móvil=Arriba, Escritorio=Derecha) -->
-        <!-- NOTA: En HTML el orden importa para el tabulador, pero en flex column mobile el mapa se fuerza arriba visualmente o se deja natural -->
-        <div id="map"></div>
+        /* --- CONSTANTS --- */
+        const COLORS = {
+            guinda: '#9d2449',
+            dorado: '#b38e5d',
+            gris: '#54565a',
+            verde: '#28a745',
+            rojo: '#dc3545',
+            alerta: '#ffc107',
+            zoning: '#00eaff',
+            alcaldias: '#ffffff',
+        };
 
-        <!-- Sidebar (Panel de Control y Resultados) -->
-        <div id="sidebar">
-            <div class="p-6 space-y-6">
-                
-                <!-- Sección de Búsqueda -->
-                <div id="search-section" class="space-y-4 border-b border-gray-200 pb-6 no-print">
-                    
-                    <!-- Coordenadas -->
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Por Coordenadas</label>
-                        <form id="coord-form" class="flex relative">
-                            <input type="text" id="coord-input" placeholder="Ej. 19.4326, -99.1332" class="w-full pl-2 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#9d2148] outline-none">
-                            <button type="submit" class="absolute right-2 top-1.5 p-1 text-gray-400 hover:text-[#9d2148]">
-                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                            </button>
-                        </form>
-                    </div>
-
-                    <!-- Dirección -->
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Por Dirección</label>
-                        <div class="flex relative">
-                            <input type="text" id="address-input" placeholder="Calle, Colonia, Alcaldía..." class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#9d2148] outline-none">
-                            <i data-lucide="map-pin" class="absolute left-2.5 top-2.5 w-4 h-4 text-gray-400"></i>
-                            <button onclick="handleAddressSearch()" class="absolute right-2 top-1.5 p-1 text-gray-400 hover:text-[#9d2148]">
-                                <i data-lucide="search" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Botones Acción -->
-                    <div class="flex gap-2 pt-1">
-                        <button onclick="detectLocation()" class="btn-primary flex-1 btn-icon">
-                            <i data-lucide="navigation" class="w-4 h-4"></i> Ubícame
-                        </button>
-                        <button onclick="resetMap()" class="btn-secondary px-3 btn-icon" title="Limpiar mapa">
-                            <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Estado Inicial -->
-                <div id="empty-state" class="text-center py-10 text-gray-400">
-                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i data-lucide="map" class="w-8 h-8 text-gray-300"></i>
-                    </div>
-                    <p class="text-sm font-medium">Seleccione un punto en el mapa</p>
-                    <p class="text-xs mt-1">O utilice las herramientas de búsqueda.</p>
-                </div>
-
-                <!-- Cargando -->
-                <div id="loading-state" class="hidden text-center py-10 text-[#9d2148]">
-                    <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2"></i>
-                    <p class="text-sm font-medium">Analizando ubicación...</p>
-                </div>
-
-                <!-- Resultados -->
-                <div id="results-container" class="hidden space-y-6 animate-fade-in">
-                    
-                    <!-- Ficha de Estatus -->
-                    <div id="status-card" class="p-5 rounded-lg border-l-8 shadow-sm bg-gray-50 border-gray-400">
-                        <!-- Inyectado via JS -->
-                    </div>
-
-                    <!-- Detalles del Predio -->
-                    <div class="grid grid-cols-1 gap-3 text-sm">
-                         <div class="bg-gray-50 p-3 rounded border border-gray-200">
-                            <span class="block text-gray-500 text-[10px] uppercase font-bold tracking-wider mb-1">Ubicación de Referencia</span>
-                            <span id="folio-text" class="font-mono font-bold text-gray-800 text-sm block truncate">Calculando...</span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="bg-gray-50 p-3 rounded border border-gray-200">
-                                <span class="block text-gray-500 text-[10px] uppercase font-bold tracking-wider mb-1">Alcaldía</span>
-                                <span id="alcaldia-text" class="font-semibold text-gray-800">--</span>
-                            </div>
-                            <div class="bg-gray-50 p-3 rounded border border-gray-200">
-                                <span class="block text-gray-500 text-[10px] uppercase font-bold tracking-wider mb-1">Coordenadas</span>
-                                <span id="coord-text" class="font-mono text-gray-800 text-xs">--</span>
-                            </div>
-                        </div>
-                        <div id="zoning-info" class="hidden bg-gray-50 p-3 rounded border border-gray-200">
-                             <span class="block text-gray-500 text-[10px] uppercase font-bold tracking-wider mb-1">Zonificación (PGOEDF)</span>
-                             <div class="flex items-center gap-2 mt-1">
-                                 <span id="zoning-key" class="bg-[#b28e5d] text-white px-2 py-0.5 rounded text-xs font-bold shadow-sm">--</span>
-                                 <span id="zoning-name" class="font-semibold text-gray-800 leading-tight">--</span>
-                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Listas de Actividades (Acordeones) -->
-                    <div id="rules-container" class="space-y-1 pt-2 hidden">
-                        <h3 class="text-sm font-bold text-gray-800 mb-3 border-b pb-1 uppercase">Regulación de Uso de Suelo</h3>
-                        <div id="activities-list"></div>
-                    </div>
-
-                    <!-- Notas Legales -->
-                    <div class="mt-6 border-t border-gray-200 pt-4">
-                        <h4 class="text-xs font-bold text-[#9d2148] uppercase mb-2">Notas Importantes</h4>
-                        <ul class="list-disc pl-4 space-y-1 text-[10px] text-gray-600 text-justify leading-relaxed">
-                            <li>La información mostrada es de carácter informativo y no produce efectos jurídicos.</li>
-                            <li>Para trámites oficiales, consulte a la autoridad competente en la Ventanilla Única de SEDEMA.</li>
-                            <li>Las disposiciones no prejuzgan sobre la propiedad de la tierra.</li>
-                        </ul>
-                    </div>
-
-                    <!-- Botones Pie -->
-                    <div class="flex gap-3 pt-4 no-print">
-                        <button onclick="window.print()" class="btn-secondary flex-1 btn-icon">
-                            <i data-lucide="printer" class="w-4 h-4"></i> Imprimir
-                        </button>
-                        <button onclick="shareResult()" class="btn-share flex-1 btn-icon">
-                            <i data-lucide="share-2" class="w-4 h-4"></i> Compartir
-                        </button>
-                    </div>
-
-                     <!-- Footer Impresión -->
-                    <div id="legal-footer" class="hidden text-justify text-gray-500 font-serif">
-                        <p>Documento generado por el Visor de Consulta Ciudadana de la Secretaría del Medio Ambiente de la Ciudad de México.</p>
-                        <p>Fecha de consulta: <span id="print-date"></span></p>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-    <!-- SCRIPT PRINCIPAL -->
-    <script>
-        // --- CONSTANTES ---
         const DATA_FILES = {
             LIMITES_CDMX: './limites_cdmx.geojson',
             LIMITES_ALCALDIAS: './limites_alcaldias.geojson',
             LIMITES_EDOMEX: './limites_edomex.geojson',
             LIMITES_MORELOS: './limites_morelos.geojson',
             SUELO_CONSERVACION: './suelo-de-conservacion-2020.geojson',
-            ZONIFICACION: './zoonificación_pgoedf_2000.geojson',
+            ZONIFICACION: './zoonificación_pgoedf_2000.geojson', 
             USOS_SUELO_CSV: './usos_suelo.csv'
         };
 
-        // --- ESTADO GLOBAL ---
-        let map, marker, layerControl;
+        const LEGAL_DISCLAIMER = "Esta plataforma es una versión de divulgación e información. Los resultados emitidos no producen efectos jurídicos vinculantes. Para trámites oficiales, consulte a la autoridad competente.";
+
+        const LEGAL_NOTES = [
+            "Adicionalmente a lo dispuesto en la tabla de usos del suelo, para cualquier obra o actividad que se pretenda desarrollar se deberán contemplar los criterios y lineamientos señalados en el programa de Ordenamiento Ecológico.",
+            "Los usos del suelo no identificados en esta tabla deberán cumplir con los permisos y autorizaciones en materia urbana y ambiental aplicables.",
+            "En las Areas Naturales Protegidas (ANP) regirá la zonificación especificada en su respectivo Programa de Manejo.",
+            "El Suelo de Conservación definido por las barrancas estará regulado por la zonificación Forestal de Conservación FC.",
+        ];
+
+        const INITIAL_CENTER = [19.3200, -99.1500]; 
+        const INITIAL_ZOOM = 10;
+
+        const CONTACT_INFO = {
+            phone: "55-5345-8000 ext. 1234",
+            hours: "Lunes a Viernes de 9:00 a 18:00 hrs",
+            email: "atencionciudadana@sedema.cdmx.gob.mx"
+        };
+
+        const HECTARES_DATA = [
+            { year: 2025, recovered: 120 },
+            { year: 2026, recovered: 0 },
+            { year: 2027, recovered: 0 },
+            { year: 2028, recovered: 0 },
+            { year: 2029, recovered: 0 },
+            { year: 2030, recovered: 0 },
+        ];
+
+        const GALLERY_ITEMS = [
+            { 
+                type: 'image',
+                src: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=400&q=80", 
+                title: "Reforestación Ajusco" 
+            },
+            { 
+                type: 'video',
+                videoId: "LisBu1Hvm-c",
+                title: "Video Informativo" 
+            },
+            { 
+                type: 'image',
+                src: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=400&q=80", 
+                title: "Conservación Xochimilco" 
+            }
+        ];
+
+        const FAQ_ITEMS = [
+            {
+                q: "1. ¿Qué beneficios obtengo del Sistema de Información Geográfica?",
+                a: "Conocer la información normativa urbana que regula a la ciudad, mediante los Programas Delegacionales y Parciales de Desarrollo Urbano aplicables a cada predio, como son: Zonificación, Uso del Suelo, Áreas de Actuación, Normas Generales de Ordenación, Normas Particulares de Ordenación, Normas de Ordenación sobre Vialidad y Sitios Patrimoniales."
+            },
+            {
+                q: "2. ¿Qué es Zonificación?",
+                a: `La zonificación es la clasificación de áreas dentro de un territorio, en la Ciudad de México están establecidas en los Programas Delegacionales de Desarrollo Urbano y en los Programas Parciales de Desarrollo Urbano, por ejemplo:
+                <br/><br/>
+                <strong>En Suelo Urbano:</strong>
+                • Habitacional (H).<br/>
+                • Habitacional Comercial en planta Baja (HC).<br/>
+                • Habitacional Mixto (HM).<br/>
+                • Habitacional con Oficinas (HO).<br/>
+                • Habitacional con Servicios (HS).<br/>
+                • Habitacional con Comercio y Servicios (HCS).<br/>
+                • Habitacional con Entretenimiento (He).<br/>
+                • Habitacional Unifamiliar.<br/>
+                • Habitacional Plurifamiliar.<br/>
+                • Centro de Barrio (CB).<br/>
+                • Equipamiento (E).<br/>
+                • Equipamiento Deportivo.<br/>
+                • Equipamiento Existente.<br/>
+                • Industria (I).<br/>
+                • Espacio Abierto (EA).<br/>
+                • Áreas Verdes (AV).
+                <br/><br/>
+                <strong>Suelo de Conservación:</strong>
+                • Habitacional Rural de Baja Densidad (HRB).<br/>
+                • Habitacional Rural (HR).<br/>
+                • Habitacional Rural Comercial y Servicios (HRC).<br/>
+                • Equipamiento Rural (ER).<br/>
+                • Rescate Ecológico (RE).<br/>
+                • Producción Rural Agroindustrial (PRA).<br/>
+                • Preservación Ecológica (PE).`
+            },
+            {
+                q: "3. ¿Cómo se representa la Zonificación?",
+                a: "La zonificación se muestra mediante una nomenclatura, que determina la zona, los niveles y porcentaje de área libre que debe tener. Ejemplo: H / 3 / 40 / B (H=Habitacional, 3=niveles máximos de construcción, 40=porcentaje de área libre y en este caso B=1 vivienda por cada 100 metros cuadrados de terreno."
+            },
+            {
+                q: "4. ¿Qué es Uso del Suelo?",
+                a: "Es la capacidad permitida de uso o utilización asignada a un predio, de acuerdo a la zonificación establecida en los Programas Delegacionales de Desarrollo Urbano y/o Programas Parciales de Desarrollo Urbano, Ejemplo: Habitacional Unifamiliar, Recauderías, Tiendas de Abarrotes, Centros Comerciales, Madererías, Consultorios para Nutriólogos, Casetas de Vigilancia, Clínicas, Escuelas Primarias, etc."
+            },
+            {
+                q: "5. ¿Cuáles son los Usos del Suelo que le aplican a mi predio?",
+                a: "El Sistema de Información Geográfica SIG - CiudadMX es el medio por el cual puede realizar la consulta para saber los Usos del Suelo que le aplican a su predio. La consulta se hace ingresando la cuenta catastral el cual desplegará un cuadro de información del predio y seleccionando el enlace de normatividad de Uso del Suelo, en el apartado de 'Zonificación', donde se muestra la liga 'Ver Tabla de Uso', al seleccionarla mostrará los usos permitidos que le corresponden al predio."
+            },
+            {
+                q: "6. ¿Para qué sirve conocer el Uso del Suelo de mi Predio?",
+                a: "Informarse sobre los usos permitidos en el predio, para los asuntos relacionados con la renta y/o compraventa de un predio y/o inmueble, para establecer un comercio, industria, infraestructura, servicio o vivienda, etc. Para obtener un documento oficial que avale los usos permitidos que le corresponden al predio, deberá tramitar el Certificado Único de Zonificación de Uso del Suelo, ya sea presencial o digital."
+            },
+            {
+                q: "7. ¿Cómo sé qué tipo de negocio o servicio puedo establecer en mi Predio?",
+                a: "Consultando los usos permitidos que se visualizan en el Sistema de Información Geográfica."
+            },
+            {
+                q: "8. ¿En todos los Predios se puede construir vivienda?",
+                a: "No, sólo en aquellos predios que tengan permitido el Uso Habitacional, el cual puede ser consultado en el Sistema de Información Geográfica."
+            },
+            {
+                q: "9. ¿Cómo puedo ubicar mi Predio?",
+                a: "Puede ubicar su predio ingresando las coordenadas geográficas, buscando por dirección (calle y número) o navegando manualmente en el mapa interactivo."
+            },
+            {
+                q: "10. ¿Por qué no aparece mi Cuenta Catastral o mi Predio?",
+                a: "Puede deberse a que la base de datos catastral no esté actualizada en esta versión de consulta o que el predio se encuentre en una zona limítrofe sin regularización definitiva."
+            },
+            {
+                q: "11. ¿Puede tener mi predio más de una Zonificación en el Sistema de Información Geográfica?",
+                a: "Sí, es posible si el predio atraviesa límites territoriales de diferentes zonas o programas parciales, aunque generalmente aplica una zonificación dominante."
+            },
+            {
+                q: "12. ¿Puede un predio no tener Uso del Suelo en el Sistema?",
+                a: `Si, esto es factible debido a que en los programas delegacionales o parciales:<br/><br/>
+                a) No se ubica el predio en una zonificación existente.<br/>
+                b) No hay uso de suelo permitido para la zonificación.<br/>
+                c) No existe zonificación.<br/>
+                d) El uso del suelo está prohibido.`
+            }
+        ];
+
+        /* --- ICONS (SVG Components) --- */
+        const Icons = {
+            Search: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>,
+            MapPin: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>,
+            Printer: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>,
+            Share2: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>,
+            AlertTriangle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>,
+            CheckCircle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>,
+            XCircle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>,
+            Info: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>,
+            RotateCcw: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>,
+            AlertCircle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>,
+            Navigation: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>,
+            Map: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>,
+            Phone: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.12 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>,
+            Clock: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>,
+            X: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
+            ZoomIn: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>,
+            Play: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>,
+            HelpCircle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>,
+            ChevronDown: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="6 9 12 15 18 9"></polyline></svg>,
+            ChevronUp: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="18 15 12 9 6 15"></polyline></svg>,
+            Layers: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>,
+            Eye: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>,
+            EyeOff: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>,
+            Loader2: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+        };
+
+        /* --- GEO UTILS & SERVICE --- */
+        const isPointInPolygon = (point, feature) => {
+            const { lat, lng } = point;
+            const { type, coordinates } = feature.geometry;
+            let isInside = false;
+
+            const checkPolygon = (ring) => {
+                let inside = false;
+                for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+                    const xi = ring[i][0], yi = ring[i][1];
+                    const xj = ring[j][0], yj = ring[j][1];
+                    const intersect = ((yi > lat) !== (yj > lat)) && (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+                    if (intersect) inside = !inside;
+                }
+                return inside;
+            };
+
+            if (type === 'Polygon') return checkPolygon(coordinates[0]);
+            else if (type === 'MultiPolygon') {
+                for (const polygon of coordinates) {
+                    if (checkPolygon(polygon[0])) {
+                        isInside = true;
+                        break;
+                    }
+                }
+            }
+            return isInside;
+        };
+
+        const findFeatureContainingPoint = (point, collection) => {
+            if (!collection || !collection.features) return null;
+            for (const feature of collection.features) {
+                if (isPointInPolygon(point, feature)) return feature;
+            }
+            return null;
+        };
+
         let dataCache = {};
-        let currentAnalysis = null;
-        
-        // --- INICIALIZACIÓN ---
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            initMap();
-            loadData();
-            
-            // Event Listeners Formularios
-            document.getElementById('coord-form').addEventListener('submit', (e) => {
-                e.preventDefault();
-                const input = document.getElementById('coord-input').value;
-                const coords = parseCoordinates(input);
-                if (coords) handleLocationSelect(coords, "Coordenada manual");
-                else alert("Formato de coordenadas no válido.");
-            });
-        });
 
-        // --- MAPA ---
-        function initMap() {
-            // 1. Centro CDMX y Zoom inicial que abarca toda la ciudad
-            map = L.map('map', { zoomControl: false }).setView([19.32, -99.15], 10);
-            
-            // Control de Zoom (Arriba derecha en escritorio)
-            L.control.zoom({ position: 'topright' }).addTo(map);
-
-            // 2. Capa Satelital (ESRI World Imagery) - PREDETERMINADA
-            const satelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                attribution: 'Tiles &copy; Esri',
-                maxZoom: 19
-            }).addTo(map);
-
-            const calles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; CARTO',
-                maxZoom: 20
-            });
-
-            // Capas Base
-            const baseMaps = { "Satélite": satelite, "Mapa Callejero": calles };
-            layerControl = L.control.layers(baseMaps, {}, { collapsed: true }).addTo(map);
-
-            // Evento Click en Mapa
-            map.on('click', (e) => {
-                handleLocationSelect(e.latlng, null); // Null triggering reverse geocode
-            });
-        }
-
-        // --- CARGA DE DATOS ---
-        async function loadData() {
+        const loadData = async () => {
             try {
-                const fetchJson = async (url) => (await fetch(url)).json().catch(() => ({ type: "FeatureCollection", features: [] }));
-                
-                const [cdmx, alcaldias, edomex, morelos, sc, zoning] = await Promise.all([
+                const fetchJson = async (url) => {
+                    try {
+                        const response = await fetch(url);
+                        if (!response.ok) throw new Error(`Network response was not ok for ${url}`);
+                        return await response.json();
+                    } catch (e) {
+                        console.warn(`Could not load ${url}`);
+                        return { type: "FeatureCollection", features: [] };
+                    }
+                };
+
+                const fetchCsv = async (url) => {
+                    return new Promise((resolve) => {
+                        Papa.parse(url, {
+                            download: true,
+                            header: true,
+                            skipEmptyLines: true,
+                            complete: (results) => resolve(results.data),
+                            error: () => resolve([])
+                        });
+                    });
+                };
+
+                const [cdmx, alcaldias, edomex, morelos, sc, zoning, rules] = await Promise.all([
                     fetchJson(DATA_FILES.LIMITES_CDMX),
                     fetchJson(DATA_FILES.LIMITES_ALCALDIAS),
                     fetchJson(DATA_FILES.LIMITES_EDOMEX),
                     fetchJson(DATA_FILES.LIMITES_MORELOS),
                     fetchJson(DATA_FILES.SUELO_CONSERVACION),
-                    fetchJson(DATA_FILES.ZONIFICACION)
+                    fetchJson(DATA_FILES.ZONIFICACION),
+                    fetchCsv(DATA_FILES.USOS_SUELO_CSV)
                 ]);
 
-                // CSV Parsing
-                let rules = [];
-                Papa.parse(DATA_FILES.USOS_SUELO_CSV, {
-                    download: true, header: true, skipEmptyLines: true,
-                    complete: (res) => { dataCache.rules = res.data; },
-                    error: () => { console.warn("Error cargando CSV"); }
-                });
-
-                dataCache = { cdmx, alcaldias, edomex, morelos, sc, zoning };
-
-                // Renderizar Capas Contextuales en el Mapa
-                if (cdmx.features.length) L.geoJSON(cdmx, { style: { color: '#55585a', weight: 3, fill: false }, interactive: false }).addTo(map);
-                if (sc.features.length) {
-                    const scLayer = L.geoJSON(sc, { style: { color: '#9d2148', weight: 1, fillColor: '#9d2148', fillOpacity: 0.1 } });
-                    layerControl.addOverlay(scLayer, "Suelo de Conservación");
-                    scLayer.addTo(map); // Activa por defecto
-                }
-                if (zoning.features.length) {
-                     const zoningLayer = L.geoJSON(zoning, { 
-                         style: { color: '#b28e5d', weight: 1, dashArray: '4,4', fillOpacity: 0 },
-                         interactive: true, // Clickable para identificar zonas
-                         onEachFeature: (feature, layer) => {
-                             layer.on('click', (e) => {
-                                 L.DomEvent.stopPropagation(e); // Evitar doble trigger
-                                 handleLocationSelect(e.latlng, null);
-                             });
-                         }
-                     });
-                     layerControl.addOverlay(zoningLayer, "Zonificación");
-                     zoningLayer.addTo(map); // Activa por defecto
-                }
-                
-                // Capas externas (Contexto)
-                if (edomex.features.length) L.geoJSON(edomex, { style: { color: '#9ca3af', dashArray: '2,4', fill: false }, interactive: false }).addTo(map);
-                if (morelos.features.length) L.geoJSON(morelos, { style: { color: '#9ca3af', dashArray: '2,4', fill: false }, interactive: false }).addTo(map);
-
-            } catch (e) {
-                console.error("Error inicializando datos:", e);
-                alert("Error al cargar capas geográficas. Verifique la conexión o los archivos.");
+                dataCache = { cdmx, alcaldias, edomex, morelos, sc, zoning, rules };
+                return true;
+            } catch (error) {
+                console.error("Error loading GIS data:", error);
+                return false;
             }
-        }
+        };
 
-        // --- LÓGICA PRINCIPAL ---
-        async function handleLocationSelect(latlng, addressLabel) {
-            // 1. UI Feedback
-            document.getElementById('empty-state').classList.add('hidden');
-            document.getElementById('results-container').classList.add('hidden');
-            document.getElementById('loading-state').classList.remove('hidden');
+        const analyzeLocation = async (coord) => {
+            const result = {
+                status: 'LOADING',
+                isRestricted: false,
+                allowedActivities: [],
+                prohibitedActivities: [],
+                conditionedActivities: [],
+                timestamp: new Date().toLocaleString(),
+                coordinate: coord
+            };
 
-            // 2. Marcador
-            if (marker) map.removeLayer(marker);
-            // Colores temporales, se actualizan tras análisis
-            marker = L.circleMarker(latlng, { radius: 10, color: 'white', weight: 2, fillColor: '#b28e5d', fillOpacity: 1 }).addTo(map);
-            map.setView(latlng, 16);
+            const inCDMX = dataCache.cdmx?.features.length ? findFeatureContainingPoint(coord, dataCache.cdmx) : null;
 
-            // 3. Geocodificación Inversa (Obtener Dirección/Folio)
-            let finalAddress = addressLabel;
-            if (!finalAddress) {
-                try {
-                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}`);
-                    const data = await response.json();
-                    // Limpiar dirección para que parezca folio
-                    finalAddress = data.display_name ? data.display_name.split(',').slice(0, 3).join(',') : "Ubicación sin nombre";
-                } catch {
-                    finalAddress = "Referencia Geográfica";
-                }
+            if (dataCache.cdmx?.features.length && !inCDMX) {
+                result.status = 'OUTSIDE_CDMX';
+                const inEdoMex = findFeatureContainingPoint(coord, dataCache.edomex);
+                const inMorelos = findFeatureContainingPoint(coord, dataCache.morelos);
+                if (inEdoMex) result.outsideContext = "Estado de México";
+                else if (inMorelos) result.outsideContext = "Estado de Morelos";
+                return result;
             }
 
-            // 4. Análisis Espacial (Point in Polygon)
-            const analysis = analyzePoint(latlng);
-            currentAnalysis = { ...analysis, address: finalAddress, latlng };
+            const alcaldiaFeature = findFeatureContainingPoint(coord, dataCache.alcaldias);
+            if (alcaldiaFeature) result.alcaldia = alcaldiaFeature.properties.NOMBRE || alcaldiaFeature.properties.NOMGEO;
 
-            // 5. Renderizar
-            renderResults(currentAnalysis);
+            const scFeature = findFeatureContainingPoint(coord, dataCache.sc);
+            if (!scFeature) {
+                result.status = 'URBAN_SOIL';
+                return result;
+            }
+
+            result.status = 'CONSERVATION_SOIL';
+            result.isRestricted = true;
+
+            const zoningFeature = findFeatureContainingPoint(coord, dataCache.zoning);
             
-            // 6. Scroll automático en móvil para ver resultados
-            if (window.innerWidth < 768) {
-                setTimeout(() => {
-                    document.getElementById('sidebar').scrollIntoView({ behavior: 'smooth' });
-                }, 300);
-            }
-        }
+            if (zoningFeature) {
+                const clave = zoningFeature.properties.CLAVE;
+                const nombre = zoningFeature.properties.PGOEDF || zoningFeature.properties.UGA;
+                result.zoningKey = clave;
+                result.zoningName = nombre;
 
-        function analyzePoint(latlng) {
-            const pt = { lat: latlng.lat, lng: latlng.lng };
-            let result = { status: 'UNKNOWN', alcaldia: null, zoning: null, rules: { A: [], C: [], P: [] }, context: '' };
-
-            // A. Validar CDMX
-            const inCDMX = isPointInPolygon(pt, dataCache.cdmx);
-            if (!inCDMX) {
-                result.status = 'OUTSIDE';
-                if (isPointInPolygon(pt, dataCache.edomex)) result.context = "Estado de México";
-                else if (isPointInPolygon(pt, dataCache.morelos)) result.context = "Estado de Morelos";
-                return result;
-            }
-
-            // B. Alcaldía
-            const alc = findFeature(pt, dataCache.alcaldias);
-            if (alc) result.alcaldia = alc.properties.NOMBRE || alc.properties.NOMGEO;
-
-            // C. Suelo Conservación
-            const inSC = isPointInPolygon(pt, dataCache.sc);
-            if (!inSC) {
-                result.status = 'URBAN';
-                return result;
-            }
-
-            // D. Zonificación
-            result.status = 'RESTRICTED';
-            const zone = findFeature(pt, dataCache.zoning);
-            if (zone) {
-                result.zoning = { key: zone.properties.CLAVE, name: zone.properties.PGOEDF || zone.properties.UGA };
-                // E. Reglas CSV
-                if (dataCache.rules) {
+                if (result.zoningKey && dataCache.rules) {
+                    const allowed = [], prohibited = [], conditioned = [];
                     dataCache.rules.forEach(row => {
-                        const val = (row[result.zoning.key] || '').toUpperCase().trim();
-                        const desc = `${row.SECTOR} - ${row.ACTIVIDAD_GENERAL}: ${row.ACTIVIDAD_ESPECIFICA}`;
-                        
-                        // Lógica especial para destacar "Nuevos Asentamientos"
-                        const isCritical = desc.includes("Nuevos Asentamientos Humanos");
-                        const finalDesc = isCritical ? `⚠️ ${desc}` : desc;
-
-                        if (val === 'A') {
-                            if (isCritical) result.rules.A.unshift(finalDesc); else result.rules.A.push(finalDesc);
-                        } else if (val === 'C') {
-                            if (isCritical) result.rules.C.unshift(finalDesc); else result.rules.C.push(finalDesc);
-                        } else if (val === 'P') {
-                            if (isCritical) result.rules.P.unshift(finalDesc); else result.rules.P.push(finalDesc);
-                        }
+                        const rawValue = row[result.zoningKey] || '';
+                        const ruleValue = rawValue.trim().toUpperCase();
+                        const activity = `${row.SECTOR} - ${row.ACTIVIDAD_GENERAL}: ${row.ACTIVIDAD_ESPECIFICA}`;
+                        if (ruleValue === 'A') allowed.push(activity);
+                        else if (ruleValue === 'C') conditioned.push(activity);
+                        else if (ruleValue === 'P') prohibited.push(activity);
                     });
+                    result.allowedActivities = allowed;
+                    result.prohibitedActivities = prohibited;
+                    result.conditionedActivities = conditioned;
                 }
+            } else {
+                result.zoningName = scFeature.properties.PGOEDF || "Sin zonificación específica detectada";
+                result.zoningKey = scFeature.properties.CLAVE;
             }
+
             return result;
-        }
+        };
 
-        function renderResults(data) {
-            const container = document.getElementById('results-container');
-            const loading = document.getElementById('loading-state');
-            const statusCard = document.getElementById('status-card');
-            
-            loading.classList.add('hidden');
-            container.classList.remove('hidden');
+        /* --- COMPONENTS --- */
 
-            // Actualizar Textos Básicos
-            document.getElementById('folio-text').textContent = data.address || "Coordenada Manual";
-            document.getElementById('alcaldia-text').textContent = data.alcaldia || "No identificada";
-            document.getElementById('coord-text').textContent = `${data.latlng.lat.toFixed(5)}, ${data.latlng.lng.toFixed(5)}`;
-            document.getElementById('print-date').textContent = new Date().toLocaleDateString();
-
-            // Lógica Visual de Estatus
-            let cardHTML = '';
-            let markerColor = '#9d2148'; // Default Guinda
-
-            if (data.status === 'OUTSIDE') {
-                markerColor = '#6b7280'; // Gris
-                cardHTML = `
-                    <div class="flex items-start gap-3 text-gray-700">
-                        <i data-lucide="x-circle" class="w-6 h-6 shrink-0 mt-1"></i>
-                        <div>
-                            <h2 class="text-lg font-bold uppercase">Fuera de Jurisdicción</h2>
-                            <p class="text-sm mt-1">El punto no pertenece a la Ciudad de México. ${data.context ? 'Ubicación probable: ' + data.context : ''}</p>
+        const ActivitySection = ({ title, activities, icon, headerClass, bgClass, defaultOpen }) => {
+            if (!activities || activities.length === 0) return null;
+            return (
+                <details className={`group rounded-lg border border-gray-200 overflow-hidden mb-3 shadow-sm ${bgClass} break-inside-avoid`} open={defaultOpen}>
+                    <summary className={`flex items-center justify-between px-3 py-2 cursor-pointer select-none transition-colors ${headerClass} hover:opacity-90`}>
+                        <div className="flex items-center gap-2 font-bold text-xs">
+                            {icon}
+                            <span>{title} <span className="text-[10px] font-normal opacity-90">({activities.length})</span></span>
                         </div>
-                    </div>`;
-                hideZoning();
-            } else if (data.status === 'URBAN') {
-                markerColor = '#16a34a'; // Verde
-                cardHTML = `
-                    <div class="flex items-start gap-3 text-green-800">
-                        <i data-lucide="check-circle" class="w-6 h-6 shrink-0 mt-1"></i>
-                        <div>
-                            <h2 class="text-lg font-bold uppercase">Suelo Urbano</h2>
-                            <p class="text-sm mt-1">Predio fuera de la capa de conservación ecológica. Consulte Zonificación Urbana en SEDUVI.</p>
-                        </div>
-                    </div>`;
-                hideZoning();
-            } else if (data.status === 'RESTRICTED') {
-                markerColor = '#dc2626'; // Rojo
-                cardHTML = `
-                    <div class="flex items-start gap-3 text-red-800">
-                        <i data-lucide="alert-triangle" class="w-6 h-6 shrink-0 mt-1"></i>
-                        <div>
-                            <h2 class="text-lg font-bold uppercase">Zona Restringida</h2>
-                            <p class="text-sm mt-1">Suelo de Conservación. Aplican restricciones ambientales estrictas.</p>
-                        </div>
-                    </div>`;
-                
-                // Mostrar Zonificación y Reglas
-                if (data.zoning) {
-                    document.getElementById('zoning-info').classList.remove('hidden');
-                    document.getElementById('zoning-key').textContent = data.zoning.key;
-                    document.getElementById('zoning-name').textContent = data.zoning.name;
-                    renderRules(data.rules);
-                }
-            }
-
-            statusCard.innerHTML = cardHTML;
-            statusCard.className = `p-5 rounded-lg border-l-8 shadow-sm ${
-                data.status === 'RESTRICTED' ? 'bg-red-50 border-red-700' : 
-                data.status === 'URBAN' ? 'bg-green-50 border-green-600' : 
-                'bg-gray-100 border-gray-400'
-            }`;
-
-            // Actualizar color del marcador
-            if (marker) marker.setStyle({ fillColor: markerColor, color: 'white' });
-
-            lucide.createIcons();
-        }
-
-        function hideZoning() {
-            document.getElementById('zoning-info').classList.add('hidden');
-            document.getElementById('rules-container').classList.add('hidden');
-        }
-
-        function renderRules(rules) {
-            const container = document.getElementById('rules-container');
-            const list = document.getElementById('activities-list');
-            container.classList.remove('hidden');
-            list.innerHTML = '';
-
-            const createAccordion = (title, items, colorClass, icon, open) => {
-                if (!items.length) return '';
-                return `
-                <details ${open ? 'open' : ''}>
-                    <summary class="${colorClass} hover:opacity-90">
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="${icon}" class="w-4 h-4"></i>
-                            <span>${title} (${items.length})</span>
-                        </div>
-                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
                     </summary>
-                    <div class="content">
-                        <ul class="list-disc pl-4 space-y-1 text-gray-600">
-                            ${items.map(i => `<li class="${i.includes('⚠️') ? 'font-bold text-red-600' : ''}">${i}</li>`).join('')}
+                    <div className="px-3 py-2 bg-white border-t border-gray-100">
+                        <ul className="list-disc pl-4 text-[11px] text-gray-700 space-y-1.5 max-h-60 overflow-y-auto custom-scrollbar">
+                            {activities.map((act, i) => <li key={i}>{act}</li>)}
                         </ul>
                     </div>
-                </details>`;
-            };
-
-            list.innerHTML += createAccordion('PERMITIDAS', rules.A, 'text-green-900 bg-green-100', 'check-circle', true);
-            list.innerHTML += createAccordion('CONDICIONADAS', rules.C, 'text-amber-900 bg-amber-100', 'alert-circle', false);
-            list.innerHTML += createAccordion('PROHIBIDAS', rules.P, 'text-red-900 bg-red-100', 'x-circle', false);
-        }
-
-        // --- UTILIDADES ---
-        function parseCoordinates(input) {
-            const parts = input.split(',').map(n => parseFloat(n.trim()));
-            if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) return { lat: parts[0], lng: parts[1] };
-            return null;
-        }
-
-        function resetMap() {
-            if (marker) map.removeLayer(marker);
-            document.getElementById('empty-state').classList.remove('hidden');
-            document.getElementById('results-container').classList.add('hidden');
-            document.getElementById('coord-input').value = '';
-            document.getElementById('address-input').value = '';
-            map.setView([19.32, -99.15], 10);
-        }
-
-        async function handleAddressSearch() {
-            const query = document.getElementById('address-input').value;
-            if (!query) return;
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', CDMX')}&limit=1`);
-                const data = await res.json();
-                if (data.length) handleLocationSelect({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }, data[0].display_name);
-                else alert("Dirección no encontrada.");
-            } catch { alert("Error buscando dirección."); }
-        }
-
-        function detectLocation() {
-            if (!navigator.geolocation) return alert("Geolocalización no soportada.");
-            navigator.geolocation.getCurrentPosition(
-                pos => handleLocationSelect({ lat: pos.coords.latitude, lng: pos.coords.longitude }, "Mi Ubicación"),
-                () => alert("No se pudo obtener la ubicación.")
+                </details>
             );
-        }
+        };
 
-        function shareResult() {
-            if (!currentAnalysis) return;
-            const text = `Consulta SEDEMA: ${currentAnalysis.address}. Estatus: ${currentAnalysis.status === 'RESTRICTED' ? 'ZONA RESTRINGIDA' : 'SUELO URBANO'}.`;
-            if (navigator.share) {
-                navigator.share({ title: 'Consulta Ciudadana', text: text, url: window.location.href }).catch(console.error);
-            } else {
-                navigator.clipboard.writeText(text);
-                alert("Enlace copiado al portapapeles.");
-            }
-        }
+        const Sidebar = ({ analysis, onLocationSelect, currentLocation, onReset }) => {
+            const [inputStr, setInputStr] = useState('');
+            const [addressStr, setAddressStr] = useState('');
+            const [isSearchingAddr, setIsSearchingAddr] = useState(false);
+            const [selectedItem, setSelectedItem] = useState(null);
 
-        // --- ALGORITMOS GIS (Ray Casting) ---
-        function isPointInPolygon(point, geojson) {
-            if (!geojson || !geojson.features) return false;
-            return geojson.features.some(f => pointInFeature(point, f));
-        }
-
-        function findFeature(point, geojson) {
-            if (!geojson || !geojson.features) return null;
-            return geojson.features.find(f => pointInFeature(point, f));
-        }
-
-        function pointInFeature(pt, feature) {
-            const { type, coordinates } = feature.geometry;
-            const checkPoly = (ring) => {
-                let inside = false;
-                for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-                    const xi = ring[i][0], yi = ring[i][1];
-                    const xj = ring[j][0], yj = ring[j][1];
-                    const intersect = ((yi > pt.lat) !== (yj > pt.lat)) && (pt.lng < (xj - xi) * (pt.lat - yi) / (yj - yi) + xi);
-                    if (intersect) inside = !inside;
+            useEffect(() => {
+                if (analysis && window.innerWidth < 768) {
+                    const el = document.getElementById('results-container');
+                    el?.scrollIntoView({ behavior: 'smooth' });
                 }
-                return inside;
-            };
-            if (type === 'Polygon') return checkPoly(coordinates[0]);
-            if (type === 'MultiPolygon') return coordinates.some(poly => checkPoly(poly[0]));
-            return false;
-        }
+            }, [analysis]);
 
+            const handleManualInput = (e) => {
+                e.preventDefault();
+                const parts = inputStr.split(',').map(s => parseFloat(s.trim()));
+                if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                    onLocationSelect({ lat: parts[0], lng: parts[1] });
+                } else {
+                    alert("Formato: Latitud, Longitud (ej. 19.4326, -99.1332)");
+                }
+            };
+
+            const handleAddressSearch = async (e) => {
+                e.preventDefault();
+                if (!addressStr.trim()) return;
+                setIsSearchingAddr(true);
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressStr + ', Ciudad de México')}&limit=1`);
+                    const data = await response.json();
+                    if (data?.[0]) {
+                        onLocationSelect({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) });
+                    } else {
+                        alert("Dirección no encontrada.");
+                    }
+                } catch {
+                    alert("Error en la búsqueda.");
+                } finally {
+                    setIsSearchingAddr(false);
+                }
+            };
+
+            const handleGPS = () => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => onLocationSelect({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                        () => alert("No se pudo obtener la ubicación.")
+                    );
+                }
+            };
+
+            return (
+                <>
+                <div id="sidebar-wrapper" className="flex flex-col h-full bg-white print-layout relative w-full md:w-[450px] shadow-xl z-20 border-r border-gray-200">
+                    <header className="px-6 py-5 bg-[#9d2449] text-white shrink-0 shadow-lg z-20 flex items-center gap-5 relative">
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-transparent pointer-events-none"></div>
+                        <img 
+                            src="./logo-sedema.png" 
+                            alt="CDMX" 
+                            className="h-12 object-contain filter brightness-0 invert drop-shadow-sm" 
+                            onError={(e) => { e.target.style.display = 'none'; e.target.nextElementSibling?.classList.remove('hidden'); }}
+                        />
+                        <span className="hidden font-bold text-xl tracking-tighter">CDMX</span>
+                        <div className="h-10 w-px bg-white/30"></div>
+                        <div className="flex flex-col justify-center">
+                            <h1 className="text-xl font-serif font-medium tracking-wide leading-none">VISOR DE CONSULTA</h1>
+                            <p className="text-[10px] text-white/80 uppercase tracking-widest mt-1 font-light">Secretaría del Medio Ambiente</p>
+                        </div>
+                    </header>
+
+                    <div id="results-container" className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar bg-white">
+                        <div className="space-y-3 no-print border-b border-gray-100 pb-5">
+                            <div className="grid grid-cols-1 gap-2">
+                                <form onSubmit={handleManualInput} className="flex relative group">
+                                    <input type="text" placeholder="Coordenadas (Lat, Lng)" className="w-full pl-3 pr-2 py-2 border border-gray-300 rounded-l text-sm focus:border-[#9d2449] focus:outline-none transition-colors" value={inputStr} onChange={(e) => setInputStr(e.target.value)} />
+                                    <button className="bg-gray-100 px-3 border-y border-r border-gray-300 rounded-r text-xs text-gray-600 hover:bg-gray-200 transition-colors">Ir</button>
+                                </form>
+                                <form onSubmit={handleAddressSearch} className="flex relative">
+                                    <input type="text" placeholder="Dirección..." className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded text-sm focus:border-[#9d2449] focus:outline-none transition-colors" value={addressStr} onChange={(e) => setAddressStr(e.target.value)} disabled={isSearchingAddr} />
+                                    <Icons.Search className="absolute right-2 top-2.5 h-4 w-4 text-gray-400" />
+                                </form>
+                            </div>
+                            <div className="flex gap-2">
+                                <button onClick={handleGPS} className="flex-1 py-2 bg-gray-800 text-white rounded text-xs flex items-center justify-center gap-2 hover:bg-gray-700 transition-colors shadow-sm">
+                                    <Icons.Navigation className="h-3 w-3" /> Mi Ubicación
+                                </button>
+                                <button onClick={() => { setInputStr(''); setAddressStr(''); onReset(); }} className="px-3 bg-gray-100 border rounded hover:bg-white text-gray-600 transition-colors">
+                                    <Icons.RotateCcw className="h-4 w-4" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {analysis ? (
+                            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                <div className="flex justify-between items-center no-print mb-2">
+                                    <span className="text-[10px] text-gray-400 font-mono">FOLIO: {Date.now().toString().slice(-6)}</span>
+                                    <button onClick={onReset} className="text-xs font-bold text-[#9d2449] flex items-center gap-1 uppercase hover:underline">
+                                        <Icons.RotateCcw className="h-3 w-3" /> Nueva Consulta
+                                    </button>
+                                </div>
+
+                                <div className={`p-5 rounded-lg border-l-4 shadow-sm mb-5 ${
+                                    analysis.status === 'CONSERVATION_SOIL' ? 'bg-red-50 border-red-700' :
+                                    analysis.status === 'URBAN_SOIL' ? 'bg-green-50 border-green-600' : 'bg-gray-100 border-gray-400'
+                                }`}>
+                                    <div className="flex gap-4">
+                                        <div className="mt-1">
+                                            {analysis.status === 'CONSERVATION_SOIL' && <Icons.AlertTriangle className="h-6 w-6 text-red-700" />}
+                                            {analysis.status === 'URBAN_SOIL' && <Icons.CheckCircle className="h-6 w-6 text-green-700" />}
+                                            {(analysis.status === 'OUTSIDE_CDMX' || analysis.status === 'LOADING') && <Icons.Info className="h-6 w-6 text-gray-600" />}
+                                        </div>
+                                        <div>
+                                            <h2 className={`text-lg font-bold uppercase tracking-tight ${
+                                                analysis.status === 'CONSERVATION_SOIL' ? 'text-red-900' :
+                                                analysis.status === 'URBAN_SOIL' ? 'text-green-900' : 'text-gray-800'
+                                            }`}>
+                                                {analysis.status === 'CONSERVATION_SOIL' ? 'Zona Restringida' :
+                                                analysis.status === 'URBAN_SOIL' ? 'Suelo Urbano' : 'Fuera de CDMX'}
+                                            </h2>
+                                            <p className="text-sm mt-1 text-gray-800 text-justify leading-relaxed">
+                                                {analysis.status === 'CONSERVATION_SOIL' 
+                                                    ? 'El predio se ubica dentro del Suelo de Conservación. Aplican restricciones ambientales estrictas para preservar los servicios ecosistémicos.' 
+                                                    : analysis.status === 'URBAN_SOIL'
+                                                    ? 'El predio se ubica fuera de la capa de conservación ecológica. Para normatividad urbana, consulte a SEDUVI.'
+                                                    : 'La ubicación seleccionada se encuentra fuera de la jurisdicción de la Ciudad de México.'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3 text-xs mb-6">
+                                    <div className="bg-white p-3 rounded border border-gray-200 shadow-sm">
+                                        <span className="block text-gray-500 text-[10px] font-bold uppercase tracking-wide mb-1">Alcaldía</span>
+                                        <span className="font-semibold text-gray-800 text-sm">{analysis.alcaldia || 'No identificada'}</span>
+                                    </div>
+                                    <div className="bg-white p-3 rounded border border-gray-200 shadow-sm">
+                                        <span className="block text-gray-500 text-[10px] font-bold uppercase tracking-wide mb-1">Coordenadas</span>
+                                        <span className="font-mono text-gray-600 text-[11px]">
+                                            {analysis.coordinate.lat.toFixed(5)}, {analysis.coordinate.lng.toFixed(5)}
+                                        </span>
+                                    </div>
+                                    {analysis.zoningKey && (
+                                        <div className="col-span-2 bg-white p-3 rounded border border-gray-200 shadow-sm">
+                                            <span className="block text-gray-500 text-[10px] font-bold uppercase tracking-wide mb-1">Zonificación Ecológica</span>
+                                            <div className="flex items-center gap-3">
+                                                <span className="bg-[#b38e5d] text-white px-2 py-0.5 rounded text-xs font-bold">{analysis.zoningKey}</span>
+                                                <span className="font-medium text-gray-800 text-sm leading-tight">{analysis.zoningName}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {analysis.status === 'CONSERVATION_SOIL' && (
+                                    <div className="mt-6">
+                                        <h3 className="text-xs font-bold text-gray-800 mb-3 border-b pb-2 flex items-center gap-2">
+                                            <Icons.Map className="h-3 w-3" /> REGULACIÓN DE USO DE SUELO
+                                        </h3>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 activity-grid">
+                                            <div className="space-y-3">
+                                                <ActivitySection 
+                                                    title="PROHIBIDAS" 
+                                                    activities={analysis.prohibitedActivities} 
+                                                    icon={<Icons.XCircle className="h-3 w-3" />}
+                                                    headerClass="text-red-900 bg-red-50 border-red-100"
+                                                    bgClass="bg-white"
+                                                    defaultOpen={true}
+                                                />
+                                                <ActivitySection 
+                                                    title="CONDICIONADAS" 
+                                                    activities={analysis.conditionedActivities} 
+                                                    icon={<Icons.AlertCircle className="h-3 w-3" />}
+                                                    headerClass="text-amber-900 bg-amber-50 border-amber-100"
+                                                    bgClass="bg-white"
+                                                    defaultOpen={true}
+                                                />
+                                            </div>
+                                            <div>
+                                                <ActivitySection 
+                                                    title="PERMITIDAS" 
+                                                    activities={analysis.allowedActivities} 
+                                                    icon={<Icons.CheckCircle className="h-3 w-3" />}
+                                                    headerClass="text-green-900 bg-green-50 border-green-100"
+                                                    bgClass="bg-white"
+                                                    defaultOpen={true}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="mt-8 border-t border-dashed border-gray-300 pt-4">
+                                    <h4 className="text-[10px] font-bold text-gray-500 uppercase mb-2">Fuentes y Referencias</h4>
+                                    <ul className="text-[10px] text-gray-500 space-y-1">
+                                        <li>• Programa General de Ordenamiento Ecológico del DF (2000)</li>
+                                        <li>• Sistema de Información Geográfica SEDEMA</li>
+                                        <li>• Fecha de consulta: {analysis.timestamp}</li>
+                                    </ul>
+                                </div>
+
+                                <div className="mt-4 border-t border-dashed border-gray-300 pt-4 bg-gray-50 p-3 rounded text-justify">
+                                    <h4 className="text-[10px] font-bold text-[#9d2449] uppercase mb-1">Aviso Legal</h4>
+                                    <ul className="list-disc pl-3 space-y-1">
+                                        {LEGAL_NOTES.map((note, i) => <li key={i} className="text-[9px] text-gray-500">{note}</li>)}
+                                    </ul>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-full text-center py-20 opacity-50">
+                                <div className="bg-gray-100 p-6 rounded-full mb-4">
+                                    <Icons.MapPin className="h-10 w-10 text-gray-400" />
+                                </div>
+                                <h3 className="text-gray-800 font-bold mb-1">Bienvenido al Visor</h3>
+                                <p className="text-sm text-gray-500 max-w-xs">Seleccione un punto en el mapa o busque una dirección para consultar la normativa ambiental.</p>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="bg-gray-50 border-t border-gray-200 z-10 relative shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                        <div className="px-5 py-4 border-b border-gray-200">
+                            <h4 className="text-[10px] font-bold text-gray-500 uppercase mb-3 text-center tracking-wider">Recuperación de Suelo de Conservación</h4>
+                            <div className="flex justify-between items-end h-16 px-2 gap-1.5">
+                                {HECTARES_DATA.map((d) => d.year <= new Date().getFullYear() ? (
+                                    <div key={d.year} className="flex flex-col items-center w-full group cursor-default">
+                                        <div className="w-full relative flex items-end justify-center">
+                                            <div className="bg-[#b38e5d] w-full rounded-t-sm group-hover:bg-[#9d2449] transition-all duration-500 ease-out" style={{ height: `${Math.max(d.recovered, 15)}px` }}></div>
+                                            <span className="absolute -top-5 text-[9px] font-bold text-[#9d2449] opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">{d.recovered}ha</span>
+                                        </div>
+                                        <span className="text-[9px] text-gray-400 mt-1 font-medium">{d.year}</span>
+                                    </div>
+                                ) : null)}
+                            </div>
+                        </div>
+
+                        <div className="px-5 py-4 border-b border-gray-200 bg-white">
+                            {analysis && (
+                                <div className="flex gap-3 mb-5 no-print">
+                                    <button onClick={() => window.print()} className="flex-1 py-2.5 bg-white border border-[#9d2449] text-[#9d2449] rounded-md text-xs font-bold hover:bg-[#9d2449] hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm">
+                                        <Icons.Printer className="h-4 w-4" /> IMPRIMIR
+                                    </button>
+                                    <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Consulta SEDEMA: ' + analysis.alcaldia)}`, '_blank')} className="flex-1 py-2.5 bg-[#9d2449] text-white rounded-md text-xs font-bold hover:bg-[#7d1d3a] transition-all flex items-center justify-center gap-2 shadow-sm">
+                                        <Icons.Share2 className="h-4 w-4" /> COMPARTIR
+                                    </button>
+                                </div>
+                            )}
+                            
+                            <div className="grid grid-cols-2 gap-4 text-[10px] text-gray-500">
+                                <div className="flex items-center gap-2">
+                                    <Icons.Phone className="h-3 w-3 text-[#b38e5d] shrink-0" />
+                                    <span>{CONTACT_INFO.phone}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Icons.Clock className="h-3 w-3 text-[#b38e5d] shrink-0" />
+                                    <span>{CONTACT_INFO.hours}</span>
+                                </div>
+                            </div>
+                            <p className="mt-3 text-[9px] text-justify leading-tight opacity-60 italic border-t border-gray-100 pt-2">{LEGAL_DISCLAIMER}</p>
+                        </div>
+
+                        <div className="px-5 py-4 no-print bg-gray-50 border-b border-gray-200">
+                            <h4 className="text-[10px] font-bold text-gray-500 uppercase mb-2 tracking-wider">Galería de Actividades</h4>
+                            <div className="grid grid-cols-3 gap-2">
+                                {GALLERY_ITEMS.map((item, i) => (
+                                    <button 
+                                        key={i} 
+                                        onClick={() => setSelectedItem(item)}
+                                        className="relative aspect-square rounded-lg overflow-hidden group border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#9d2449] bg-black"
+                                    >
+                                        {item.type === 'video' ? (
+                                            <>
+                                                <img src={`https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`} alt={item.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity" />
+                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                    <div className="bg-white/20 p-2 rounded-full backdrop-blur-sm group-hover:scale-110 transition-transform">
+                                                        <Icons.Play className="h-5 w-5 text-white fill-white" />
+                                                    </div>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <img src={item.src} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <Icons.ZoomIn className="text-white h-5 w-5" />
+                                                </div>
+                                            </>
+                                        )}
+                                        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent text-white text-[8px] p-1.5 pt-4 truncate font-medium">{item.title}</div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="px-5 py-5 bg-white no-print">
+                            <h4 className="text-[10px] font-bold text-gray-500 uppercase mb-3 flex items-center gap-2">
+                                <Icons.HelpCircle className="h-3 w-3" /> Preguntas Frecuentes
+                            </h4>
+                            <div className="space-y-2">
+                                {FAQ_ITEMS.map((faq, i) => (
+                                    <details key={i} className="group border border-gray-100 rounded-md overflow-hidden bg-white">
+                                        <summary className="flex items-start justify-between p-3 cursor-pointer select-none bg-gray-50 group-hover:bg-gray-100 transition-colors">
+                                            <span className="text-[11px] font-bold text-gray-700 pr-2 leading-tight">{faq.q}</span>
+                                            <Icons.ChevronDown className="h-3 w-3 text-gray-400 group-open:rotate-180 transition-transform mt-0.5 shrink-0" />
+                                        </summary>
+                                        <div className="p-3 bg-white border-t border-gray-100 text-[11px] text-gray-600 leading-relaxed text-justify faq-content">
+                                            <div dangerouslySetInnerHTML={{ __html: faq.a.replace(/\n/g, '<br/>') }} />
+                                        </div>
+                                    </details>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {selectedItem && (
+                    <div 
+                        className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+                        onClick={() => setSelectedItem(null)}
+                    >
+                        <button 
+                            className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors p-2 bg-white/10 rounded-full hover:bg-white/20 z-50"
+                            onClick={() => setSelectedItem(null)}
+                        >
+                            <Icons.X className="h-8 w-8" />
+                        </button>
+                        <div className="w-full max-w-4xl max-h-[90vh] flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                            {selectedItem.type === 'video' ? (
+                                <div className="w-full aspect-video bg-black rounded-lg overflow-hidden shadow-2xl">
+                                    <iframe width="100%" height="100%" src={`https://www.youtube.com/embed/${selectedItem.videoId}?autoplay=1&rel=0`} title={selectedItem.title} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+                                </div>
+                            ) : (
+                                <img src={selectedItem.src} alt={selectedItem.title} className="max-w-full max-h-[90vh] rounded-lg shadow-2xl object-contain" />
+                            )}
+                        </div>
+                    </div>
+                )}
+                </>
+            );
+        };
+
+        const MapViewer = ({ location, onLocationSelect, onReset, analysisStatus }) => {
+            const mapRef = useRef(null);
+            const mapInstance = useRef(null);
+            const markerInstance = useRef(null);
+            const layersRef = useRef({});
+            const [isMapLoading, setIsMapLoading] = useState(true);
+            const [visibleLayers, setVisibleLayers] = useState({ sc: true, zoning: true, alcaldias: true, context: true });
+            const [isLegendOpen, setIsLegendOpen] = useState(true);
+
+            const toggleLayer = (key, e) => {
+                e.stopPropagation();
+                setVisibleLayers(prev => ({ ...prev, [key]: !prev[key] }));
+            };
+
+            useEffect(() => {
+                if (!window.L || !mapRef.current || mapInstance.current) return;
+
+                const map = window.L.map(mapRef.current, { zoomControl: false }).setView(INITIAL_CENTER, INITIAL_ZOOM);
+                window.L.control.zoom({ position: 'topright' }).addTo(map);
+                mapInstance.current = map;
+
+                window.L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles &copy; Esri', maxZoom: 19
+                }).addTo(map);
+
+                window.L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+                    maxZoom: 19, opacity: 0.7
+                }).addTo(map);
+
+                setIsMapLoading(true);
+
+                const initLayers = () => {
+                    const cachedData = dataCache;
+                    const contextGroup = window.L.layerGroup();
+                    if (cachedData.edomex?.features?.length) {
+                        contextGroup.addLayer(window.L.geoJSON(cachedData.edomex, { style: { color: '#fbbf24', weight: 1, dashArray: '4, 4', fillOpacity: 0.1 }, interactive: false }));
+                    }
+                    layersRef.current['context'] = contextGroup;
+
+                    if (cachedData.sc?.features?.length) {
+                        layersRef.current['sc'] = window.L.geoJSON(cachedData.sc, { style: { color: '#d6d6d6', weight: 1, opacity: 0.6, fillColor: '#9d2449', fillOpacity: 0.1 } });
+                    }
+
+                    if (cachedData.zoning?.features?.length) {
+                        layersRef.current['zoning'] = window.L.geoJSON(cachedData.zoning, {
+                            style: { color: '#00eaff', weight: 1.5, dashArray: '4, 4', fillColor: '#00eaff', fillOpacity: 0.05 },
+                            onEachFeature: (feature, layer) => {
+                                if (feature.properties) {
+                                    const name = feature.properties.PGOEDF || feature.properties.UGA || feature.properties.CLAVE;
+                                    if (name) layer.bindTooltip(name, { sticky: true, className: 'custom-tooltip' });
+                                }
+                            }
+                        });
+                    }
+
+                    if (cachedData.alcaldias?.features?.length) {
+                        layersRef.current['alcaldias'] = window.L.geoJSON(cachedData.alcaldias, { style: { color: '#ffffff', weight: 2, dashArray: '8, 4', fillOpacity: 0 }, interactive: false });
+                    }
+
+                    Object.entries(visibleLayers).forEach(([key, isVisible]) => {
+                        if (isVisible && layersRef.current[key]) {
+                            layersRef.current[key].addTo(map);
+                            if (key === 'sc') layersRef.current[key].bringToBack();
+                        }
+                    });
+
+                    if (layersRef.current['zoning']) layersRef.current['zoning'].bringToFront();
+                    if (layersRef.current['alcaldias']) layersRef.current['alcaldias'].bringToFront();
+                    setIsMapLoading(false);
+                };
+
+                // Wait slightly for data loading
+                const checkData = setInterval(() => {
+                    if (dataCache.cdmx) {
+                        clearInterval(checkData);
+                        initLayers();
+                    }
+                }, 500);
+
+                if (window.L.Control.Geocoder) {
+                    const geocoder = window.L.Control.Geocoder.nominatim();
+                    window.L.Control.geocoder({ geocoder, defaultMarkGeocode: false, placeholder: "Buscar ubicación...", errorMessage: "No encontrado.", showResultIcons: true })
+                    .on('markgeocode', function(e) {
+                        const latlng = e.geocode.center;
+                        handleMapClick({ latlng });
+                        map.setView(latlng, 16);
+                    })
+                    .addTo(map);
+                }
+
+                if (onReset) {
+                    const resetBtn = window.L.control({ position: 'topleft' });
+                    resetBtn.onAdd = () => {
+                        const div = window.L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+                        div.innerHTML = `<button style="background:white; border:none; width:30px; height:30px; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Reiniciar mapa"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9d2449" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>`;
+                        div.onclick = (e) => { e.stopPropagation(); onReset(); };
+                        return div;
+                    };
+                    resetBtn.addTo(map);
+                }
+
+                const handleMapClick = (e) => {
+                    const { lat, lng } = e.latlng;
+                    onLocationSelect({ lat, lng });
+                };
+
+                map.on('click', handleMapClick);
+
+                return () => {
+                    map.remove();
+                    mapInstance.current = null;
+                };
+            }, []);
+
+            useEffect(() => {
+                if (!mapInstance.current || isMapLoading) return;
+                Object.entries(visibleLayers).forEach(([key, isVisible]) => {
+                    const layer = layersRef.current[key];
+                    if (!layer) return;
+                    if (isVisible) {
+                        if (!mapInstance.current.hasLayer(layer)) {
+                            mapInstance.current.addLayer(layer);
+                            if (key === 'sc') layer.bringToBack();
+                            if (key === 'zoning') layer.bringToFront();
+                            if (key === 'alcaldias') layer.bringToFront();
+                        }
+                    } else {
+                        if (mapInstance.current.hasLayer(layer)) mapInstance.current.removeLayer(layer);
+                    }
+                });
+            }, [visibleLayers, isMapLoading]);
+
+            useEffect(() => {
+                if (!mapInstance.current) return;
+                if (!location) {
+                    if (markerInstance.current) {
+                        markerInstance.current.remove();
+                        markerInstance.current = null;
+                    }
+                    mapInstance.current.setView(INITIAL_CENTER, INITIAL_ZOOM);
+                    return;
+                }
+                const { lat, lng } = location;
+                let color = '#3b82f6';
+                if (analysisStatus === 'CONSERVATION_SOIL') color = '#ef4444';
+                if (analysisStatus === 'URBAN_SOIL') color = '#22c55e';
+                if (analysisStatus === 'OUTSIDE_CDMX') color = '#9ca3af';
+
+                if (markerInstance.current) {
+                    markerInstance.current.setLatLng([lat, lng]);
+                    markerInstance.current.setStyle({ fillColor: color, color: 'white' });
+                } else {
+                    markerInstance.current = window.L.circleMarker([lat, lng], { radius: 12, fillColor: color, color: '#fff', weight: 3, opacity: 1, fillOpacity: 0.9 }).addTo(mapInstance.current);
+                }
+                mapInstance.current.setView([lat, lng], 16);
+            }, [location, analysisStatus]);
+
+            return (
+                <div id="map-wrapper" className="flex-1 relative bg-gray-200 h-[50vh] md:h-full">
+                    <div id="map-container-div" className="h-full w-full relative group bg-gray-900">
+                        {isMapLoading && (
+                            <div className="absolute inset-0 z-[1000] bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center text-[#9d2449]">
+                                <Icons.Loader2 className="h-10 w-10 animate-spin mb-3" />
+                                <span className="text-sm font-bold font-serif tracking-wide">Cargando Mapa Satelital...</span>
+                            </div>
+                        )}
+                        <div ref={mapRef} className="h-full w-full z-10" />
+                        <div className={`absolute bottom-8 left-4 bg-white shadow-xl border border-gray-200 z-[400] transition-all duration-300 ease-in-out rounded-lg overflow-hidden print-legend ${isLegendOpen ? 'w-64' : 'w-auto'}`} onMouseEnter={() => setIsLegendOpen(true)}>
+                            <button onClick={() => setIsLegendOpen(!isLegendOpen)} className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors border-b border-gray-100 no-print">
+                                <div className="flex items-center gap-2 text-sm font-bold text-[#9d2449] font-serif">
+                                    <Icons.Layers className="h-4 w-4" />
+                                    {isLegendOpen && <span>Capas y Simbología</span>}
+                                </div>
+                                {isLegendOpen ? <Icons.ChevronDown className="h-4 w-4 text-gray-500" /> : <Icons.ChevronUp className="h-4 w-4 text-gray-500" />}
+                            </button>
+                            <div className={`p-3 space-y-3 bg-white/95 backdrop-blur-sm ${!isLegendOpen ? 'hidden print:block' : ''}`}>
+                                <div className="flex items-center justify-between cursor-pointer group p-1" onClick={(e) => toggleLayer('sc', e)}>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-5 h-5 rounded bg-[#9d2449]/30 border border-[#9d2449] shrink-0"></div>
+                                        <span className="text-xs text-gray-800 font-bold">Suelo de Conservación</span>
+                                    </div>
+                                    <button className="text-gray-400 group-hover:text-[#9d2449] no-print">{visibleLayers.sc ? <Icons.Eye className="h-3 w-3" /> : <Icons.EyeOff className="h-3 w-3" />}</button>
+                                </div>
+                                <div className="flex items-center justify-between cursor-pointer group p-1" onClick={(e) => toggleLayer('zoning', e)}>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-5 h-5 bg-transparent border-2 border-dashed border-[#00eaff] shrink-0"></div>
+                                        <span className="text-xs text-gray-800 font-bold">Zonificación</span>
+                                    </div>
+                                    <button className="text-gray-400 group-hover:text-[#00eaff] no-print">{visibleLayers.zoning ? <Icons.Eye className="h-3 w-3" /> : <Icons.EyeOff className="h-3 w-3" />}</button>
+                                </div>
+                                <div className="flex items-center justify-between cursor-pointer group p-1" onClick={(e) => toggleLayer('alcaldias', e)}>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-5 h-5 bg-transparent border-2 border-white shadow-sm shrink-0"></div>
+                                        <span className="text-xs text-gray-800 font-bold">Límites Alcaldías</span>
+                                    </div>
+                                    <button className="text-gray-400 group-hover:text-gray-600 no-print">{visibleLayers.alcaldias ? <Icons.Eye className="h-3 w-3" /> : <Icons.EyeOff className="h-3 w-3" />}</button>
+                                </div>
+                                <div className="pt-2 mt-2 border-t border-gray-100">
+                                    <div className="text-[10px] text-gray-500 font-bold mb-2 uppercase">Estatus Predio</div>
+                                    <div className="space-y-1.5">
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-3 h-3 rounded-full bg-[#22c55e] border border-white shadow-sm shrink-0"></span>
+                                            <span className="text-[10px] text-gray-600">Urbano (Permitido)</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-3 h-3 rounded-full bg-[#ef4444] border border-white shadow-sm shrink-0"></span>
+                                            <span className="text-[10px] text-gray-600">Conservación (Restringido)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [loading, setLoading] = useState(true);
+            const [analysis, setAnalysis] = useState(null);
+            const [selectedLocation, setSelectedLocation] = useState(null);
+
+            useEffect(() => {
+                loadData().then(() => setLoading(false));
+            }, []);
+
+            const handleLocationSelect = async (coord) => {
+                setSelectedLocation(coord);
+                const result = await analyzeLocation(coord);
+                setAnalysis(result);
+            };
+
+            const handleReset = () => {
+                setSelectedLocation(null);
+                setAnalysis(null);
+            };
+
+            if (loading) {
+                return (
+                    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 text-[#9d2449]">
+                        <Icons.Loader2 className="h-12 w-12 animate-spin mb-4" />
+                        <h2 className="text-xl font-semibold font-serif">Cargando datos geográficos SEDEMA...</h2>
+                        <p className="text-sm text-gray-500 mt-2">Por favor espere.</p>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="flex flex-col md:flex-row h-screen overflow-hidden relative">
+                    <Sidebar 
+                        analysis={analysis} 
+                        onLocationSelect={handleLocationSelect}
+                        currentLocation={selectedLocation}
+                        onReset={handleReset}
+                    />
+                    <MapViewer 
+                        location={selectedLocation} 
+                        onLocationSelect={handleLocationSelect}
+                        onReset={handleReset}
+                        analysisStatus={analysis?.status}
+                    />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
