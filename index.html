@@ -20,9 +20,7 @@
     
     <!-- Libraries -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    
+   
     <!-- React & Babel (for JSX) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -281,7 +279,7 @@
                 isRestricted: false,
                 allowedActivities: [],
                 prohibitedActivities: [],
-                conditionedActivities: [],
+                
                 timestamp: new Date().toLocaleString(),
                 coordinate: coord
             };
@@ -341,8 +339,7 @@
                         if (isEmpty) return;
 
                         if (ruleValue === 'A') allowed.push(activityObj);
-                        else if (ruleValue === 'C') conditioned.push(activityObj);
-                        else if (ruleValue === 'P') prohibited.push(activityObj);
+                                               else if (ruleValue === 'P') prohibited.push(activityObj);
                     });
                     result.allowedActivities = allowed;
                     result.prohibitedActivities = prohibited;
@@ -640,37 +637,33 @@
                                 </div>
 
                                 {/* ACTIVIDADES: PROHIBIDAS -> PERMITIDAS -> CONDICIONADAS (APILADAS) */}
-                                {analysis.status === 'CONSERVATION_SOIL' && (
-                                    <div className="mt-6">
-                                        <h3 className="text-xs font-bold text-gray-800 mb-3 border-b pb-2 flex items-center gap-2">
-                                            <Icons.Map className="h-3 w-3" /> REGULACIÓN DE USO DE SUELO
-                                        </h3>
+                               {analysis.status === 'CONSERVATION_SOIL' && (
+  <div className="mt-6">
+    <h3 className="text-xs font-bold text-gray-800 mb-3 border-b pb-2 flex items-center gap-2">
+      <Icons.Map className="h-3 w-3" /> REGULACIÓN DE USO DE SUELO
+    </h3>
 
-                                        <div className="space-y-3">
-                                            <ActivitySection 
-                                                title="PROHIBIDAS" 
-                                                activities={analysis.prohibitedActivities} 
-                                                icon={<Icons.XCircle className="h-3 w-3" />}
-                                                headerClass="text-red-900 bg-red-50 border-red-100"
-                                                bgClass="bg-white"
-                                                defaultOpen={true}
-                                            />
-                                            <ActivitySection 
-                                                title="PERMITIDAS" 
-                                                activities={analysis.allowedActivities} 
-                                                icon={<Icons.CheckCircle className="h-3 w-3" />}
-                                                headerClass="text-green-900 bg-green-50 border-green-100"
-                                                bgClass="bg-white"
-                                                defaultOpen={true}
-                                            />
-                                            <ActivitySection 
-                                                title="CONDICIONADAS" 
-                                                activities={analysis.conditionedActivities} 
-                                                icon={<Icons.AlertCircle className="h-3 w-3" />}
-                                                headerClass="text-amber-900 bg-amber-50 border-amber-100"
-                                                bgClass="bg-white"
-                                                defaultOpen={false}
-                                            />
+    <div className="space-y-3">
+      <ActivitySection 
+        title="PROHIBIDAS" 
+        activities={analysis.prohibitedActivities} 
+        icon={<Icons.XCircle className="h-3 w-3" />}
+        headerClass="text-red-900 bg-red-50 border-red-100"
+        bgClass="bg-white"
+        defaultOpen={true}
+      />
+      <ActivitySection 
+        title="PERMITIDAS" 
+        activities={analysis.allowedActivities} 
+        icon={<Icons.CheckCircle className="h-3 w-3" />}
+        headerClass="text-green-900 bg-green-50 border-green-100"
+        bgClass="bg-white"
+        defaultOpen={true}
+      />
+    </div>
+  </div>
+)}
+                                        
                                         </div>
                                     </div>
                                 )}
@@ -867,43 +860,58 @@
             ER: '#CC79A7'    // Equipamiento Rural
         };
 
-        const ZONING_COLORS = [
-          '#1f77b4',
-          '#ff7f0e',
-          '#2ca02c',
-          '#d62728',
-          '#9467bd',
-          '#8c564b',
-          '#e377c2',
-          '#17becf'
-        ];
+       /* --- PALETA DE ZONIFICACIÓN --- */
+const ZONING_FIXED_COLORS = {
+  PE:  '#0072B2', // Preservación Ecológica
+  RE:  '#009E73', // Rescate Ecológico
+  FC:  '#005F2F', // Forestal de Conservación
+  PRA: '#D55E00', // Producción Rural Agroindustrial
+  HR:  '#E69F00', // Habitacional Rural
+  HRB: '#E69F00', // Habitacional Rural de Baja Densidad
+  ER:  '#CC79A7'  // Equipamiento Rural
+};
 
-        const getZoningColor = (claveRaw) => {
-          const clave = (claveRaw || 'DEFAULT').toString().toUpperCase();
-          if (ZONING_FIXED_COLORS[clave]) return ZONING_FIXED_COLORS[clave];
+const ZONING_COLORS = [
+  '#1f77b4',
+  '#ff7f0e',
+  '#2ca02c',
+  '#d62728',
+  '#9467bd',
+  '#8c564b',
+  '#e377c2',
+  '#17becf'
+];
 
-          let hash = 0;
-          for (let i = 0; i < clave.length; i++) {
-            hash = ((hash << 5) - hash) + clave.charCodeAt(i);
-            hash |= 0;
-          }
-          const index = Math.abs(hash) % ZONING_COLORS.length;
-          return ZONING_COLORS[index];
-        };
+const getZoningColor = (claveRaw) => {
+  const clave = (claveRaw || 'DEFAULT').toString().toUpperCase();
 
-        const getZoningStyle = (feature) => {
-          const props = feature.properties || {};
-          const clave = props.CLAVE || props.PGOEDF || props.UGA || 'DEFAULT';
-          const color = getZoningColor(clave);
+  // Paleta fija por CLAVE
+  if (ZONING_FIXED_COLORS[clave]) return ZONING_FIXED_COLORS[clave];
 
-          return {
-            color,
-            weight: 1.2,
-            dashArray: '3, 3',
-            fillColor: color,
-            fillOpacity: 0.25
-          };
-        };
+  // Fallback hash si aparece una clave nueva
+  let hash = 0;
+  for (let i = 0; i < clave.length; i++) {
+    hash = ((hash << 5) - hash) + clave.charCodeAt(i);
+    hash |= 0;
+  }
+  const index = Math.abs(hash) % ZONING_COLORS.length;
+  return ZONING_COLORS[index];
+};
+
+const getZoningStyle = (feature) => {
+  const props = feature.properties || {};
+  const clave = props.CLAVE || props.PGOEDF || props.UGA || 'DEFAULT';
+  const color = getZoningColor(clave);
+
+  return {
+    color,
+    weight: 1.2,
+    dashArray: '3, 3',
+    fillColor: color,
+    fillOpacity: 0.25
+  };
+};
+          
 
         /* --- MAPVIEWER --- */
 
@@ -979,14 +987,24 @@
                 setIsMapLoading(true);
 
                 const initLayers = () => {
-                    const cachedData = dataCache;
+    const cachedData = dataCache;
+    // ... todo lo que ya tienes para edomex, morelos, sc, zoning, alcaldias ...
 
-                    if (cachedData.edomex?.features?.length) {
-                        layersRef.current['edomex'] = window.L.geoJSON(cachedData.edomex, {
-                            style: { color: '#fbbf24', weight: 1, dashArray: '4, 4', fillOpacity: 0.05 },
-                            interactive: false
-                        });
-                    }
+    Object.entries(visibleLayers).forEach(([key, isVisible]) => {
+        if (isVisible && layersRef.current[key]) {
+            layersRef.current[key].addTo(map);
+            if (key === 'sc') layersRef.current[key].bringToBack();
+        }
+    });
+
+    if (layersRef.current['zoning']) layersRef.current['zoning'].bringToFront();
+    if (layersRef.current['alcaldias']) layersRef.current['alcaldias'].bringToFront();
+
+    // 👇 AÑADE ESTA LÍNEA
+    map.invalidateSize(true);
+
+    setIsMapLoading(false);
+};
 
                     if (cachedData.morelos?.features?.length) {
                         layersRef.current['morelos'] = window.L.geoJSON(cachedData.morelos, {
@@ -1068,15 +1086,7 @@
                     }
                 }, 500);
 
-                if (window.L.Control.Geocoder) {
-                    const geocoder = window.L.Control.Geocoder.nominatim();
-                    window.L.Control.geocoder({
-                        geocoder,
-                        defaultMarkGeocode: false,
-                        placeholder: "Buscar ubicación...",
-                        errorMessage: "No encontrado.",
-                        showResultIcons: true
-                    })
+              
                     .on('markgeocode', function(e) {
                         const latlng = e.geocode.center;
                         handleMapClick({ latlng });
