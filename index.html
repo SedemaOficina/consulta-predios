@@ -681,7 +681,43 @@
                 </>
             );
         };
+/* --- ESTILOS DE ZONIFICACIÓN --- */
+const ZONING_COLORS = [
+  '#1f77b4', // azul
+  '#ff7f0e', // naranja
+  '#2ca02c', // verde
+  '#d62728', // rojo
+  '#9467bd', // morado
+  '#8c564b', // café
+  '#e377c2', // rosa
+  '#17becf'  // turquesa
+];
 
+const getZoningColor = (claveRaw) => {
+  const clave = (claveRaw || 'DEFAULT').toString();
+  // hash simple para repartir claves en la paleta
+  let hash = 0;
+  for (let i = 0; i < clave.length; i++) {
+    hash = ((hash << 5) - hash) + clave.charCodeAt(i);
+    hash |= 0; // Convertir a 32 bits
+  }
+  const index = Math.abs(hash) % ZONING_COLORS.length;
+  return ZONING_COLORS[index];
+};
+
+const getZoningStyle = (feature) => {
+  const props = feature.properties || {};
+  const clave = props.CLAVE || props.PGOEDF || props.UGA || 'DEFAULT';
+  const color = getZoningColor(clave);
+
+  return {
+    color,               // color del contorno
+    weight: 1.2,
+    dashArray: '3, 3',
+    fillColor: color,    // mismo color al relleno
+    fillOpacity: 0.18,   // buena transparencia
+  };
+};
         const MapViewer = ({ location, onLocationSelect, onReset, analysisStatus }) => {
             const mapRef = useRef(null);
             const mapInstance = useRef(null);
@@ -725,17 +761,22 @@
                         layersRef.current['sc'] = window.L.geoJSON(cachedData.sc, { style: { color: '#d6d6d6', weight: 1, opacity: 0.6, fillColor: '#9d2449', fillOpacity: 0.1 } });
                     }
 
-                    if (cachedData.zoning?.features?.length) {
-                        layersRef.current['zoning'] = window.L.geoJSON(cachedData.zoning, {
-                            style: { color: '#00eaff', weight: 1.5, dashArray: '4, 4', fillColor: '#00eaff', fillOpacity: 0.05 },
-                            onEachFeature: (feature, layer) => {
-                                if (feature.properties) {
-                                    const name = feature.properties.PGOEDF || feature.properties.UGA || feature.properties.CLAVE;
-                                    if (name) layer.bindTooltip(name, { sticky: true, className: 'custom-tooltip' });
-                                }
-                            }
-                        });
-                    }
+                   if (cachedData.zoning?.features?.length) {
+  layersRef.current['zoning'] = window.L.geoJSON(cachedData.zoning, {
+    style: getZoningStyle,
+    onEachFeature: (feature, layer) => {
+      if (feature.properties) {
+        const name = feature.properties.PGOEDF || feature.properties.UGA || feature.properties.CLAVE;
+        if (name) {
+          layer.bindTooltip(name, {
+            sticky: true,
+            className: 'custom-tooltip'
+          });
+        }
+      }
+    }
+  });
+}
 
                     if (cachedData.alcaldias?.features?.length) {
                         layersRef.current['alcaldias'] = window.L.geoJSON(cachedData.alcaldias, { style: { color: '#ffffff', weight: 2, dashArray: '8, 4', fillOpacity: 0 }, interactive: false });
@@ -864,11 +905,15 @@
                                     </div>
                                     <button className="text-gray-400 group-hover:text-[#9d2449] no-print">{visibleLayers.sc ? <Icons.Eye className="h-3 w-3" /> : <Icons.EyeOff className="h-3 w-3" />}</button>
                                 </div>
-                                <div className="flex items-center justify-between cursor-pointer group p-1" onClick={(e) => toggleLayer('zoning', e)}>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-5 h-5 bg-transparent border-2 border-dashed border-[#00eaff] shrink-0"></div>
-                                        <span className="text-xs text-gray-800 font-bold">Zonificación</span>
-                                    </div>
+                               <div className="flex items-center justify-between cursor-pointer group p-1" onClick={(e) => toggleLayer('zoning', e)}>
+  <div className="flex items-center gap-3">
+    <div className="w-5 h-5 bg-gradient-to-r from-[#1f77b4] via-[#ff7f0e] to-[#2ca02c] border border-gray-300 rounded-sm shrink-0"></div>
+    <span className="text-xs text-gray-800 font-bold">Zonificación ecológica</span>
+  </div>
+  <button className="text-gray-400 group-hover:text-[#00eaff] no-print">
+    {visibleLayers.zoning ? <Icons.Eye className="h-3 w-3" /> : <Icons.EyeOff className="h-3 w-3" />}
+  </button>
+</div>
                                     <button className="text-gray-400 group-hover:text-[#00eaff] no-print">{visibleLayers.zoning ? <Icons.Eye className="h-3 w-3" /> : <Icons.EyeOff className="h-3 w-3" />}</button>
                                 </div>
                                 <div className="flex items-center justify-between cursor-pointer group p-1" onClick={(e) => toggleLayer('alcaldias', e)}>
