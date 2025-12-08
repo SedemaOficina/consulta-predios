@@ -129,15 +129,29 @@ body {
     overflow: visible !important;
   }
 
-  #map-wrapper {
-    height: 400px !important;
-    width: 100% !important;
-    position: relative !important;
-    border: 1px solid #ccc;
-    margin-bottom: 20px;
-    page-break-inside: avoid;
-  }
+ /* --- FIX MAP HEIGHT --- */
+#map-wrapper {
+    height: calc(100vh - 56px) !important; 
+    min-height: 400px;
+    position: relative;
+}
 
+/* Ensure leaflet map container expands fully */
+#map-container-div {
+    height: 100% !important;
+    width: 100% !important;
+    position: relative;
+}
+
+/* Z-index fixes */
+.leaflet-control-container {
+    z-index: 600 !important;
+}
+
+.legend-container,
+.print-legend {
+    z-index: 9999 !important;
+}
   .print-legend {
     position: absolute !important;
     bottom: 10px !important;
