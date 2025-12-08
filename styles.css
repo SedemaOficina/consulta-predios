@@ -42,7 +42,7 @@ body {
   text-shadow: 1px 1px 2px black;
 }
 
-/* Leaflet Geocoder Override */
+/* Leaflet Geocoder Override (ya no se usa la lupita pero no estorba) */
 .leaflet-control-geocoder {
   border-radius: 8px !important;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
@@ -83,27 +83,29 @@ body {
 
 /* Contenedor del mapa (derecha) */
 #map-wrapper {
-  height: calc(100vh - 56px) !important;
+  height: calc(100vh - 56px) !important; /* 56px ≈ altura del header */
   min-height: 400px;
   position: relative;
   background: #e5e7eb;
 }
 
+/* Contenedor interno de Leaflet */
 #map-container-div {
   height: 100% !important;
   width: 100% !important;
   position: relative;
 }
 
+/* Controles de Leaflet por encima del canvas */
 .leaflet-control-container {
   z-index: 600 !important;
 }
 
+/* Contenedores de leyenda sobre el mapa */
 .legend-container,
 .print-legend {
   z-index: 9999 !important;
 }
-
 
 /* --- RESPONSIVE MOBILE --- */
 @media (max-width: 768px) {
@@ -112,21 +114,18 @@ body {
     overflow: auto;
   }
   
-  /* Contenedor principal de la app (el que envuelve sidebar + mapa) */
   #root > div {
     flex-direction: column !important;
     height: auto !important;
     overflow: visible !important;
   }
 
-  /* Mapa en mobile: mitad de pantalla aprox. */
   #root > div > div:last-child { 
     height: 50vh !important;
     order: 2;
     min-height: 300px;
   }
 
-  /* Sidebar en mobile: arriba del mapa */
   #root > div > div:first-child {
     width: 100% !important;
     height: auto !important;
