@@ -1,8 +1,8 @@
 /* --- VARIABLES MANUAL DE IDENTIDAD --- */
 :root {
-  --color-guinda: #9d2148;
-  --color-dorado: #b28e5c;
-  --color-gris: #55585a;
+  --color-guinda: #9d2449;
+  --color-dorado: #b38e5d;
+  --color-gris: #54565a;
   --font-main: 'Roboto', sans-serif;
 }
 
@@ -18,211 +18,177 @@ body {
   flex-direction: column;
 }
 
-/* Header */
-header {
-  background-color: var(--color-guinda);
-  color: white;
-  padding: 1rem 1.5rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  z-index: 20;
-  flex-shrink: 0;
+/* Scrollbar Customization */
+.custom-scrollbar::-webkit-scrollbar { width: 5px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* Tooltips */
+.leaflet-tooltip.custom-tooltip {
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+  color: #fff;
+  font-weight: bold;
+  font-size: 10px;
+  text-shadow: 1px 1px 2px black;
 }
 
-/* Layout Principal */
-#main-container {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-  position: relative;
-}
-
-/* Sidebar (Panel Izquierdo) */
-#sidebar {
-  width: 450px;
-  background: white;
-  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-  z-index: 15;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  border-right: 1px solid #e5e7eb;
-}
-
-/* Map (Panel Derecho) */
-#map {
-  flex: 1;
-  background: #e5e5e5;
-  z-index: 1;
-}
-
-/* Leaflet Overrides */
+/* Leaflet Geocoder Override */
 .leaflet-control-geocoder {
   border-radius: 8px !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
-  border: 1px solid #e5e7eb !important;
-  font-family: var(--font-main) !important;
-  z-index: 800;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+  border: none !important;
 }
 
-/* Estilos de botones custom */
-.btn-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s;
+/* FAQ Content Formatting */
+.faq-content strong {
+  display: block;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  color: var(--color-guinda);
+  font-weight: 700;
 }
 
-.btn-primary {
-  background-color: var(--color-guinda);
-  color: white;
-  border: none;
+.faq-content ul {
+  list-style-type: disc;
+  padding-left: 20px;
 }
-.btn-primary:hover { background-color: #7d1d3a; }
-
-.btn-secondary {
-  background-color: white;
-  color: var(--color-gris);
-  border: 1px solid #d1d5db;
-}
-.btn-secondary:hover { border-color: var(--color-guinda); color: var(--color-guinda); }
-
-.btn-share {
-  background-color: #25D366; /* WhatsApp Greenish */
-  color: white;
-  border: none;
-}
-.btn-share:hover { background-color: #20bd5a; }
-
-/* Acordeones */
-details {
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  margin-bottom: 0.75rem;
-  overflow: hidden;
-}
-details summary {
-  padding: 0.75rem 1rem;
-  cursor: pointer;
-  background-color: #f9fafb;
-  font-weight: 500;
-  font-size: 0.875rem;
-  list-style: none;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-details summary:hover { background-color: #f3f4f6; }
-details summary::-webkit-details-marker { display: none; }
-details[open] summary { border-bottom: 1px solid #e5e7eb; }
-details .content { padding: 1rem; font-size: 0.8rem; background: white; }
 
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
-.fade-in {
-  animation: fadeIn 0.5s ease-in-out forwards;
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Scrollbar Personalizado */
-#sidebar::-webkit-scrollbar { width: 6px; }
-#sidebar::-webkit-scrollbar-track { background: #f1f1f1; }
-#sidebar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
-#sidebar::-webkit-scrollbar-thumb:hover { background: var(--color-guinda); }
+.animate-in.fade-in { animation: fadeIn 0.3s ease-out forwards; }
+.animate-in.slide-in-from-bottom-2 { animation: slideUp 0.4s ease-out forwards; }
 
-/* --- RESPONSIVO MÓVIL (Celulares) --- */
+/* --- RESPONSIVE MOBILE --- */
 @media (max-width: 768px) {
   body {
     height: 100%;
     overflow: auto;
   }
-
-  header {
-    padding: 0.75rem 1rem;
-    position: sticky;
-    top: 0;
+  
+  #root > div { /* Main App Container */
+    flex-direction: column !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
-  #main-container {
-    flex-direction: column;
-    height: auto;
-    overflow: visible;
+  /* Map Container on Mobile */
+  #root > div > div:last-child { 
+    height: 50vh !important;
+    order: 1; /* Show Map First */
+    min-height: 350px;
   }
 
-  #map {
-    height: 50vh; 
-    width: 100%;
-    flex: none;
-    position: relative;
-  }
-
-  #sidebar {
-    width: 100%;
-    height: auto;
-    min-height: 50vh;
-    box-shadow: none;
+  /* Sidebar on Mobile */
+  #root > div > div:first-child {
+    width: 100% !important;
+    height: auto !important;
+    order: 2; /* Show Results below map */
     border-right: none;
-    border-top: 1px solid #e5e7eb;
-    overflow: visible;
+    border-top: 4px solid var(--color-guinda);
   }
 }
 
-/* --- IMPRESIÓN (PDF) --- */
+/* --- PRINT STYLES (PDF) --- */
 @media print {
-  @page { margin: 0.5cm; size: portrait; }
-  
-  body, #main-container, #sidebar, #map {
+  @page { 
+    size: portrait; 
+    margin: 1cm; 
+  }
+
+  body {
     height: auto !important;
     overflow: visible !important;
     display: block !important;
-    position: static !important;
+    background: white;
   }
 
-  #main-container { display: block !important; }
-  
+  /* Hide interactive/unnecessary elements */
   .no-print, 
-  .leaflet-control-container,
-  #search-section,
-  button { 
-    display: none !important; 
+  .leaflet-control-container, 
+  header, 
+  ::-webkit-scrollbar {
+    display: none !important;
   }
 
-  header {
-    background: white !important;
-    color: black !important;
-    border-bottom: 3px solid var(--color-guinda);
-    margin-bottom: 1rem;
-  }
-
-  #sidebar {
-    width: 100% !important;
-    border: none !important;
-  }
-
-  #map {
-    height: 350px !important;
-    width: 100% !important;
-    border: 1px solid #000;
-    margin-bottom: 1rem;
-  }
-
-  details { border: 1px solid #ccc !important; break-inside: avoid; }
-  details[open] summary { border-bottom: 1px solid #000; }
-  
-  #legal-footer {
+  /* Main Container Layout for Print */
+  #root > div {
     display: block !important;
-    font-size: 8pt;
-    margin-top: 20px;
-    border-top: 1px solid #ccc;
-    padding-top: 10px;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Map Adjustment for Print */
+  #root > div > div:last-child {
+    height: 400px !important; /* Fixed height for PDF legibility */
+    width: 100% !important;
+    position: relative !important;
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+    page-break-inside: avoid;
+  }
+
+  /* Force Legend to Show */
+  .print-legend {
+    position: absolute !important;
+    bottom: 10px !important;
+    left: 10px !important;
+    width: auto !important;
+    display: block !important;
+    background: white !important;
+    border: 1px solid #ccc !important;
+    z-index: 9999 !important;
+  }
+  .print-legend > div { display: block !important; } /* Show content */
+
+  /* Sidebar Adjustment */
+  #root > div > div:first-child {
+    width: 100% !important;
+    height: auto !important;
+    border: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+  }
+
+  /* Two Column Activity Layout enforced */
+  .grid-cols-1.md\:grid-cols-2 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 1rem;
+  }
+
+  /* Details and Text */
+  details {
+    border: 1px solid #eee !important;
+    margin-bottom: 10px;
+    break-inside: avoid;
+  }
+  
+  details[open] summary { border-bottom: 1px solid #eee; }
+
+  /* Ensure text is readable */
+  p, li, span, h1, h2, h3, h4 {
+    color: black !important;
+  }
+
+  /* Header Simulation for Print */
+  #results-container::before {
+    content: "Consulta Ciudadana SEDEMA - Reporte Generado";
+    display: block;
+    font-size: 16pt;
+    font-weight: bold;
+    color: var(--color-guinda) !important;
+    margin-bottom: 10px;
+    border-bottom: 2px solid var(--color-guinda);
   }
 }
