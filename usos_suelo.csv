@@ -1,4 +1,4 @@
-﻿Sector,Actividad_General,Actividad_Especifica,AEE,AE,AFE,AF,FPE,FP,FCE,FC
+﻿Sector,Actividad general,Actividad específica,AEE,AE,AFE,AF,FPE,FP,FCE,FC
 Agrícola,Intensiva,Cultivos básicos y forrajeros,A,A,A,A,A,P,P,P
 Agrícola,Intensiva,Uso de agroquímicos,A,A,A,A,P,P,P,P
 Agrícola,Extensiva,Cultivos básicos y forrajeros,A,A,A,P,P,P,P,P
@@ -116,3 +116,4 @@ Infraestructura y  Servicios,Redes e instalaciones,Centros de socorro y central 
 Infraestructura y  Servicios,Redes e instalaciones,Pistas y ciclopistas,P,A,A,P,P,P,P,P
 Minería,Extracción de materiales pétreos,Para fines comerciales,P,P,P,P,P,P,P,P
 Minería,Extracción de materiales pétreos,Para obras de conservación y retención de suelo y agua y uso domestico,A,A,A,A,A,A,A,A
+
