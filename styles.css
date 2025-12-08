@@ -19,12 +19,21 @@ body {
 }
 
 /* Scrollbar Customization */
-.custom-scrollbar::-webkit-scrollbar { width: 5px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
 
-/* Tooltips */
+/* Tooltips Leaflet */
 .leaflet-tooltip.custom-tooltip {
   background-color: transparent;
   border: none;
@@ -38,7 +47,7 @@ body {
 /* Leaflet Geocoder Override */
 .leaflet-control-geocoder {
   border-radius: 8px !important;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
   border: none !important;
 }
 
@@ -61,13 +70,16 @@ body {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-in.fade-in { animation: fadeIn 0.3s ease-out forwards; }
-.animate-in.slide-in-from-bottom-2 { animation: slideUp 0.4s ease-out forwards; }
+/* Combinación de fade + slide en una sola clase */
+.animate-in {
+  animation: fadeIn 0.3s ease-out forwards, slideUp 0.4s ease-out forwards;
+}
 
 /* --- RESPONSIVE MOBILE --- */
 @media (max-width: 768px) {
@@ -76,7 +88,8 @@ body {
     overflow: auto;
   }
   
-  #root > div { /* Main App Container */
+  /* Main App Container */
+  #root > div {
     flex-direction: column !important;
     height: auto !important;
     overflow: visible !important;
@@ -85,7 +98,7 @@ body {
   /* Map Container on Mobile */
   #root > div > div:last-child { 
     height: 50vh !important;
-    order: 1; /* Show Map First */
+    order: 1; /* Mostrar mapa primero */
     min-height: 350px;
   }
 
@@ -93,7 +106,7 @@ body {
   #root > div > div:first-child {
     width: 100% !important;
     height: auto !important;
-    order: 2; /* Show Results below map */
+    order: 2; /* Resultados debajo del mapa */
     border-right: none;
     border-top: 4px solid var(--color-guinda);
   }
@@ -113,7 +126,7 @@ body {
     background: white;
   }
 
-  /* Hide interactive/unnecessary elements */
+  /* Ocultar elementos interactivos / de pantalla */
   .no-print, 
   .leaflet-control-container, 
   header, 
@@ -121,16 +134,16 @@ body {
     display: none !important;
   }
 
-  /* Main Container Layout for Print */
+  /* Layout principal para impresión */
   #root > div {
     display: block !important;
     height: auto !important;
     overflow: visible !important;
   }
 
-  /* Map Adjustment for Print */
-  #root > div > div:last-child {
-    height: 400px !important; /* Fixed height for PDF legibility */
+  /* Ajuste del mapa para impresión */
+  #map-wrapper {
+    height: 400px !important; /* Altura fija para legibilidad en PDF */
     width: 100% !important;
     position: relative !important;
     border: 1px solid #ccc;
@@ -138,7 +151,7 @@ body {
     page-break-inside: avoid;
   }
 
-  /* Force Legend to Show */
+  /* Forzar leyenda visible en impresión */
   .print-legend {
     position: absolute !important;
     bottom: 10px !important;
@@ -149,10 +162,13 @@ body {
     border: 1px solid #ccc !important;
     z-index: 9999 !important;
   }
-  .print-legend > div { display: block !important; } /* Show content */
 
-  /* Sidebar Adjustment */
-  #root > div > div:first-child {
+  .print-legend > div {
+    display: block !important;
+  }
+
+  /* Sidebar en impresión */
+  #sidebar-wrapper {
     width: 100% !important;
     height: auto !important;
     border: none !important;
@@ -160,30 +176,32 @@ body {
     box-shadow: none !important;
   }
 
-  /* Two Column Activity Layout enforced */
+  /* Forzar layout en dos columnas donde se usa grid cols-1 md:cols-2 */
   .grid-cols-1.md\:grid-cols-2 {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
     gap: 1rem;
   }
 
-  /* Details and Text */
+  /* Detalles desplegables */
   details {
     border: 1px solid #eee !important;
     margin-bottom: 10px;
     break-inside: avoid;
   }
   
-  details[open] summary { border-bottom: 1px solid #eee; }
+  details[open] summary {
+    border-bottom: 1px solid #eee;
+  }
 
-  /* Ensure text is readable */
+  /* Asegurar legibilidad de texto */
   p, li, span, h1, h2, h3, h4 {
     color: black !important;
   }
 
-  /* Header Simulation for Print */
+  /* Encabezado institucional simulado en el reporte */
   #results-container::before {
-    content: "Consulta Ciudadana SEDEMA - Reporte Generado";
+    content: "Visor de Consulta Ciudadana SEDEMA - Reporte Generado";
     display: block;
     font-size: 16pt;
     font-weight: bold;
