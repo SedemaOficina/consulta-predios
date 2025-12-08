@@ -411,7 +411,10 @@
 
             return (
                 <>
-                <div id="sidebar-wrapper" className="flex flex-col h-full bg-white relative w-full md:w-[450px] shadow-xl z-20 border-r border-gray-200">
+             <div
+  id="sidebar-wrapper"
+  className="flex flex-col h-full bg-white relative w-full md:w-[450px] shadow-xl z-20 border-r border-gray-200 overflow-y-auto custom-scrollbar"
+>
                     <header className="px-6 py-5 bg-[#9d2449] text-white shrink-0 shadow-lg z-20 flex items-center gap-5 relative">
                         <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-transparent pointer-events-none"></div>
                         <img 
@@ -428,7 +431,7 @@
                         </div>
                     </header>
 
-                    <div id="results-container" className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar bg-white">
+                   <div id="results-container" className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar bg-white">
                         <div className="space-y-3 no-print border-b border-gray-100 pb-5">
                             <div className="grid grid-cols-1 gap-2">
                                 <form onSubmit={handleManualInput} className="flex relative group">
