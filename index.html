@@ -172,15 +172,7 @@
             email: "atencionciudadana@sedema.cdmx.gob.mx"
         };
 
-        const HECTARES_DATA = [
-            { year: 2025, recovered: 120 },
-            { year: 2026, recovered: 0 },
-            { year: 2027, recovered: 0 },
-            { year: 2028, recovered: 0 },
-            { year: 2029, recovered: 0 },
-            { year: 2030, recovered: 0 },
-        ];
-
+       
         const GALLERY_ITEMS = [
             { 
                 type: 'image',
@@ -694,21 +686,7 @@
                         )}
                     </div>
 
-                    <div className="bg-gray-50 border-t border-gray-200 z-10 relative shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                        <div className="px-5 py-4 border-b border-gray-200">
-                            <h4 className="text-[10px] font-bold text-gray-500 uppercase mb-3 text-center tracking-wider">Recuperación de Suelo de Conservación</h4>
-                            <div className="flex justify-between items-end h-16 px-2 gap-1.5">
-                                {HECTARES_DATA.map((d) => d.year <= new Date().getFullYear() ? (
-                                    <div key={d.year} className="flex flex-col items-center w-full group cursor-default">
-                                        <div className="w-full relative flex items-end justify-center">
-                                            <div className="bg-[#b38e5d] w-full rounded-t-sm group-hover:bg-[#9d2449] transition-all duration-500 ease-out" style={{ height: `${Math.max(d.recovered, 15)}px` }}></div>
-                                            <span className="absolute -top-5 text-[9px] font-bold text-[#9d2449] opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">{d.recovered}ha</span>
-                                        </div>
-                                        <span className="text-[9px] text-gray-400 mt-1 font-medium">{d.year}</span>
-                                    </div>
-                                ) : null)}
-                            </div>
-                        </div>
+                   
 
                         <div className="px-5 py-4 border-b border-gray-200 bg-white">
                             {analysis && (
