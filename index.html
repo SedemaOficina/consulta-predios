@@ -31,7 +31,7 @@
 <body>
     <div id="root"></div>
 
-  <script type="text/babel">
+    <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
         /* --- 1. DEFINICIÓN DE CATEGORÍAS Y COLORES PARA LA LEYENDA --- */
@@ -41,7 +41,7 @@
             'FC':  { color: '#005F2F', label: 'Forestal de Conservación' },
             'PRA': { color: '#D55E00', label: 'Producción Rural Agro' },
             'HR':  { color: '#E69F00', label: 'Habitacional Rural' },
-            'HRB': { color: '#F0E442', label: 'Hab. Rural Baja Densidad' }, // Ajusté un poco el color para diferenciar
+            'HRB': { color: '#F0E442', label: 'Hab. Rural Baja Densidad' },
             'ER':  { color: '#CC79A7', label: 'Equipamiento Rural' }
         };
 
@@ -71,7 +71,7 @@
             dashArray: '3, 3',
             fillColor: color,
             fillOpacity: 0.25,
-            interactive: true // Por defecto interactivo
+            interactive: true
           };
         };
 
@@ -155,27 +155,8 @@
         const loadData = async () => {
             try {
                 const fetchJson = async (url) => (await fetch(url)).json().catch(() => ({ type: "FeatureCollection", features: [] }));
-                const fetchCsv = async (url) => new Promise((resolve) => Papa.parse(url, { download: true, header: true, skipEmptyLines: true, complete: (r) => resolve(r.data), error: () => resolve([]) }));
-
-                const [cdmx, alcaldias, edomex, morelos, sc, zoning, rules] = await Promise.all([
-                    fetchJson(DATA_FILES.LIMITES_CDMX),
-                    fetchJson(DATA_FILES.LIMITES_ALCALDIAS),
-                    fetchJson(DATA_FILES.LIMITES_EDOMEX),
-                    fetchJson(DATA_FILES.LIMITES_MORELOS),
-                    fetchJson(DATA_FILES.SUELO_CONSERVACION),
-                    fetchJson(DATA_FILES.ZONIFICACION),
-                    fetchCsv(DATA_FILES.USOS_SUELO_CSV)
-                ]);
-                dataCache = { cdmx, alcaldias, edomex, morelos, sc, zoning, rules };
-                return true;
-            } catch (error) { return false; }
-        };
-
-       const loadData = async () => {
-            try {
-                const fetchJson = async (url) => (await fetch(url)).json().catch(() => ({ type: "FeatureCollection", features: [] }));
                 
-                // MODIFICACIÓN: Agregamos encoding: "UTF-8" para que lea bien "específica"
+                // Configuración correcta de PapaParse para UTF-8
                 const fetchCsv = async (url) => new Promise((resolve) => Papa.parse(url, { 
                     download: true, 
                     header: true, 
@@ -232,7 +213,6 @@
 
             const zoningFeature = findFeatureContainingPoint(coord, dataCache.zoning);
             if (zoningFeature) {
-                // Normalizamos la clave (ej. HRB -> HRB)
                 result.zoningKey = zoningFeature.properties.CLAVE;
                 result.zoningName = zoningFeature.properties.PGOEDF || zoningFeature.properties.UGA;
 
@@ -240,25 +220,19 @@
                     const allowed = [], prohibited = [];
                     
                     dataCache.rules.forEach(row => {
-                        // 1. BUSCAR LA CLAVE DE ZONIFICACIÓN EN EL CSV
-                        // Tu CSV tiene claves como: AEE, AE, AFE, AF...
-                        // El mapa tiene claves como: PE, RE, HR...
-                        // A veces coinciden, a veces no. Aquí intentamos leer la columna que coincida con la clave del mapa.
+                        // Mapeo con los encabezados exactos de tu CSV
                         const ruleValue = (row[result.zoningKey] || '').trim().toUpperCase();
                         
-                        if (!ruleValue) return; // Si esa celda está vacía, saltamos
+                        if (!ruleValue) return; 
 
-                        // 2. MAPEO EXACTO DE TUS ENCABEZADOS DEL CSV
-                        // Aquí corregimos para que lea "ector", "Actividad general", etc.
                         const activityObj = {
                             sector: (row['Sector'] || row['ector'] || row['SECTOR'] || '').trim(),
                             general: (row['Actividad general'] || row['Act_general'] || '').trim(),
                             specific: (row['Actividad específica'] || row['Actividad especifica'] || row['Act_especifica'] || '').trim()
                         };
 
-                        if (ruleValue === 'A') allowed.push(activityObj); // A = Autorizado / Permitido
-                        else if (ruleValue === 'P') prohibited.push(activityObj); // P = Prohibido
-                        // Nota: Si usas 'C' (Condicionado) u otros, agrégalos aquí.
+                        if (ruleValue === 'A') allowed.push(activityObj); 
+                        else if (ruleValue === 'P') prohibited.push(activityObj);
                     });
                     result.allowedActivities = allowed;
                     result.prohibitedActivities = prohibited;
@@ -292,7 +266,6 @@
                     </summary>
                     
                     <div className="px-3 py-2 bg-white border-t border-gray-100">
-                        {/* Buscador */}
                         <input 
                             type="text" 
                             value={filter} 
@@ -301,7 +274,6 @@
                             className="w-full px-2 py-1.5 mb-2 border border-gray-300 rounded text-[11px] focus:outline-none focus:border-[#9d2449]" 
                         />
                         
-                        {/* Tabla con Encabezados */}
                         <div className="max-h-60 overflow-y-auto custom-scrollbar border rounded border-gray-100">
                             <table className="min-w-full text-[10px] text-left">
                                 <thead className="bg-gray-100 text-gray-600 font-bold sticky top-0 shadow-sm">
