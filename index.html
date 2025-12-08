@@ -16,6 +16,7 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <link rel="stylesheet" href="styles.css" />
     
     <!-- Libraries -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -26,105 +27,6 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-    <style>
-        /* --- STYLES --- */
-        :root {
-            --color-guinda: #9d2449;
-            --color-dorado: #b38e5d;
-            --color-gris: #54565a;
-            --font-main: 'Roboto', sans-serif;
-        }
-
-        body {
-            font-family: var(--font-main);
-            color: var(--color-gris);
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Scrollbar */
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
-
-        /* Tooltips */
-        .leaflet-tooltip.custom-tooltip {
-            background-color: transparent;
-            border: none;
-            box-shadow: none;
-            color: #fff;
-            font-weight: bold;
-            font-size: 10px;
-            text-shadow: 1px 1px 2px black;
-        }
-
-        /* Geocoder Override */
-        .leaflet-control-geocoder {
-            border-radius: 8px !important;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
-            border: none !important;
-        }
-
-        /* FAQ Styling */
-        .faq-content strong {
-            display: block;
-            margin-top: 8px;
-            margin-bottom: 4px;
-            color: var(--color-guinda);
-            font-weight: 700;
-        }
-        .faq-content ul {
-            list-style-type: disc;
-            padding-left: 20px;
-        }
-
-        /* Animations */
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-in { animation: fadeIn 0.3s ease-out forwards; }
-        .slide-in-bottom { animation: slideUp 0.4s ease-out forwards; }
-
-        /* Mobile */
-        @media (max-width: 768px) {
-            body { height: 100%; overflow: auto; }
-            #root > div { flex-direction: column !important; height: auto !important; overflow: visible !important; }
-            #map-wrapper { height: 50vh !important; order: 1; min-height: 350px; }
-            #sidebar-wrapper { width: 100% !important; height: auto !important; order: 2; border-right: none; border-top: 4px solid var(--color-guinda); }
-        }
-
-        /* Print */
-        @media print {
-            @page { size: portrait; margin: 0.5cm; }
-            body { height: auto !important; overflow: visible !important; display: block !important; background: white; }
-            .no-print, .leaflet-control-container, header, ::-webkit-scrollbar { display: none !important; }
-            #root > div { display: block !important; height: auto !important; overflow: visible !important; }
-            #map-wrapper { height: 400px !important; width: 100% !important; position: relative !important; border: 1px solid #ccc; margin-bottom: 20px; page-break-inside: avoid; }
-            .print-legend { position: absolute !important; bottom: 10px !important; left: 10px !important; width: auto !important; display: block !important; background: white !important; border: 1px solid #ccc !important; z-index: 9999 !important; }
-            .print-legend > div { display: block !important; }
-            #sidebar-wrapper { width: 100% !important; height: auto !important; border: none !important; overflow: visible !important; box-shadow: none !important; }
-            .activity-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 1rem; }
-            details { border: 1px solid #eee !important; margin-bottom: 10px; break-inside: avoid; }
-            details[open] summary { border-bottom: 1px solid #eee; }
-            p, li, span, h1, h2, h3, h4 { color: black !important; }
-            #results-container::before { content: "Consulta Ciudadana SEDEMA - Reporte Generado"; display: block; font-size: 16pt; font-weight: bold; color: var(--color-guinda) !important; margin-bottom: 10px; border-bottom: 2px solid var(--color-guinda); }
-        }
-    </style>
-<script type="importmap">
-{
-  "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.1/",
-    "react": "https://aistudiocdn.com/react@^19.2.1",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/"
-  }
-}
-</script>
 </head>
 <body>
     <div id="root"></div>
@@ -133,16 +35,6 @@
         const { useState, useEffect, useRef } = React;
 
         /* --- CONSTANTS --- */
-        const COLORS = {
-            guinda: '#9d2449',
-            dorado: '#b38e5d',
-            gris: '#54565a',
-            verde: '#28a745',
-            rojo: '#dc3545',
-            alerta: '#ffc107',
-            zoning: '#00eaff',
-            alcaldias: '#ffffff',
-        };
 
         const DATA_FILES = {
             LIMITES_CDMX: './limites_cdmx.geojson',
@@ -168,11 +60,9 @@
 
         const CONTACT_INFO = {
             phone: "55-5345-8000 ext. 1234",
-            hours: "Lunes a Viernes de 9:00 a 18:00 hrs",
-            email: "atencionciudadana@sedema.cdmx.gob.mx"
+            hours: "Lunes a Viernes de 9:00 a 18:00 hrs"
         };
 
-       
         const GALLERY_ITEMS = [
             { 
                 type: 'image',
@@ -521,7 +411,7 @@
 
             return (
                 <>
-                <div id="sidebar-wrapper" className="flex flex-col h-full bg-white print-layout relative w-full md:w-[450px] shadow-xl z-20 border-r border-gray-200">
+                <div id="sidebar-wrapper" className="flex flex-col h-full bg-white relative w-full md:w-[450px] shadow-xl z-20 border-r border-gray-200">
                     <header className="px-6 py-5 bg-[#9d2449] text-white shrink-0 shadow-lg z-20 flex items-center gap-5 relative">
                         <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-transparent pointer-events-none"></div>
                         <img 
@@ -626,7 +516,7 @@
                                             <Icons.Map className="h-3 w-3" /> REGULACIÓN DE USO DE SUELO
                                         </h3>
                                         
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 activity-grid">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="space-y-3">
                                                 <ActivitySection 
                                                     title="PROHIBIDAS" 
@@ -686,82 +576,79 @@
                         )}
                     </div>
 
-                   
-
-                        <div className="px-5 py-4 border-b border-gray-200 bg-white">
-                            {analysis && (
-                                <div className="flex gap-3 mb-5 no-print">
-                                    <button onClick={() => window.print()} className="flex-1 py-2.5 bg-white border border-[#9d2449] text-[#9d2449] rounded-md text-xs font-bold hover:bg-[#9d2449] hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm">
-                                        <Icons.Printer className="h-4 w-4" /> IMPRIMIR
-                                    </button>
-                                    <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Consulta SEDEMA: ' + analysis.alcaldia)}`, '_blank')} className="flex-1 py-2.5 bg-[#9d2449] text-white rounded-md text-xs font-bold hover:bg-[#7d1d3a] transition-all flex items-center justify-center gap-2 shadow-sm">
-                                        <Icons.Share2 className="h-4 w-4" /> COMPARTIR
-                                    </button>
-                                </div>
-                            )}
-                            
-                            <div className="grid grid-cols-2 gap-4 text-[10px] text-gray-500">
-                                <div className="flex items-center gap-2">
-                                    <Icons.Phone className="h-3 w-3 text-[#b38e5d] shrink-0" />
-                                    <span>{CONTACT_INFO.phone}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Icons.Clock className="h-3 w-3 text-[#b38e5d] shrink-0" />
-                                    <span>{CONTACT_INFO.hours}</span>
-                                </div>
+                    <div className="px-5 py-4 border-b border-gray-200 bg-white">
+                        {analysis && (
+                            <div className="flex gap-3 mb-5 no-print">
+                                <button onClick={() => window.print()} className="flex-1 py-2.5 bg-white border border-[#9d2449] text-[#9d2449] rounded-md text-xs font-bold hover:bg-[#9d2449] hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm">
+                                    <Icons.Printer className="h-4 w-4" /> IMPRIMIR
+                                </button>
+                                <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Consulta SEDEMA: ' + analysis.alcaldia)}`, '_blank')} className="flex-1 py-2.5 bg-[#9d2449] text-white rounded-md text-xs font-bold hover:bg-[#7d1d3a] transition-all flex items-center justify-center gap-2 shadow-sm">
+                                    <Icons.Share2 className="h-4 w-4" /> COMPARTIR
+                                </button>
                             </div>
-                            <p className="mt-3 text-[9px] text-justify leading-tight opacity-60 italic border-t border-gray-100 pt-2">{LEGAL_DISCLAIMER}</p>
-                        </div>
-
-                        <div className="px-5 py-4 no-print bg-gray-50 border-b border-gray-200">
-                            <h4 className="text-[10px] font-bold text-gray-500 uppercase mb-2 tracking-wider">Galería de Actividades</h4>
-                            <div className="grid grid-cols-3 gap-2">
-                                {GALLERY_ITEMS.map((item, i) => (
-                                    <button 
-                                        key={i} 
-                                        onClick={() => setSelectedItem(item)}
-                                        className="relative aspect-square rounded-lg overflow-hidden group border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#9d2449] bg-black"
-                                    >
-                                        {item.type === 'video' ? (
-                                            <>
-                                                <img src={`https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`} alt={item.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity" />
-                                                <div className="absolute inset-0 flex items-center justify-center">
-                                                    <div className="bg-white/20 p-2 rounded-full backdrop-blur-sm group-hover:scale-110 transition-transform">
-                                                        <Icons.Play className="h-5 w-5 text-white fill-white" />
-                                                    </div>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <img src={item.src} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                    <Icons.ZoomIn className="text-white h-5 w-5" />
-                                                </div>
-                                            </>
-                                        )}
-                                        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent text-white text-[8px] p-1.5 pt-4 truncate font-medium">{item.title}</div>
-                                    </button>
-                                ))}
+                        )}
+                        
+                        <div className="grid grid-cols-2 gap-4 text-[10px] text-gray-500">
+                            <div className="flex items-center gap-2">
+                                <Icons.Phone className="h-3 w-3 text-[#b38e5d] shrink-0" />
+                                <span>{CONTACT_INFO.phone}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Icons.Clock className="h-3 w-3 text-[#b38e5d] shrink-0" />
+                                <span>{CONTACT_INFO.hours}</span>
                             </div>
                         </div>
+                        <p className="mt-3 text-[9px] text-justify leading-tight opacity-60 italic border-t border-gray-100 pt-2">{LEGAL_DISCLAIMER}</p>
+                    </div>
 
-                        <div className="px-5 py-5 bg-white no-print">
-                            <h4 className="text-[10px] font-bold text-gray-500 uppercase mb-3 flex items-center gap-2">
-                                <Icons.HelpCircle className="h-3 w-3" /> Preguntas Frecuentes
-                            </h4>
-                            <div className="space-y-2">
-                                {FAQ_ITEMS.map((faq, i) => (
-                                    <details key={i} className="group border border-gray-100 rounded-md overflow-hidden bg-white">
-                                        <summary className="flex items-start justify-between p-3 cursor-pointer select-none bg-gray-50 group-hover:bg-gray-100 transition-colors">
-                                            <span className="text-[11px] font-bold text-gray-700 pr-2 leading-tight">{faq.q}</span>
-                                            <Icons.ChevronDown className="h-3 w-3 text-gray-400 group-open:rotate-180 transition-transform mt-0.5 shrink-0" />
-                                        </summary>
-                                        <div className="p-3 bg-white border-t border-gray-100 text-[11px] text-gray-600 leading-relaxed text-justify faq-content">
-                                            <div dangerouslySetInnerHTML={{ __html: faq.a.replace(/\n/g, '<br/>') }} />
-                                        </div>
-                                    </details>
-                                ))}
-                            </div>
+                    <div className="px-5 py-4 no-print bg-gray-50 border-b border-gray-200">
+                        <h4 className="text-[10px] font-bold text-gray-500 uppercase mb-2 tracking-wider">Galería de Actividades</h4>
+                        <div className="grid grid-cols-3 gap-2">
+                            {GALLERY_ITEMS.map((item, i) => (
+                                <button 
+                                    key={i} 
+                                    onClick={() => setSelectedItem(item)}
+                                    className="relative aspect-square rounded-lg overflow-hidden group border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#9d2449] bg-black"
+                                >
+                                    {item.type === 'video' ? (
+                                        <>
+                                            <img src={`https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`} alt={item.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity" />
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <div className="bg-white/20 p-2 rounded-full backdrop-blur-sm group-hover:scale-110 transition-transform">
+                                                    <Icons.Play className="h-5 w-5 text-white fill-white" />
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <img src={item.src} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <Icons.ZoomIn className="text-white h-5 w-5" />
+                                            </div>
+                                        </>
+                                    )}
+                                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent text-white text-[8px] p-1.5 pt-4 truncate font-medium">{item.title}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="px-5 py-5 bg-white no-print">
+                        <h4 className="text-[10px] font-bold text-gray-500 uppercase mb-3 flex items-center gap-2">
+                            <Icons.HelpCircle className="h-3 w-3" /> Preguntas Frecuentes
+                        </h4>
+                        <div className="space-y-2">
+                            {FAQ_ITEMS.map((faq, i) => (
+                                <details key={i} className="group border border-gray-100 rounded-md overflow-hidden bg-white">
+                                    <summary className="flex items-start justify-between p-3 cursor-pointer select-none bg-gray-50 group-hover:bg-gray-100 transition-colors">
+                                        <span className="text-[11px] font-bold text-gray-700 pr-2 leading-tight">{faq.q}</span>
+                                        <Icons.ChevronDown className="h-3 w-3 text-gray-400 group-open:rotate-180 transition-transform mt-0.5 shrink-0" />
+                                    </summary>
+                                    <div className="p-3 bg-white border-t border-gray-100 text-[11px] text-gray-600 leading-relaxed text-justify faq-content">
+                                        <div dangerouslySetInnerHTML={{ __html: faq.a.replace(/\n/g, '<br/>') }} />
+                                    </div>
+                                </details>
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -863,7 +750,6 @@
                     setIsMapLoading(false);
                 };
 
-                // Wait slightly for data loading
                 const checkData = setInterval(() => {
                     if (dataCache.cdmx) {
                         clearInterval(checkData);
