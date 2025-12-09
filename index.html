@@ -45,6 +45,7 @@
             'ER':  { color: '#CC79A7', label: 'Equipamiento Rural' }
         };
         const ZONING_COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#17becf'];
+        
         const DATA_FILES = {
             LIMITES_CDMX: './limites_cdmx.geojson',
             LIMITES_ALCALDIAS: './limites_alcaldias.geojson',
@@ -54,10 +55,14 @@
             ZONIFICACION: './zoonificación_pgoedf_2000.geojson',
             USOS_SUELO_CSV: './usos_suelo.csv'
         };
+        
         const INITIAL_CENTER = [19.3200, -99.1500];
         const INITIAL_ZOOM = 10;
         const CONTACT_INFO = { phone: "55-5345-8000 ext. 1234", hours: "Lunes a Viernes de 9:00 a 18:00 hrs" };
-        const FAQ_ITEMS = [{ q: "1. ¿Qué beneficios obtengo?", a: "Conocer la información normativa..." }, { q: "2. ¿Qué es Zonificación?", a: "Clasificación de áreas..." }];
+        const FAQ_ITEMS = [
+            { q: "1. ¿Qué beneficios obtengo del Sistema?", a: "Conocer la información normativa urbana y ambiental..." },
+            { q: "2. ¿Qué es Zonificación?", a: "La zonificación es la clasificación de áreas dentro de un territorio..." },
+        ];
 
         /* --- UTILS --- */
         const getZoningColor = (c) => {
@@ -66,6 +71,7 @@
             let h = 0; for (let i = 0; i < k.length; i++) h = ((h << 5) - h) + k.charCodeAt(i) | 0;
             return ZONING_COLORS[Math.abs(h) % ZONING_COLORS.length];
         };
+        
         const getZoningStyle = (f) => {
             const c = getZoningColor(f.properties?.CLAVE || f.properties?.PGOEDF || 'DEFAULT');
             return { color: c, weight: 1.2, dashArray: '3, 3', fillColor: c, fillOpacity: 0.25, interactive: true, stroke: true, fill: true };
@@ -103,6 +109,7 @@
             return false;
         };
         const findFeature = (p, c) => { if (!c?.features) return null; for (const f of c.features) if (isPointInPolygon(p, f)) return f; return null; };
+        
         const loadData = async () => {
             try {
                 const fJ = async (u) => (await fetch(u)).json().catch(() => ({ type: "FC", features: [] }));
@@ -115,6 +122,7 @@
                 return true;
             } catch { return false; }
         };
+
         const analyzeLocation = async (c) => {
             const r = { status: 'LOADING', isRestricted: false, allowedActivities: [], prohibitedActivities: [], timestamp: new Date().toLocaleString(), coordinate: c };
             if (dataCache.cdmx?.features.length && !findFeature(c, dataCache.cdmx)) {
@@ -136,7 +144,11 @@
                     dataCache.rules.forEach(row => {
                         const val = (row[r.zoningKey] || '').trim().toUpperCase();
                         if (!val) return;
-                        const act = { sector: (row['Sector']||row['ector']||'').trim(), general: (row['Actividad general']||row['Act_general']||'').trim(), specific: (row['Actividad específica']||row['Actividad especifica']||'').trim() };
+                        const act = { 
+                            sector: (row['Sector']||row['ector']||'').trim(), 
+                            general: (row['Actividad general']||row['Act_general']||'').trim(), 
+                            specific: (row['Actividad específica']||row['Actividad especifica']||'').trim() 
+                        };
                         if (val === 'A') all.push(act); else if (val === 'P') pro.push(act);
                     });
                     r.allowedActivities = all; r.prohibitedActivities = pro;
@@ -148,8 +160,9 @@
         /* --- COMPONENTES --- */
         const ActivitySection = ({ title, activities, icon, headerClass, bgClass, defaultOpen }) => {
             const [filter, setFilter] = useState('');
-            if (!activities?.length) return null;
+            if (!activities || activities.length === 0) return null;
             const filtered = activities.filter(a => `${a.sector} ${a.general} ${a.specific}`.toLowerCase().includes(filter.toLowerCase()));
+
             return (
                 <details className={`group rounded-lg border border-gray-200 overflow-hidden mb-3 shadow-sm ${bgClass}`} open={defaultOpen}>
                     <summary className={`flex items-center justify-between px-3 py-2 cursor-pointer ${headerClass} hover:opacity-90`}>
@@ -157,10 +170,28 @@
                         <Icons.ChevronDown className="h-3 w-3 group-open:rotate-180 transition-transform"/>
                     </summary>
                     <div className="px-3 py-2 bg-white border-t border-gray-100">
-                        <input type="text" value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Filtrar..." className="w-full px-2 py-1.5 mb-2 border rounded text-[10px] focus:outline-none focus:border-[#9d2449]" />
-                        <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                            <table className="min-w-full text-[10px] text-left"><thead className="bg-gray-100 sticky top-0"><tr><th className="p-1">Sector</th><th className="p-1">Act. Gral</th><th className="p-1">Act. Esp</th></tr></thead>
-                                <tbody>{filtered.map((a,i)=>(<tr key={i} className="border-b border-gray-50"><td className="p-1 font-semibold">{a.sector}</td><td className="p-1">{a.general}</td><td className="p-1 text-gray-500">{a.specific}</td></tr>))}</tbody>
+                        <input type="text" value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Filtrar..." className="w-full px-2 py-1.5 mb-2 border border-gray-300 rounded text-[11px] focus:outline-none focus:border-[#9d2449]" />
+                        <div className="max-h-60 overflow-y-auto custom-scrollbar border rounded border-gray-100">
+                            <table className="min-w-full text-[10px] text-left">
+                                <thead className="bg-gray-100 text-gray-600 font-bold sticky top-0 shadow-sm">
+                                    <tr>
+                                        <th className="px-2 py-2 w-1/4">Sector</th>
+                                        <th className="px-2 py-2 w-1/3">Act. Gral</th>
+                                        <th className="px-2 py-2">Act. Específica</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {filtered.map((a, i) => (
+                                        <tr key={i} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-2 py-1.5 align-top font-semibold text-gray-700">{a.sector}</td>
+                                            <td className="px-2 py-1.5 align-top text-gray-600">{a.general}</td>
+                                            <td className="px-2 py-1.5 align-top text-gray-500 italic">{a.specific}</td>
+                                        </tr>
+                                    ))}
+                                    {filtered.length === 0 && (
+                                        <tr><td colSpan="3" className="p-4 text-center text-gray-400 italic">No se encontraron resultados.</td></tr>
+                                    )}
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -189,20 +220,23 @@
         const ResultsContent = ({ analysis }) => {
             if(!analysis) return <div className="p-4 text-center text-gray-400 text-sm">Selecciona un punto en el mapa</div>;
             return (
-                <div className="space-y-4 animate-in pb-20"> {/* pb-20 para dar espacio a los botones fijos */}
+                <div className="space-y-4 animate-in pb-20"> 
                     <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
-                        <div className="bg-gray-50 px-4 py-2 border-b flex items-center gap-2"><Icons.Info className="h-4 w-4 text-[#9d2449]" /><span className="text-sm font-bold text-gray-700">RESUMEN</span></div>
+                        <div className="bg-gray-50 px-4 py-2 border-b flex items-center gap-2"><Icons.Info className="h-4 w-4 text-[#9d2449]" /><span className="text-sm font-bold text-gray-700">RESUMEN DEL PREDIO</span></div>
                         <div className="p-4 space-y-3">
-                            <div className="flex gap-3">
+                            {/* ESTATUS */}
+                            <div className="flex gap-3 items-start">
                                 <div className="mt-1">{analysis.status === 'CONSERVATION_SOIL' ? <Icons.XCircle className="h-4 w-4 text-red-600"/> : <Icons.CheckCircle className="h-4 w-4 text-green-600"/>}</div>
                                 <div><p className="text-[10px] font-bold text-gray-500 uppercase">Estatus</p><p className={`text-sm font-bold ${analysis.status==='CONSERVATION_SOIL'?'text-red-700':'text-green-700'}`}>{analysis.status==='CONSERVATION_SOIL'?'Suelo de Conservación':analysis.status==='URBAN_SOIL'?'Suelo Urbano':'Fuera de CDMX'}</p></div>
                             </div>
-                            <div className="flex gap-3">
+                            {/* ALCALDÍA */}
+                            <div className="flex gap-3 items-start">
                                 <div className="mt-1"><Icons.MapPin className="h-4 w-4 text-gray-400"/></div>
                                 <div><p className="text-[10px] font-bold text-gray-500 uppercase">Ubicación</p><p className="text-sm text-gray-800">{analysis.alcaldia} {analysis.outsideContext?`(${analysis.outsideContext})`:''}</p></div>
                             </div>
+                            {/* ZONIFICACIÓN */}
                             {analysis.status !== 'OUTSIDE_CDMX' && (
-                                <div className="flex gap-3">
+                                <div className="flex gap-3 items-start">
                                     <div className="mt-1"><Icons.Layers className="h-4 w-4 text-gray-400"/></div>
                                     <div><p className="text-[10px] font-bold text-gray-500 uppercase">Zonificación</p>
                                         {analysis.status==='URBAN_SOIL' ? <p className="text-xs italic text-gray-500">Suelo Urbano (Ver SEDUVI)</p> : 
@@ -210,15 +244,21 @@
                                     </div>
                                 </div>
                             )}
+                            {/* COORDENADAS */}
+                             <div className="flex gap-3 items-start border-t pt-2 border-dashed border-gray-200">
+                                <div className="mt-1 text-gray-400 font-mono text-[10px]">COORDS:</div>
+                                <div className="text-[10px] font-mono text-gray-600">{analysis.coordinate.lat.toFixed(5)}, {analysis.coordinate.lng.toFixed(5)}</div>
+                            </div>
                         </div>
                     </div>
+
                     {analysis.status === 'CONSERVATION_SOIL' && (
                         <div>
-                            <ActivitySection title="PROHIBIDAS" activities={analysis.prohibitedActivities} icon={<Icons.XCircle className="h-3 w-3"/>} headerClass="text-red-900 bg-red-50" bgClass="bg-white" defaultOpen={true} />
-                            <ActivitySection title="PERMITIDAS" activities={analysis.allowedActivities} icon={<Icons.CheckCircle className="h-3 w-3"/>} headerClass="text-green-900 bg-green-50" bgClass="bg-white" defaultOpen={false} />
+                            <ActivitySection title="ACTIVIDADES PROHIBIDAS" activities={analysis.prohibitedActivities} icon={<Icons.XCircle className="h-3 w-3"/>} headerClass="text-red-900 bg-red-50" bgClass="bg-white" defaultOpen={true} />
+                            <ActivitySection title="ACTIVIDADES PERMITIDAS" activities={analysis.allowedActivities} icon={<Icons.CheckCircle className="h-3 w-3"/>} headerClass="text-green-900 bg-green-50" bgClass="bg-white" defaultOpen={false} />
                         </div>
                     )}
-                    <div className="border-t pt-2"><details><summary className="text-xs font-bold text-gray-500 cursor-pointer">PREGUNTAS FRECUENTES</summary><div className="mt-2 space-y-2">{FAQ_ITEMS.map((f,i)=>(<div key={i} className="text-[10px] bg-gray-50 p-2 rounded"><strong>{f.q}</strong><p>{f.a}</p></div>))}</div></details></div>
+                    <div className="border-t pt-2"><details><summary className="text-xs font-bold text-gray-500 cursor-pointer flex justify-between">PREGUNTAS FRECUENTES <Icons.ChevronDown className="h-3 w-3"/></summary><div className="mt-2 space-y-2">{FAQ_ITEMS.map((f,i)=>(<div key={i} className="text-[10px] bg-gray-50 p-2 rounded"><strong>{f.q}</strong><p>{f.a}</p></div>))}</div></details></div>
                 </div>
             );
         };
@@ -244,29 +284,23 @@
             </div>
         );
 
-        /* --- COMPONENTE BOTTOM SHEET (MÓVIL) --- */
         const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => {
             const [isExpanded, setIsExpanded] = useState(false);
             const sheetRef = useRef(null);
             const startY = useRef(0);
 
-            // Reseteo al cambiar de selección
             useEffect(() => { if(analysis) setIsExpanded(false); }, [analysis]);
 
-            const handleTouchStart = (e) => {
-                if(e.target.closest('.sheet-header')) { startY.current = e.touches[0].clientY; }
-            };
+            const handleTouchStart = (e) => { if(e.target.closest('.sheet-header')) { startY.current = e.touches[0].clientY; } };
             const handleTouchEnd = (e) => {
                 const endY = e.changedTouches[0].clientY;
-                const diff = startY.current - endY; // Positivo = deslizar hacia arriba
-                if (Math.abs(diff) > 50) {
-                    setIsExpanded(diff > 0); // Arriba -> Expandir, Abajo -> Colapsar
-                }
+                const diff = startY.current - endY; 
+                if (Math.abs(diff) > 50) { setIsExpanded(diff > 0); }
             };
 
             return (
                 <>
-                    {/* Barra de Búsqueda Flotante (Solo visible si no hay análisis o sheet colapsado) */}
+                    {/* Barra de Búsqueda Flotante */}
                     <div className={`md:hidden absolute top-4 left-4 right-4 z-[2000] transition-opacity duration-300 ${analysis && isExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                         <div className="bg-white p-2 rounded-lg shadow-lg border border-gray-200">
                              <SearchLogic onLocationSelect={onLocationSelect} onReset={()=>{onReset(); onClose();}} />
@@ -280,23 +314,19 @@
                             className={`md:hidden fixed bottom-0 left-0 w-full bg-white rounded-t-2xl shadow-[0_-5px_20px_rgba(0,0,0,0.2)] z-[3000] flex flex-col transition-all duration-300 ease-out`}
                             style={{ height: isExpanded ? '85vh' : '35vh' }}
                         >
-                            {/* Header / Handle (Zona táctil) */}
                             <div className="sheet-header flex-shrink-0 h-8 flex justify-center items-center cursor-grab" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
                                 <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
                             </div>
                             
-                            {/* Título y Botón Cerrar */}
                             <div className="px-4 pb-2 flex justify-between items-center border-b border-gray-100 flex-shrink-0">
                                 <h3 className="font-bold text-gray-800 text-sm truncate pr-2">{analysis.alcaldia}</h3>
                                 <button onClick={onClose} className="p-1 bg-gray-100 rounded-full"><Icons.X className="h-5 w-5 text-gray-500"/></button>
                             </div>
 
-                            {/* Contenido Scrollable */}
                             <div className="flex-1 overflow-y-auto custom-scrollbar p-4 bg-gray-50/50">
                                 <ResultsContent analysis={analysis} />
                             </div>
 
-                            {/* FOOTER FIJO CON BOTONES */}
                             <div className="flex-shrink-0 p-3 bg-white border-t border-gray-200 safe-area-bottom">
                                 <ActionButtons analysis={analysis} />
                             </div>
@@ -311,10 +341,16 @@
             const mapInstance = useRef(null);
             const layersRef = useRef({});
             const markerRef = useRef(null);
-            const [visibleLayers, setVisibleLayers] = useState({sc:true, zoning:true, alcaldias:true, edomex:true, morelos:true, PE:true, RE:true, FC:true, PRA:true, HR:true, HRB:true, ER:true});
+            
+            // Estado inicial: Todo visible
+            const [visibleLayers, setVisibleLayers] = useState(() => {
+                const defaults = { sc: true, zoning: true, alcaldias: true, edomex: true, morelos: true };
+                Object.keys(ZONING_CAT_INFO).forEach(k => defaults[k] = true);
+                return defaults;
+            });
             const [isLegendOpen, setIsLegendOpen] = useState(true);
 
-            const toggleLayer = (k) => setVisibleLayers(p => ({...p, [k]:!p[k]}));
+            const toggleLayer = (k) => setVisibleLayers(p => ({...p, [k]: !p[k]}));
             const toggleZoningGroup = () => { const v=!visibleLayers.zoning; const u={zoning:v}; Object.keys(ZONING_CAT_INFO).forEach(k=>u[k]=v); setVisibleLayers(p=>({...p,...u})); };
 
             useEffect(() => {
@@ -349,19 +385,37 @@
                 return () => { map.remove(); mapInstance.current = null; };
             }, []);
 
+            /* LÓGICA DE CAPAS CORREGIDA */
             useEffect(() => {
                 if(!mapInstance.current) return;
+                
+                // 1. Capas Generales (Añadir/Quitar del mapa)
                 ['sc', 'alcaldias', 'edomex', 'morelos', 'zoning'].forEach(k => {
                     const l = layersRef.current[k]; if(!l) return;
-                    if(visibleLayers[k] && !mapInstance.current.hasLayer(l)) { mapInstance.current.addLayer(l); if(k==='alcaldias') l.bringToFront(); else l.bringToBack(); }
+                    if(visibleLayers[k] && !mapInstance.current.hasLayer(l)) { 
+                        mapInstance.current.addLayer(l); 
+                        if(k==='alcaldias') l.bringToFront(); else l.bringToBack(); 
+                    }
                     else if(!visibleLayers[k] && mapInstance.current.hasLayer(l)) mapInstance.current.removeLayer(l);
                 });
+
+                // 2. Filtrado de Categorías de Zonificación (Ocultar polígonos específicos)
                 if(layersRef.current.zoning && mapInstance.current.hasLayer(layersRef.current.zoning)) {
                     layersRef.current.zoning.eachLayer(l => {
-                        const k = (l.feature.properties.CLAVE||'').toString().trim().toUpperCase();
-                        const vis = visibleLayers.zoning && (visibleLayers[k] !== false);
-                        if(vis) { const s = getZoningStyle(l.feature); l.setStyle({stroke:true, fill:true, opacity:1, fillOpacity:0.25, interactive:true, color:s.color, fillColor:s.fillColor}); if(l._path) l._path.style.pointerEvents='auto'; }
-                        else { l.setStyle({stroke:false, fill:false, interactive:false}); if(l._path) l._path.style.pointerEvents='none'; }
+                        const rawKey = l.feature.properties.CLAVE || l.feature.properties.PGOEDF;
+                        const key = (rawKey || '').toString().trim().toUpperCase();
+                        
+                        // Visible si la capa Zoning está ON Y la categoría específica NO está OFF
+                        const isVisible = visibleLayers.zoning && (visibleLayers[key] !== false);
+                        
+                        if(isVisible) { 
+                            const s = getZoningStyle(l.feature); 
+                            l.setStyle({stroke:true, fill:true, opacity:1, fillOpacity:0.25, interactive:true, color:s.color, fillColor:s.fillColor}); 
+                            if(l._path) l._path.style.pointerEvents='auto'; 
+                        } else { 
+                            l.setStyle({stroke:false, fill:false, interactive:false}); 
+                            if(l._path) l._path.style.pointerEvents='none'; 
+                        }
                     });
                 }
             }, [visibleLayers]);
@@ -382,10 +436,10 @@
                             <div className="flex flex-col h-full">
                                 <div className="flex justify-between items-center p-2 bg-gray-50 border-b cursor-pointer shrink-0" onClick={()=>setIsLegendOpen(false)}><span className="text-xs font-bold">Capas</span><Icons.ChevronDown className="h-3 w-3"/></div>
                                 <div className="p-2 space-y-2 overflow-y-auto custom-scrollbar flex-1">
-                                    {['sc','alcaldias','edomex','morelos'].map(k=>(<div key={k} className="flex justify-between cursor-pointer" onClick={()=>toggleLayer(k)}><span className="text-[10px] capitalize">{k}</span>{visibleLayers[k]?<Icons.Eye className="h-3 w-3"/>:<Icons.EyeOff className="h-3 w-3 text-gray-300"/>}</div>))}
+                                    {['sc','alcaldias','edomex','morelos'].map(k=>(<div key={k} className="flex justify-between cursor-pointer" onClick={()=>toggleLayer(k)}><span className="text-[10px] capitalize">{k==='sc'?'Suelo Cons.':k}</span>{visibleLayers[k]?<Icons.Eye className="h-3 w-3"/>:<Icons.EyeOff className="h-3 w-3 text-gray-300"/>}</div>))}
                                     <hr/>
                                     <details open><summary className="flex justify-between cursor-pointer text-[10px] font-bold py-1"><span>Zonificación</span><span onClick={(e)=>{e.preventDefault();toggleZoningGroup()}}>{visibleLayers.zoning?<Icons.Eye className="h-3 w-3"/>:<Icons.EyeOff className="h-3 w-3"/>}</span></summary>
-                                        <div className="pl-2 mt-1 space-y-1">{Object.entries(ZONING_CAT_INFO).map(([k,i])=>(<div key={k} className="flex justify-between cursor-pointer text-[9px]" onClick={()=>toggleLayer(k)}><div className="flex gap-1"><span className="w-2 h-2 rounded-full" style={{backgroundColor:i.color}}></span><span>{k}</span></div>{visibleLayers[k]?<Icons.CheckCircle className="h-3 w-3 text-green-600"/>:<div className="h-3 w-3 border rounded-full"/>}</div>))}</div>
+                                        <div className="pl-2 mt-1 space-y-1">{Object.entries(ZONING_CAT_INFO).map(([k,i])=>(<div key={k} className="flex justify-between cursor-pointer text-[9px]" onClick={()=>toggleLayer(k)}><div className="flex gap-1"><span className="w-2 h-2 rounded-full" style={{backgroundColor:i.color}}></span><span>{i.label}</span></div>{visibleLayers[k]?<Icons.CheckCircle className="h-3 w-3 text-green-600"/>:<div className="h-3 w-3 border rounded-full"/>}</div>))}</div>
                                     </details>
                                 </div>
                             </div>
