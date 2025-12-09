@@ -45,7 +45,6 @@
             'ER':  { color: '#CC79A7', label: 'Equipamiento Rural' }
         };
         const ZONING_COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#17becf'];
-        
         const DATA_FILES = {
             LIMITES_CDMX: './limites_cdmx.geojson',
             LIMITES_ALCALDIAS: './limites_alcaldias.geojson',
@@ -55,14 +54,10 @@
             ZONIFICACION: './zoonificación_pgoedf_2000.geojson',
             USOS_SUELO_CSV: './usos_suelo.csv'
         };
-        
         const INITIAL_CENTER = [19.3200, -99.1500];
         const INITIAL_ZOOM = 10;
         const CONTACT_INFO = { phone: "55-5345-8000 ext. 1234", hours: "Lunes a Viernes de 9:00 a 18:00 hrs" };
-        const FAQ_ITEMS = [
-            { q: "1. ¿Qué beneficios obtengo del Sistema?", a: "Conocer la información normativa urbana y ambiental..." },
-            { q: "2. ¿Qué es Zonificación?", a: "La zonificación es la clasificación de áreas dentro de un territorio..." },
-        ];
+        const FAQ_ITEMS = [{ q: "1. ¿Qué beneficios obtengo?", a: "Conocer la información normativa..." }, { q: "2. ¿Qué es Zonificación?", a: "Clasificación de áreas..." }];
 
         /* --- UTILS --- */
         const getZoningColor = (c) => {
@@ -71,7 +66,6 @@
             let h = 0; for (let i = 0; i < k.length; i++) h = ((h << 5) - h) + k.charCodeAt(i) | 0;
             return ZONING_COLORS[Math.abs(h) % ZONING_COLORS.length];
         };
-        
         const getZoningStyle = (f) => {
             const c = getZoningColor(f.properties?.CLAVE || f.properties?.PGOEDF || 'DEFAULT');
             return { color: c, weight: 1.2, dashArray: '3, 3', fillColor: c, fillOpacity: 0.25, interactive: true, stroke: true, fill: true };
@@ -224,17 +218,14 @@
                     <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
                         <div className="bg-gray-50 px-4 py-2 border-b flex items-center gap-2"><Icons.Info className="h-4 w-4 text-[#9d2449]" /><span className="text-sm font-bold text-gray-700">RESUMEN DEL PREDIO</span></div>
                         <div className="p-4 space-y-3">
-                            {/* ESTATUS */}
                             <div className="flex gap-3 items-start">
                                 <div className="mt-1">{analysis.status === 'CONSERVATION_SOIL' ? <Icons.XCircle className="h-4 w-4 text-red-600"/> : <Icons.CheckCircle className="h-4 w-4 text-green-600"/>}</div>
                                 <div><p className="text-[10px] font-bold text-gray-500 uppercase">Estatus</p><p className={`text-sm font-bold ${analysis.status==='CONSERVATION_SOIL'?'text-red-700':'text-green-700'}`}>{analysis.status==='CONSERVATION_SOIL'?'Suelo de Conservación':analysis.status==='URBAN_SOIL'?'Suelo Urbano':'Fuera de CDMX'}</p></div>
                             </div>
-                            {/* ALCALDÍA */}
                             <div className="flex gap-3 items-start">
                                 <div className="mt-1"><Icons.MapPin className="h-4 w-4 text-gray-400"/></div>
                                 <div><p className="text-[10px] font-bold text-gray-500 uppercase">Ubicación</p><p className="text-sm text-gray-800">{analysis.alcaldia} {analysis.outsideContext?`(${analysis.outsideContext})`:''}</p></div>
                             </div>
-                            {/* ZONIFICACIÓN */}
                             {analysis.status !== 'OUTSIDE_CDMX' && (
                                 <div className="flex gap-3 items-start">
                                     <div className="mt-1"><Icons.Layers className="h-4 w-4 text-gray-400"/></div>
@@ -244,7 +235,6 @@
                                     </div>
                                 </div>
                             )}
-                            {/* COORDENADAS */}
                              <div className="flex gap-3 items-start border-t pt-2 border-dashed border-gray-200">
                                 <div className="mt-1 text-gray-400 font-mono text-[10px]">COORDS:</div>
                                 <div className="text-[10px] font-mono text-gray-600">{analysis.coordinate.lat.toFixed(5)}, {analysis.coordinate.lng.toFixed(5)}</div>
@@ -284,6 +274,7 @@
             </div>
         );
 
+        /* --- BOTTOM SHEET MÓVIL CON CLICK HANDLE --- */
         const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => {
             const [isExpanded, setIsExpanded] = useState(false);
             const sheetRef = useRef(null);
@@ -297,24 +288,29 @@
                 const diff = startY.current - endY; 
                 if (Math.abs(diff) > 50) { setIsExpanded(diff > 0); }
             };
+            const toggleSheet = () => setIsExpanded(!isExpanded); // Nuevo: Toggle con click
 
             return (
                 <>
-                    {/* Barra de Búsqueda Flotante */}
                     <div className={`md:hidden absolute top-4 left-4 right-4 z-[2000] transition-opacity duration-300 ${analysis && isExpanded ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                         <div className="bg-white p-2 rounded-lg shadow-lg border border-gray-200">
                              <SearchLogic onLocationSelect={onLocationSelect} onReset={()=>{onReset(); onClose();}} />
                         </div>
                     </div>
 
-                    {/* Bottom Sheet */}
                     {analysis && (
                         <div 
                             ref={sheetRef}
                             className={`md:hidden fixed bottom-0 left-0 w-full bg-white rounded-t-2xl shadow-[0_-5px_20px_rgba(0,0,0,0.2)] z-[3000] flex flex-col transition-all duration-300 ease-out`}
                             style={{ height: isExpanded ? '85vh' : '35vh' }}
                         >
-                            <div className="sheet-header flex-shrink-0 h-8 flex justify-center items-center cursor-grab" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+                            {/* Header con click y touch */}
+                            <div 
+                                className="sheet-header flex-shrink-0 h-8 flex justify-center items-center cursor-grab active:cursor-grabbing" 
+                                onTouchStart={handleTouchStart} 
+                                onTouchEnd={handleTouchEnd}
+                                onClick={toggleSheet}
+                            >
                                 <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
                             </div>
                             
@@ -342,13 +338,12 @@
             const layersRef = useRef({});
             const markerRef = useRef(null);
             
-            // Estado inicial: Todo visible
             const [visibleLayers, setVisibleLayers] = useState(() => {
                 const defaults = { sc: true, zoning: true, alcaldias: true, edomex: true, morelos: true };
                 Object.keys(ZONING_CAT_INFO).forEach(k => defaults[k] = true);
                 return defaults;
             });
-            const [isLegendOpen, setIsLegendOpen] = useState(true);
+            const [isLegendOpen, setIsLegendOpen] = useState(false); // Inicia cerrado
 
             const toggleLayer = (k) => setVisibleLayers(p => ({...p, [k]: !p[k]}));
             const toggleZoningGroup = () => { const v=!visibleLayers.zoning; const u={zoning:v}; Object.keys(ZONING_CAT_INFO).forEach(k=>u[k]=v); setVisibleLayers(p=>({...p,...u})); };
@@ -385,11 +380,8 @@
                 return () => { map.remove(); mapInstance.current = null; };
             }, []);
 
-            /* LÓGICA DE CAPAS CORREGIDA */
             useEffect(() => {
                 if(!mapInstance.current) return;
-                
-                // 1. Capas Generales (Añadir/Quitar del mapa)
                 ['sc', 'alcaldias', 'edomex', 'morelos', 'zoning'].forEach(k => {
                     const l = layersRef.current[k]; if(!l) return;
                     if(visibleLayers[k] && !mapInstance.current.hasLayer(l)) { 
@@ -399,13 +391,10 @@
                     else if(!visibleLayers[k] && mapInstance.current.hasLayer(l)) mapInstance.current.removeLayer(l);
                 });
 
-                // 2. Filtrado de Categorías de Zonificación (Ocultar polígonos específicos)
                 if(layersRef.current.zoning && mapInstance.current.hasLayer(layersRef.current.zoning)) {
                     layersRef.current.zoning.eachLayer(l => {
                         const rawKey = l.feature.properties.CLAVE || l.feature.properties.PGOEDF;
                         const key = (rawKey || '').toString().trim().toUpperCase();
-                        
-                        // Visible si la capa Zoning está ON Y la categoría específica NO está OFF
                         const isVisible = visibleLayers.zoning && (visibleLayers[key] !== false);
                         
                         if(isVisible) { 
@@ -431,7 +420,9 @@
             return (
                 <div className="relative h-full w-full">
                     <div ref={mapRef} className="h-full w-full bg-gray-200" />
-                    <div className={`absolute bottom-32 md:bottom-8 left-4 bg-white shadow-lg rounded-lg z-[1000] overflow-hidden transition-all flex flex-col max-h-[50vh] ${isLegendOpen ? 'w-64' : 'w-10 h-10 rounded-full flex items-center justify-center'}`}>
+                    
+                    {/* LEYENDA: Posicionada Top-Right debajo del search bar */}
+                    <div className={`absolute top-24 right-4 md:bottom-8 md:top-auto md:left-4 md:right-auto bg-white shadow-lg rounded-lg z-[1000] overflow-hidden transition-all flex flex-col max-h-[50vh] ${isLegendOpen ? 'w-64' : 'w-10 h-10 rounded-full flex items-center justify-center'}`}>
                         {isLegendOpen ? (
                             <div className="flex flex-col h-full">
                                 <div className="flex justify-between items-center p-2 bg-gray-50 border-b cursor-pointer shrink-0" onClick={()=>setIsLegendOpen(false)}><span className="text-xs font-bold">Capas</span><Icons.ChevronDown className="h-3 w-3"/></div>
@@ -443,7 +434,7 @@
                                     </details>
                                 </div>
                             </div>
-                        ) : <button onClick={()=>setIsLegendOpen(true)} className="w-full h-full flex items-center justify-center"><Icons.Layers className="h-5 w-5 text-[#9d2449]"/></button>}
+                        ) : <button onClick={()=>setIsLegendOpen(true)} className="w-full h-full flex items-center justify-center bg-white shadow-md rounded-full"><Icons.Layers className="h-5 w-5 text-[#9d2449]"/></button>}
                     </div>
                 </div>
             );
