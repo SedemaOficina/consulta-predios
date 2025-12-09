@@ -15,11 +15,11 @@ body { font-family: var(--font); color: #54565a; margin: 0; height: 100vh; overf
 
 /* MOBILE SPECIFIC */
 @media (max-width: 768px) {
-    /* Ocultar barra de zoom leaflet en móvil */
     .leaflet-control-zoom { display: none !important; }
-    
-    /* Área segura para iPhones */
     .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+    
+    /* Ajustes para el mapa en pantalla completa */
+    #map-wrapper { height: 100vh !important; }
 }
 
 /* Bottom Sheet Header Handle */
