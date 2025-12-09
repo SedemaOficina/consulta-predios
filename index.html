@@ -80,14 +80,14 @@
         // Generador de colores pastel para Sectores
         const getSectorStyle = (str) => {
             const styles = [
-                { bg: '#eff6ff', border: '#3b82f6', text: '#1e40af' }, // Blue
-                { bg: '#f0fdf4', border: '#22c55e', text: '#15803d' }, // Green
-                { bg: '#fefce8', border: '#eab308', text: '#a16207' }, // Yellow
-                { bg: '#fff1f2', border: '#f43f5e', text: '#be123c' }, // Rose
-                { bg: '#fdf4ff', border: '#d946ef', text: '#a21caf' }, // Fuchsia
-                { bg: '#f5f3ff', border: '#8b5cf6', text: '#6d28d9' }, // Violet
-                { bg: '#ecfeff', border: '#06b6d4', text: '#0e7490' }, // Cyan
-                { bg: '#fff7ed', border: '#f97316', text: '#c2410c' }  // Orange
+                { bg: '#eff6ff', border: '#3b82f6', text: '#1e40af' }, 
+                { bg: '#f0fdf4', border: '#22c55e', text: '#15803d' }, 
+                { bg: '#fefce8', border: '#eab308', text: '#a16207' }, 
+                { bg: '#fff1f2', border: '#f43f5e', text: '#be123c' }, 
+                { bg: '#fdf4ff', border: '#d946ef', text: '#a21caf' }, 
+                { bg: '#f5f3ff', border: '#8b5cf6', text: '#6d28d9' }, 
+                { bg: '#ecfeff', border: '#06b6d4', text: '#0e7490' }, 
+                { bg: '#fff7ed', border: '#f97316', text: '#c2410c' }  
             ];
             let hash = 0;
             for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
@@ -114,6 +114,7 @@
             Info: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>,
             X: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
             Copy: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>,
+            Share: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>,
         };
 
         /* --- GEO LOGIC --- */
@@ -231,7 +232,7 @@
                             const style = getSectorStyle(sector);
                             return (
                                 <div key={i} className="mb-3 rounded overflow-hidden border border-gray-100">
-                                    {/* CABECERA DEL SECTOR (COLOR DISTINTIVO) */}
+                                    {/* CABECERA DEL SECTOR */}
                                     <div 
                                         className="px-3 py-2 font-bold text-[11px] uppercase tracking-wide border-l-4"
                                         style={{ backgroundColor: style.bg, borderLeftColor: style.border, color: style.text }}
@@ -239,7 +240,6 @@
                                         {sector}
                                     </div>
                                     
-                                    {/* ACTIVIDADES GENERALES (ACORDEÓN ANIDADO CERRADO POR DEFAULT) */}
                                     <div className="bg-white">
                                         {Object.entries(generals).map(([gen, specifics], j) => (
                                             <details key={j} className="group/inner border-b border-gray-50 last:border-0">
@@ -254,7 +254,6 @@
                                                     </div>
                                                 </summary>
                                                 
-                                                {/* ACTIVIDADES ESPECÍFICAS (LISTA) */}
                                                 <ul className="bg-gray-50/50 px-4 py-2 space-y-1 animate-in">
                                                     {specifics.map((spec, k) => (
                                                         <li key={k} className="text-[10px] text-gray-600 pl-4 relative">
@@ -356,13 +355,18 @@
             );
         };
 
-        const ActionButtons = ({ analysis }) => {
-            const copy = () => { navigator.clipboard.writeText(`${analysis.alcaldia}, ${analysis.zoningKey}. ${analysis.coordinate.lat},${analysis.coordinate.lng}`); alert("Copiado"); };
+        /* --- BOTONES DE ACCIÓN (Desktop vs Mobile) --- */
+        const ActionButtonsDesktop = ({ analysis }) => {
+            const handleCopyLink = () => {
+                const url = `${window.location.origin}${window.location.pathname}?lat=${analysis.coordinate.lat}&lng=${analysis.coordinate.lng}`;
+                navigator.clipboard.writeText(url);
+                alert("Enlace copiado al portapapeles");
+            };
+
             return (
-                <div className="grid grid-cols-3 gap-2 w-full">
-                    <a href={`https://www.google.com/maps/search/?api=1&query=${analysis.coordinate.lat},${analysis.coordinate.lng}`} target="_blank" className="flex flex-col items-center justify-center p-2 bg-white border rounded hover:border-[#9d2449] text-gray-600 hover:text-[#9d2449]"><Icons.MapIcon className="h-5 w-5 mb-1"/><span className="text-[9px] font-bold">Maps</span></a>
-                    <a href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${analysis.coordinate.lat},${analysis.coordinate.lng}`} target="_blank" className="flex flex-col items-center justify-center p-2 bg-white border rounded hover:border-[#9d2449] text-gray-600 hover:text-[#9d2449]"><Icons.StreetView className="h-5 w-5 mb-1"/><span className="text-[9px] font-bold">Street View</span></a>
-                    <button onClick={copy} className="flex flex-col items-center justify-center p-2 bg-white border rounded hover:border-[#9d2449] text-gray-600 hover:text-[#9d2449]"><Icons.Link className="h-5 w-5 mb-1"/><span className="text-[9px] font-bold">Copiar</span></button>
+                <div className="grid grid-cols-2 gap-2 w-full">
+                    <a href={`https://www.google.com/maps/search/?api=1&query=${analysis.coordinate.lat},${analysis.coordinate.lng}`} target="_blank" className="flex flex-col items-center justify-center p-2 bg-white border rounded hover:border-[#9d2449] text-gray-600 hover:text-[#9d2449]"><Icons.MapIcon className="h-5 w-5 mb-1"/><span className="text-[9px] font-bold">Google Maps</span></a>
+                    <button onClick={handleCopyLink} className="flex flex-col items-center justify-center p-2 bg-white border rounded hover:border-[#9d2449] text-gray-600 hover:text-[#9d2449]"><Icons.Link className="h-5 w-5 mb-1"/><span className="text-[9px] font-bold">Copiar Enlace</span></button>
                 </div>
             );
         };
@@ -370,7 +374,7 @@
         const SidebarDesktop = ({ analysis, onLocationSelect, onReset }) => (
             <div id="sidebar-desktop" className="hidden md:flex flex-col h-full bg-white w-[400px] shadow-xl z-[2000] overflow-y-auto custom-scrollbar border-r">
                 <div className="p-4 bg-[#9d2449] text-white"><h2 className="font-bold">Consulta Ciudadana</h2></div>
-                <div className="p-4 space-y-4"><SearchLogicDesktop onLocationSelect={onLocationSelect} onReset={onReset} /><ResultsContent analysis={analysis} /><div className="mt-4">{analysis && <ActionButtons analysis={analysis} />}</div></div>
+                <div className="p-4 space-y-4"><SearchLogicDesktop onLocationSelect={onLocationSelect} onReset={onReset} /><ResultsContent analysis={analysis} /><div className="mt-4">{analysis && <ActionButtonsDesktop analysis={analysis} />}</div></div>
             </div>
         );
 
@@ -384,7 +388,15 @@
             const toggleSheet = () => setIsExpanded(!isExpanded);
             const handleTouchStart = (e) => { if(e.target.closest('.sheet-header')) { startY.current = e.touches[0].clientY; } };
             const handleTouchEnd = (e) => { const endY = e.changedTouches[0].clientY; const diff = startY.current - endY; if (Math.abs(diff) > 50) setIsExpanded(diff > 0); };
-            const copyCoords = () => { navigator.clipboard.writeText(`${analysis.coordinate.lat},${analysis.coordinate.lng}`); alert("Copiado"); };
+            
+            const handleShare = async () => {
+                const url = `${window.location.origin}${window.location.pathname}?lat=${analysis.coordinate.lat}&lng=${analysis.coordinate.lng}`;
+                if (navigator.share) {
+                    try { await navigator.share({ title: 'Consulta Ciudadana SEDEMA', text: `Ubicación: ${analysis.alcaldia}`, url: url }); } catch (err) { console.log('Error sharing', err); }
+                } else {
+                    navigator.clipboard.writeText(url); alert("Enlace copiado");
+                }
+            };
 
             if(!analysis) return null;
 
@@ -401,9 +413,8 @@
                         <ResultsContent analysis={analysis} />
                     </div>
                     <div className="flex-shrink-0 p-3 bg-white border-t border-gray-200 safe-area-bottom flex gap-3 overflow-x-auto">
-                        <a href={`https://www.google.com/maps/search/?api=1&query=${analysis.coordinate.lat},${analysis.coordinate.lng}`} target="_blank" className="flex-1 min-w-[100px] flex items-center justify-center gap-2 bg-[#9d2449] text-white py-2.5 px-4 rounded-full text-xs font-bold shadow-sm hover:bg-[#7d1d3a] transition-colors"><Icons.MapIcon className="h-4 w-4"/> Cómo llegar</a>
-                        <a href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${analysis.coordinate.lat},${analysis.coordinate.lng}`} target="_blank" className="flex-1 min-w-[100px] flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-300 py-2.5 px-4 rounded-full text-xs font-bold shadow-sm hover:bg-gray-50"><Icons.StreetView className="h-4 w-4"/> Street View</a>
-                        <button onClick={copyCoords} className="flex items-center justify-center w-10 h-10 bg-white text-gray-600 border border-gray-300 rounded-full shadow-sm hover:bg-gray-50 flex-shrink-0"><Icons.Link className="h-5 w-5"/></button>
+                        <a href={`https://www.google.com/maps/search/?api=1&query=${analysis.coordinate.lat},${analysis.coordinate.lng}`} target="_blank" className="flex-1 min-w-[100px] flex items-center justify-center gap-2 bg-[#9d2449] text-white py-2.5 px-4 rounded-full text-xs font-bold shadow-sm hover:bg-[#7d1d3a] transition-colors"><Icons.MapIcon className="h-4 w-4"/> Google Maps</a>
+                        <button onClick={handleShare} className="flex-1 min-w-[100px] flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-300 py-2.5 px-4 rounded-full text-xs font-bold shadow-sm hover:bg-gray-50"><Icons.Share className="h-4 w-4"/> Compartir</button>
                     </div>
                 </div>
             );
@@ -507,7 +518,17 @@
             const [visibleLayers, setVisibleLayers] = useState(() => { const d = { sc: true, zoning: true, alcaldias: true, edomex: true, morelos: true }; Object.keys(ZONING_CAT_INFO).forEach(k => d[k] = true); return d; });
             const [isLegendOpen, setIsLegendOpen] = useState(false);
 
-            useEffect(() => { loadData().then(() => setLoading(false)); }, []);
+            useEffect(() => { 
+                loadData().then(() => {
+                    setLoading(false);
+                    // URL Params Check
+                    const params = new URLSearchParams(window.location.search);
+                    const lat = parseFloat(params.get('lat'));
+                    const lng = parseFloat(params.get('lng'));
+                    if(!isNaN(lat) && !isNaN(lng)) handleSelect({lat, lng});
+                }); 
+            }, []);
+            
             const handleSelect = async (c) => { setLocation(c); setAnalysis(await analyzeLocation(c)); };
             const handleReset = () => { setLocation(null); setAnalysis(null); };
             const handleUserLocation = () => navigator.geolocation.getCurrentPosition(p=>handleSelect({lat:p.coords.latitude,lng:p.coords.longitude}));
