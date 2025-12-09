@@ -1,157 +1,26 @@
-/* --- VARIABLES GLOBALES --- */
-:root {
-  --color-guinda: #9d2449;
-  --color-dorado: #b38e5d;
-  --color-gris: #54565a;
-  --font-main: 'Roboto', sans-serif;
-}
+:root { --color-guinda: #9d2449; --font: 'Roboto', sans-serif; }
+body { font-family: var(--font); color: #54565a; margin: 0; height: 100vh; overflow: hidden; background: #f3f4f6; }
 
-/* --- BASE --- */
-body {
-  font-family: var(--font-main);
-  color: var(--color-gris);
-  margin: 0;
-  padding: 0;
-  height: 100vh;
-  overflow: hidden; /* Evita scroll en toda la página */
-  background-color: #f3f4f6;
-}
+/* Scrollbars */
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+.leaflet-tooltip.custom-tooltip { background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 11px; padding: 2px 6px; }
 
-/* --- SCROLLBAR PERSONALIZADO --- */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 5px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 4px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
+/* Layout */
+#root { height: 100%; display: flex; flex-direction: column; }
 
-/* --- LEAFLET TOOLTIPS --- */
-.leaflet-tooltip.custom-tooltip {
-  background-color: rgba(0, 0, 0, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-  color: #fff;
-  font-weight: 500;
-  font-size: 11px;
-  padding: 2px 6px;
-  text-shadow: none;
-}
-.leaflet-tooltip-left:before, .leaflet-tooltip-right:before {
-  border-left-color: rgba(0,0,0,0.8);
-  border-right-color: rgba(0,0,0,0.8);
-}
-
-/* --- ESTRUCTURA PRINCIPAL (LAYOUT) --- */
-#root {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-#map-wrapper {
-  position: relative;
-  height: 100%;
-  width: 100%;
-  z-index: 1;
-}
-
-#map-container-div {
-  height: 100%;
-  width: 100%;
-}
-
-/* --- ANIMACIONES GENERALES --- */
+/* Animaciones */
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.animate-in { animation: fadeIn 0.3s ease-out forwards, slideUp 0.4s ease-out forwards; }
+.animate-in { animation: fadeIn 0.3s ease-out forwards; }
 
-
-/* =========================================
-   ESTILOS RESPONSIVOS Y BOTTOM SHEET
-   ========================================= */
-
-/* --- CONFIGURACIÓN BASE DEL SIDEBAR (Desktop) --- */
-#sidebar-wrapper {
-  z-index: 2000; /* Por encima del mapa */
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background-color: white;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Ocultar elementos exclusivos de móvil en desktop */
-.drag-handle-area {
-  display: none;
-}
-
-
-/* --- CONFIGURACIÓN MÓVIL (Max-width 768px) --- */
+/* MOBILE SPECIFIC */
 @media (max-width: 768px) {
-  
-  /* Transformar Sidebar en Bottom Sheet */
-  #sidebar-wrapper {
-    position: fixed !important; /* Fijo sobre el mapa */
-    top: auto !important;       /* Ignorar top */
-    bottom: 0 !important;       /* Pegado abajo */
-    left: 0 !important;
-    width: 100% !important;     /* Ancho completo */
-    height: 85vh !important;    /* Ocupa el 85% de la pantalla */
-    max-height: 85vh;
+    /* Ocultar barra de zoom leaflet en móvil para que no estorbe */
+    .leaflet-control-zoom { display: none !important; }
     
-    /* Estética de tarjeta flotante */
-    border-right: none !important;
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
-    box-shadow: 0 -10px 40px rgba(0,0,0,0.2); /* Sombra hacia arriba */
-    
-    /* Estado inicial: Oculto hacia abajo */
-    transform: translateY(110%);
-  }
-
-  /* Clase que activa la visibilidad (manejada por React) */
-  #sidebar-wrapper.mobile-visible {
-    transform: translateY(0);
-  }
-
-  /* El mapa ocupa todo el fondo */
-  #map-wrapper {
-    height: 100% !important;
-    flex: 1;
-  }
-
-  /* --- ÁREA DE ARRASTRE (DRAG HANDLE) --- */
-  .drag-handle-area {
-    display: flex !important; /* Visible solo en móvil */
-    width: 100%;
-    height: 30px; /* Área táctil cómoda */
-    align-items: center;
-    justify-content: center;
-    cursor: grab;
-    background-color: white; /* Coincide con el fondo del panel */
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
-    flex-shrink: 0; /* Evita que se aplaste */
-    touch-action: none; /* Mejora la respuesta táctil y evita scroll del body */
-  }
-
-  /* La píldora gris visual */
-  .drag-pill {
-    width: 40px;
-    height: 5px;
-    background-color: #e5e7eb;
-    border-radius: 100px;
-  }
-  
-  /* Ajustes para inputs táctiles */
-  input[type="text"], button {
-    min-height: 44px;
-  }
+    /* Área segura para iPhones sin botón */
+    .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
 }
+
+/* Bottom Sheet Header Handle */
+.sheet-header:active { cursor: grabbing; }
