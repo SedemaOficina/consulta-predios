@@ -588,23 +588,27 @@
                 mapInstance.current.setView([location.lat, location.lng], 15);
             }, [location, analysisStatus]);
 
-            /* --- LEYENDA OPTIMIZADA --- */
+            /* --- LEYENDA RESPONSIVA --- */
             return (
                 <div id="map-wrapper">
                     <div id="map-container-div" ref={mapRef} className="h-full w-full bg-gray-200" />
                     
-                    {/* Altura ajustada a max-h-[80vh] y ancho ajustado */}
-                    <div className={`absolute bottom-8 left-4 bg-white shadow-xl rounded-lg z-[999] overflow-hidden transition-all flex flex-col max-h-[80vh] ${isLegendOpen ? 'w-72' : 'w-10 h-10 rounded-full flex items-center justify-center'}`}>
+                    {/* AQUÍ ESTÁ EL CAMBIO PRINCIPAL DE POSICIÓN */}
+                    <div className={`
+                        absolute z-[999] bg-white shadow-xl rounded-lg overflow-hidden transition-all flex flex-col
+                        left-4
+                        top-4 md:top-auto md:bottom-8  
+                        max-h-[75vh] md:max-h-[80vh]
+                        ${isLegendOpen ? 'w-72' : 'w-10 h-10 rounded-full flex items-center justify-center'}
+                    `}>
                         {isLegendOpen ? (
                             <div className="flex flex-col h-full">
-                                {/* Header más compacto: p-2 en vez de p-3 */}
                                 <div className="flex justify-between items-center p-2 bg-gray-50 border-b cursor-pointer shrink-0" onClick={() => setIsLegendOpen(false)}>
                                     <span className="text-xs font-bold text-gray-700">Capas y Simbología</span>
                                     <Icons.ChevronDown className="h-4 w-4" />
                                 </div>
                                 
                                 <div className="p-2 space-y-2 overflow-y-auto custom-scrollbar flex-1">
-                                    {/* SECCIÓN: MAPA BASE COMPACTO (SEGMENTED CONTROL) */}
                                     <div className="flex items-center justify-between mb-2 border-b border-gray-100 pb-2">
                                         <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1">
                                             <Icons.Globe className="h-3 w-3"/> Mapa Base
@@ -625,7 +629,6 @@
                                         </div>
                                     </div>
 
-                                    {/* Capas Generales - Menos padding vertical */}
                                     <div className="space-y-1">
                                         <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('sc')}>
                                             <div className="flex items-center gap-2">
@@ -662,7 +665,6 @@
 
                                     <hr className="border-gray-100 my-1"/>
 
-                                    {/* Sección Zonificación Compacta */}
                                     <details className="group" open>
                                         <summary className="flex items-center justify-between cursor-pointer list-none py-1">
                                             <div className="flex items-center gap-2">
@@ -689,7 +691,6 @@
                                                             className="w-3 h-3 rounded-sm shadow-sm flex-shrink-0" 
                                                             style={{ backgroundColor: info.color }}
                                                         ></span>
-                                                        {/* Texto a 9px y leading tight para ahorrar espacio vertical */}
                                                         <span className="text-[9px] text-gray-600 leading-tight">{info.label} ({key})</span>
                                                     </div>
                                                     <div>
