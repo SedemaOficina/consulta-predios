@@ -34,7 +34,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        /* --- 1. DEFINICIÓN DE CATEGORÍAS Y COLORES PARA LA LEYENDA --- */
+        /* --- 1. CONFIGURACIÓN --- */
         const ZONING_CAT_INFO = {
             'PE':  { color: '#0072B2', label: 'Preservación Ecológica' },
             'RE':  { color: '#009E73', label: 'Rescate Ecológico' },
@@ -47,24 +47,25 @@
 
         const ZONING_COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#17becf'];
 
-        const getZoningColor = (claveRaw) => {
-          const clave = (claveRaw || 'DEFAULT').toString().toUpperCase().trim();
-          if (ZONING_CAT_INFO[clave]) return ZONING_CAT_INFO[clave].color;
+        const getCleanKey = (props) => {
+            // Intenta encontrar la clave en varias propiedades comunes y límpiala
+            const raw = props.CLAVE || props.PGOEDF || props.UGA || 'DEFAULT';
+            return raw.toString().toUpperCase().trim();
+        };
 
+        const getZoningColor = (clave) => {
+          if (ZONING_CAT_INFO[clave]) return ZONING_CAT_INFO[clave].color;
           let hash = 0;
           for (let i = 0; i < clave.length; i++) {
             hash = ((hash << 5) - hash) + clave.charCodeAt(i);
             hash |= 0;
           }
-          const index = Math.abs(hash) % ZONING_COLORS.length;
-          return ZONING_COLORS[index];
+          return ZONING_COLORS[Math.abs(hash) % ZONING_COLORS.length];
         };
 
         const getZoningStyle = (feature) => {
-          const props = feature.properties || {};
-          const clave = props.CLAVE || props.PGOEDF || props.UGA || 'DEFAULT';
+          const clave = getCleanKey(feature.properties || {});
           const color = getZoningColor(clave);
-
           return {
             color: color,
             weight: 1.2,
@@ -75,7 +76,6 @@
           };
         };
 
-        /* --- CONSTANTES --- */
         const DATA_FILES = {
             LIMITES_CDMX: './limites_cdmx.geojson',
             LIMITES_ALCALDIAS: './limites_alcaldias.geojson',
@@ -89,13 +89,12 @@
         const INITIAL_CENTER = [19.3200, -99.1500];
         const INITIAL_ZOOM = 10;
         const CONTACT_INFO = { phone: "55-5345-8000 ext. 1234", hours: "Lunes a Viernes de 9:00 a 18:00 hrs" };
-
         const FAQ_ITEMS = [
             { q: "1. ¿Qué beneficios obtengo del Sistema?", a: "Conocer la información normativa urbana y ambiental..." },
             { q: "2. ¿Qué es Zonificación?", a: "La zonificación es la clasificación de áreas dentro de un territorio..." },
         ];
 
-        /* --- ICONOS (SVG) --- */
+        /* --- ICONOS --- */
         const Icons = {
             Search: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>,
             MapPin: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>,
@@ -154,12 +153,8 @@
                 const fetchJson = async (url) => (await fetch(url)).json().catch(() => ({ type: "FeatureCollection", features: [] }));
                 
                 const fetchCsv = async (url) => new Promise((resolve) => Papa.parse(url, { 
-                    download: true, 
-                    header: true, 
-                    skipEmptyLines: true, 
-                    encoding: "UTF-8", 
-                    complete: (r) => resolve(r.data), 
-                    error: () => resolve([]) 
+                    download: true, header: true, skipEmptyLines: true, encoding: "UTF-8", 
+                    complete: (r) => resolve(r.data), error: () => resolve([]) 
                 }));
 
                 const [cdmx, alcaldias, edomex, morelos, sc, zoning, rules] = await Promise.all([
@@ -209,7 +204,7 @@
 
             const zoningFeature = findFeatureContainingPoint(coord, dataCache.zoning);
             if (zoningFeature) {
-                result.zoningKey = zoningFeature.properties.CLAVE;
+                result.zoningKey = getCleanKey(zoningFeature.properties);
                 result.zoningName = zoningFeature.properties.PGOEDF || zoningFeature.properties.UGA;
 
                 if (result.zoningKey && dataCache.rules) {
@@ -302,9 +297,11 @@
                 } catch { alert("Error en búsqueda"); }
             };
 
+            // MODIFICACIÓN: Copiar Link de la URL
             const copyToClipboard = () => {
-                navigator.clipboard.writeText(`Consulta SEDEMA: ${analysis.alcaldia}, Zonificación: ${analysis.zoningKey || 'N/A'}. Coordenadas: ${analysis.coordinate.lat}, ${analysis.coordinate.lng}`);
-                alert("Información copiada al portapapeles");
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    alert("Enlace con ubicación copiado al portapapeles");
+                });
             };
 
             return (
@@ -555,10 +552,10 @@
                     }
                 });
 
+                // MODIFICACIÓN: Corrección del bug de toggling para todas las categorías
                 if(layersRef.current.zoning && mapInstance.current.hasLayer(layersRef.current.zoning)) {
                     layersRef.current.zoning.eachLayer(layer => {
-                        const props = layer.feature.properties || {};
-                        const clave = (props.CLAVE || props.PGOEDF || props.UGA || '').toString().toUpperCase().trim();
+                        const clave = getCleanKey(layer.feature.properties || {});
                         const isVisible = visibleLayers.zoning && (visibleLayers[clave] !== false);
                         
                         if (isVisible) {
@@ -575,6 +572,7 @@
 
             }, [visibleLayers, activeBaseMap]);
 
+            // MODIFICACIÓN: Centrado Automático
             useEffect(() => {
                 if(!mapInstance.current) return;
                 if(!location) {
@@ -583,23 +581,26 @@
                     return;
                 }
                 const color = analysisStatus === 'CONSERVATION_SOIL' ? '#ef4444' : analysisStatus === 'URBAN_SOIL' ? '#22c55e' : '#9ca3af';
+                
+                // Actualizar o crear marcador
                 if(markerRef.current) markerRef.current.setLatLng([location.lat, location.lng]).setStyle({ fillColor: color });
                 else markerRef.current = window.L.circleMarker([location.lat, location.lng], { radius: 12, fillColor: color, color: '#fff', weight: 3, fillOpacity: 0.9 }).addTo(mapInstance.current);
-                mapInstance.current.setView([location.lat, location.lng], 15);
+                
+                // Centrar mapa
+                mapInstance.current.flyTo([location.lat, location.lng], 15, { duration: 1.5 });
             }, [location, analysisStatus]);
 
-            /* --- LEYENDA RESPONSIVA --- */
             return (
                 <div id="map-wrapper">
                     <div id="map-container-div" ref={mapRef} className="h-full w-full bg-gray-200" />
                     
-                    {/* AQUÍ ESTÁ EL CAMBIO PRINCIPAL DE POSICIÓN */}
+                    {/* MODIFICACIÓN: Posición Responsiva y Compacta */}
                     <div className={`
                         absolute z-[999] bg-white shadow-xl rounded-lg overflow-hidden transition-all flex flex-col
-                        left-4
-                        top-4 md:top-auto md:bottom-8  
+                        right-4 
+                        bottom-36 md:bottom-8 md:left-4 md:right-auto 
                         max-h-[75vh] md:max-h-[80vh]
-                        ${isLegendOpen ? 'w-72' : 'w-10 h-10 rounded-full flex items-center justify-center'}
+                        ${isLegendOpen ? 'w-60' : 'w-10 h-10 rounded-full flex items-center justify-center'}
                     `}>
                         {isLegendOpen ? (
                             <div className="flex flex-col h-full">
@@ -609,67 +610,60 @@
                                 </div>
                                 
                                 <div className="p-2 space-y-2 overflow-y-auto custom-scrollbar flex-1">
+                                    {/* Mapa Base */}
                                     <div className="flex items-center justify-between mb-2 border-b border-gray-100 pb-2">
                                         <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1">
                                             <Icons.Globe className="h-3 w-3"/> Mapa Base
                                         </span>
                                         <div className="flex bg-gray-100 rounded p-0.5">
-                                            <button 
-                                                onClick={() => setActiveBaseMap('light')}
-                                                className={`text-[9px] px-2 py-0.5 rounded shadow-sm transition-all ${activeBaseMap === 'light' ? 'bg-white text-[#9d2449] font-bold' : 'text-gray-500 hover:text-gray-700'}`}
-                                            >
-                                                Claro
-                                            </button>
-                                            <button 
-                                                onClick={() => setActiveBaseMap('satellite')}
-                                                className={`text-[9px] px-2 py-0.5 rounded shadow-sm transition-all ${activeBaseMap === 'satellite' ? 'bg-white text-[#9d2449] font-bold' : 'text-gray-500 hover:text-gray-700'}`}
-                                            >
-                                                Satélite
-                                            </button>
+                                            <button onClick={() => setActiveBaseMap('light')} className={`text-[9px] px-2 py-0.5 rounded shadow-sm transition-all ${activeBaseMap === 'light' ? 'bg-white text-[#9d2449] font-bold' : 'text-gray-500 hover:text-gray-700'}`}>Claro</button>
+                                            <button onClick={() => setActiveBaseMap('satellite')} className={`text-[9px] px-2 py-0.5 rounded shadow-sm transition-all ${activeBaseMap === 'satellite' ? 'bg-white text-[#9d2449] font-bold' : 'text-gray-500 hover:text-gray-700'}`}>Satélite</button>
                                         </div>
                                     </div>
 
+                                    {/* Capas Generales - Ojito pegado a la izquierda */}
                                     <div className="space-y-1">
-                                        <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('sc')}>
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-4 h-4 bg-[#9d2449]/30 border border-[#9d2449] rounded-sm"></span>
-                                                <span className="text-[10px] font-medium text-gray-700">Suelo de Conservación</span>
-                                            </div>
+                                        <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('sc')}>
                                             <EyeIcon visible={visibleLayers.sc} />
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-3 h-3 bg-[#9d2449]/30 border border-[#9d2449] rounded-sm"></span>
+                                                <span className="text-[10px] font-medium text-gray-700">Suelo Conservación</span>
+                                            </div>
                                         </div>
 
-                                        <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('alcaldias')}>
+                                        <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('alcaldias')}>
+                                            <EyeIcon visible={visibleLayers.alcaldias} />
                                             <div className="flex items-center gap-2">
-                                                <span className="w-4 h-4 bg-white border-2 border-gray-500 border-dashed rounded-sm"></span>
+                                                <span className="w-3 h-3 bg-white border-2 border-gray-500 border-dashed rounded-sm"></span>
                                                 <span className="text-[10px] font-medium text-gray-700">Límites Alcaldías</span>
                                             </div>
-                                            <EyeIcon visible={visibleLayers.alcaldias} />
                                         </div>
 
-                                        <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('edomex')}>
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-4 h-4 bg-[#fbbf24]/20 border border-[#fbbf24] border-dashed rounded-sm"></span>
-                                                <span className="text-[10px] font-medium text-gray-700">Estado de México</span>
-                                            </div>
+                                        <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('edomex')}>
                                             <EyeIcon visible={visibleLayers.edomex} />
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-3 h-3 bg-[#fbbf24]/20 border border-[#fbbf24] border-dashed rounded-sm"></span>
+                                                <span className="text-[10px] font-medium text-gray-700">Edo. México</span>
+                                            </div>
                                         </div>
 
-                                        <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('morelos')}>
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-4 h-4 bg-[#a855f7]/20 border border-[#a855f7] border-dashed rounded-sm"></span>
-                                                <span className="text-[10px] font-medium text-gray-700">Estado de Morelos</span>
-                                            </div>
+                                        <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('morelos')}>
                                             <EyeIcon visible={visibleLayers.morelos} />
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-3 h-3 bg-[#a855f7]/20 border border-[#a855f7] border-dashed rounded-sm"></span>
+                                                <span className="text-[10px] font-medium text-gray-700">Morelos</span>
+                                            </div>
                                         </div>
                                     </div>
 
                                     <hr className="border-gray-100 my-1"/>
 
+                                    {/* Zonificación PGOEDF - Misma tipografía que Mapa Base */}
                                     <details className="group" open>
                                         <summary className="flex items-center justify-between cursor-pointer list-none py-1">
                                             <div className="flex items-center gap-2">
                                                 <Icons.Layers className="h-4 w-4 text-gray-500"/>
-                                                <span className="text-xs font-bold text-gray-700">Zonificación PGOEDF</span>
+                                                <span className="text-[10px] font-bold text-gray-500 uppercase">Zonificación PGOEDF</span>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <div onClick={(e) => { e.preventDefault(); toggleAllZoning(); }} className="cursor-pointer">
@@ -679,26 +673,20 @@
                                             </div>
                                         </summary>
                                         
-                                        <div className="mt-1 pl-2 space-y-0.5 border-l-2 border-gray-100 ml-1.5">
+                                        <div className="mt-1 pl-1 space-y-0.5 border-l-2 border-gray-100 ml-1.5">
                                             {Object.entries(ZONING_CAT_INFO).map(([key, info]) => (
                                                 <div 
                                                     key={key} 
-                                                    className={`flex items-center justify-between p-0.5 rounded cursor-pointer ${!visibleLayers.zoning ? 'opacity-40 pointer-events-none' : 'hover:bg-gray-50'}`}
+                                                    className={`flex items-center gap-2 p-0.5 rounded cursor-pointer ${!visibleLayers.zoning ? 'opacity-40 pointer-events-none' : 'hover:bg-gray-50'}`}
                                                     onClick={() => toggleLayer(key)}
                                                 >
-                                                    <div className="flex items-center gap-2">
-                                                        <span 
-                                                            className="w-3 h-3 rounded-sm shadow-sm flex-shrink-0" 
-                                                            style={{ backgroundColor: info.color }}
-                                                        ></span>
-                                                        <span className="text-[9px] text-gray-600 leading-tight">{info.label} ({key})</span>
-                                                    </div>
+                                                     {/* Ojito pegado a la izquierda */}
                                                     <div>
-                                                        {visibleLayers[key] !== false ? (
-                                                            <Icons.Eye className="h-3 w-3 text-green-600"/>
-                                                        ) : (
-                                                            <Icons.EyeOff className="h-3 w-3 text-red-600"/>
-                                                        )}
+                                                        {visibleLayers[key] !== false ? <Icons.Eye className="h-3 w-3 text-green-600"/> : <Icons.EyeOff className="h-3 w-3 text-red-600"/>}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="w-3 h-3 rounded-sm shadow-sm flex-shrink-0" style={{ backgroundColor: info.color }}></span>
+                                                        <span className="text-[9px] text-gray-600 leading-tight">{info.label} ({key})</span>
                                                     </div>
                                                 </div>
                                             ))}
@@ -722,15 +710,38 @@
             const [location, setLocation] = useState(null);
             const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-            useEffect(() => { loadData().then(() => setLoading(false)); }, []);
+            // MODIFICACIÓN: Leer parámetros URL al iniciar
+            useEffect(() => { 
+                loadData().then(() => {
+                    setLoading(false);
+                    const params = new URLSearchParams(window.location.search);
+                    const lat = parseFloat(params.get('lat'));
+                    const lng = parseFloat(params.get('lng'));
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        handleSelect({ lat, lng });
+                    }
+                }); 
+            }, []);
 
             const handleSelect = async (coord) => {
+                // MODIFICACIÓN: Actualizar URL
+                const url = new URL(window.location);
+                url.searchParams.set('lat', coord.lat);
+                url.searchParams.set('lng', coord.lng);
+                window.history.pushState({}, '', url);
+
                 setLocation(coord);
                 setAnalysis(await analyzeLocation(coord));
                 setMobileSidebarOpen(true); 
             };
 
             const handleReset = () => {
+                // Limpiar URL
+                const url = new URL(window.location);
+                url.searchParams.delete('lat');
+                url.searchParams.delete('lng');
+                window.history.pushState({}, '', url);
+
                 setLocation(null);
                 setAnalysis(null);
                 setMobileSidebarOpen(false);
