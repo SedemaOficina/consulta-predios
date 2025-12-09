@@ -117,14 +117,16 @@
         };
 
         /* --- COMPONENTE TOGGLE SWITCH --- */
-        const ToggleSwitch = ({ checked, onChange }) => (
-            <button 
-                onClick={(e) => { e.stopPropagation(); onChange(!checked); }}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none ${checked ? 'bg-[#9d2449]' : 'bg-gray-300'}`}
-            >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
-            </button>
-        );
+       const ToggleSwitch = ({ checked, onChange }) => (
+    <button 
+        onClick={(e) => { e.stopPropagation(); onChange(!checked); }}
+        // Cambiamos h-6 w-11 por h-4 w-7
+        className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors duration-200 focus:outline-none ${checked ? 'bg-[#9d2449]' : 'bg-gray-300'}`}
+    >
+        {/* Cambiamos h-4 w-4 por h-3 w-3 y translate-x-6 por translate-x-3 */}
+        <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition duration-200 ${checked ? 'translate-x-3' : 'translate-x-0.5'}`} />
+    </button>
+);
 
         /* --- LOGICA GEO --- */
         let dataCache = {};
