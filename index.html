@@ -259,8 +259,25 @@
                     <StatusMessage analysis={analysis} />
                     {analysis.status === 'CONSERVATION_SOIL' && !analysis.isANP && (
                         <div className="mt-4">
-                            <GroupedActivities title="ACTIVIDADES PROHIBIDAS" activities={analysis.prohibitedActivities} icon={<Icons.XCircle className="h-4 w-4"/>} headerClass="text-red-900 bg-red-50" bgClass="bg-white" defaultOpen={true} />
-                            <GroupedActivities title="ACTIVIDADES PERMITIDAS" activities={analysis.allowedActivities} icon={<Icons.CheckCircle className="h-4 w-4"/>} headerClass="text-green-900 bg-green-50" bgClass="bg-white" defaultOpen={false} />
+                            {/* CAMBIO AQUÍ: defaultOpen={false} para que inicie cerrado */}
+                            <GroupedActivities 
+                                title="ACTIVIDADES PROHIBIDAS" 
+                                activities={analysis.prohibitedActivities} 
+                                icon={<Icons.XCircle className="h-4 w-4"/>} 
+                                headerClass="text-red-900 bg-red-50" 
+                                bgClass="bg-white" 
+                                defaultOpen={false} 
+                            />
+                            
+                            {/* Este ya estaba en false, se mantiene igual */}
+                            <GroupedActivities 
+                                title="ACTIVIDADES PERMITIDAS" 
+                                activities={analysis.allowedActivities} 
+                                icon={<Icons.CheckCircle className="h-4 w-4"/>} 
+                                headerClass="text-green-900 bg-green-50" 
+                                bgClass="bg-white" 
+                                defaultOpen={false} 
+                            />
                         </div>
                     )}
                     <LegalDisclaimer />
