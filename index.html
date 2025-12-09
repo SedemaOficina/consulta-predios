@@ -40,16 +40,29 @@
             SATELLITE: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
         };
 
+        /* 
+           CLAVES DE ZONIFICACIÓN (CSV y GeoJSON 'CLAVE')
+           Se asignan colores distintivos para el mapa.
+        */
         const ZONING_CAT_INFO = {
-            'PE':  { color: '#0072B2', label: 'Preservación Ecológica' },
-            'RE':  { color: '#009E73', label: 'Rescate Ecológico' },
-            'FC':  { color: '#005F2F', label: 'Forestal de Conservación' },
-            'PRA': { color: '#D55E00', label: 'Producción Rural Agro' },
-            'HR':  { color: '#E69F00', label: 'Habitacional Rural' },
-            'HRB': { color: '#F0E442', label: 'Hab. Rural Baja Densidad' },
-            'ER':  { color: '#CC79A7', label: 'Equipamiento Rural' }
+            'AEE': { color: '#1f77b4', label: 'Agroecológico Especial (AEE)' },
+            'AE':  { color: '#aec7e8', label: 'Agroecológico (AE)' },
+            'AFE': { color: '#ff7f0e', label: 'Agroforestal Especial (AFE)' },
+            'AF':  { color: '#ffbb78', label: 'Agroforestal (AF)' },
+            'FPE': { color: '#2ca02c', label: 'Forestal Protección Esp. (FPE)' },
+            'FP':  { color: '#98df8a', label: 'Forestal Protección (FP)' },
+            'FCE': { color: '#005a32', label: 'Forestal Conservación Esp. (FCE)' },
+            'FC':  { color: '#74c476', label: 'Forestal Conservación (FC)' },
+            'ANP': { color: '#9467bd', label: 'Área Natural Protegida' } // Caso especial
         };
-        const ZONING_COLORS = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#17becf'];
+
+        // Colores de capas generales para la simbología
+        const LAYER_STYLES = {
+            sc:        { color: '#9d2449', label: 'Suelo de Conservación' },
+            alcaldias: { color: '#ffffff', border: '#555', label: 'Límite Alcaldías' },
+            edomex:    { color: '#fbbf24', label: 'Estado de México' },
+            morelos:   { color: '#a855f7', label: 'Estado de Morelos' }
+        };
         
         const DATA_FILES = {
             LIMITES_CDMX: './limites_cdmx.geojson',
@@ -69,32 +82,28 @@
         const getZoningColor = (c) => {
             const k = (c || 'DEFAULT').toString().toUpperCase().trim();
             if (ZONING_CAT_INFO[k]) return ZONING_CAT_INFO[k].color;
-            let h = 0; for (let i = 0; i < k.length; i++) h = ((h << 5) - h) + k.charCodeAt(i) | 0;
-            return ZONING_COLORS[Math.abs(h) % ZONING_COLORS.length];
+            return '#8c564b'; // Color fallback
         };
+        
         const getZoningStyle = (f) => {
-            const c = getZoningColor(f.properties?.CLAVE || f.properties?.PGOEDF || 'DEFAULT');
+            // USAR ESTRICTAMENTE LA PROPIEDAD 'CLAVE'
+            const c = getZoningColor(f.properties?.CLAVE);
             return { color: c, weight: 1.2, dashArray: '3, 3', fillColor: c, fillOpacity: 0.25, interactive: true, stroke: true, fill: true };
         };
 
-        // Generador de colores pastel para Sectores
         const getSectorStyle = (str) => {
             const styles = [
                 { bg: '#eff6ff', border: '#3b82f6', text: '#1e40af' }, 
                 { bg: '#f0fdf4', border: '#22c55e', text: '#15803d' }, 
                 { bg: '#fefce8', border: '#eab308', text: '#a16207' }, 
                 { bg: '#fff1f2', border: '#f43f5e', text: '#be123c' }, 
-                { bg: '#fdf4ff', border: '#d946ef', text: '#a21caf' }, 
-                { bg: '#f5f3ff', border: '#8b5cf6', text: '#6d28d9' }, 
-                { bg: '#ecfeff', border: '#06b6d4', text: '#0e7490' }, 
-                { bg: '#fff7ed', border: '#f97316', text: '#c2410c' }  
+                { bg: '#fdf4ff', border: '#d946ef', text: '#a21caf' } 
             ];
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
             return styles[Math.abs(hash) % styles.length];
         };
 
-        /* --- ICONOS SVG STANDARD --- */
+        /* --- ICONOS --- */
         const Icons = {
             Search: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>,
             MapPin: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>,
@@ -117,7 +126,7 @@
             Share: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>,
         };
 
-        /* --- GEO LOGIC --- */
+        /* --- LOGICA GEO --- */
         let dataCache = {};
         const isPointInPolygon = (p, f) => { const {lat,lng}=p; const {type,coordinates}=f.geometry; const c=(r)=>{let inP=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const xi=r[i][0],yi=r[i][1],xj=r[j][0],yj=r[j][1];if(((yi>lat)!==(yj>lat))&&(lng<(xj-xi)*(lat-yi)/(yj-yi)+xi))inP=!inP}return inP}; if(type==='Polygon')return c(coordinates[0]); if(type==='MultiPolygon'){for(const poly of coordinates)if(c(poly[0]))return true}return false; };
         const findFeature = (p, c) => { if(!c?.features) return null; for(const f of c.features) if(isPointInPolygon(p, f)) return f; return null; };
@@ -148,12 +157,21 @@
             const sc = findFeature(c, dataCache.sc);
             if (!sc) { r.status = 'URBAN_SOIL'; return r; }
             r.status = 'CONSERVATION_SOIL'; r.isRestricted = true;
+            
             const z = findFeature(c, dataCache.zoning);
             if (z) {
-                r.zoningKey = z.properties.CLAVE; r.zoningName = z.properties.PGOEDF || z.properties.UGA;
-                if (r.zoningKey && dataCache.rules) {
+                // USAR 'CLAVE' PARA VINCULAR CON CSV
+                r.zoningKey = (z.properties.CLAVE || '').toString().trim().toUpperCase();
+                r.zoningName = z.properties.PGOEDF || z.properties.UGA || r.zoningKey;
+
+                // CASO ESPECIAL ANP
+                if (r.zoningKey === 'ANP') {
+                    r.isANP = true;
+                    // No se buscan actividades, se mostrará mensaje especial
+                } else if (r.zoningKey && dataCache.rules) {
                     const all = [], pro = [];
                     dataCache.rules.forEach(row => {
+                        // Buscar en la columna que coincide con la clave (AEE, AE, etc.)
                         const val = (row[r.zoningKey] || '').trim().toUpperCase();
                         if (!val) return;
                         const act = { 
@@ -169,40 +187,28 @@
             return r;
         };
 
-        /* --- COMPONENTES UI MEJORADOS --- */
-
-        const StatusMessage = ({ status, outsideContext }) => {
-            if (status === 'OUTSIDE_CDMX') {
-                return <div className="p-3 bg-gray-100 text-gray-700 text-xs border-l-4 border-gray-400 rounded-r"><strong>Atención:</strong> El punto está fuera de la Ciudad de México {outsideContext ? `(${outsideContext})` : ''}. Esta herramienta solo aplica dentro de CDMX.</div>;
-            }
-            if (status === 'URBAN_SOIL') {
-                return <div className="p-3 bg-blue-50 text-blue-800 text-xs border-l-4 border-blue-500 rounded-r"><strong>Suelo Urbano:</strong> La regulación del uso de suelo corresponde a SEDUVI. Este visor solo orienta respecto a Suelo de Conservación.</div>;
-            }
-            if (status === 'CONSERVATION_SOIL') {
-                return <div className="p-3 bg-green-50 text-green-800 text-xs border-l-4 border-green-600 rounded-r"><strong>Nota:</strong> Este resultado es orientativo. La interpretación oficial corresponde a las áreas competentes de la Secretaría.</div>;
-            }
+        /* --- COMPONENTES UI --- */
+        const StatusMessage = ({ analysis }) => {
+            const { status, outsideContext, isANP } = analysis;
+            if (status === 'OUTSIDE_CDMX') return <div className="p-3 bg-gray-100 text-gray-700 text-xs border-l-4 border-gray-400 rounded-r"><strong>Atención:</strong> El punto está fuera de la Ciudad de México {outsideContext ? `(${outsideContext})` : ''}. Esta herramienta solo aplica dentro de CDMX.</div>;
+            if (status === 'URBAN_SOIL') return <div className="p-3 bg-blue-50 text-blue-800 text-xs border-l-4 border-blue-500 rounded-r"><strong>Suelo Urbano:</strong> La regulación del uso de suelo corresponde a SEDUVI. Este visor solo orienta respecto a Suelo de Conservación.</div>;
+            if (isANP) return <div className="p-3 bg-purple-50 text-purple-800 text-xs border-l-4 border-purple-600 rounded-r"><strong>Área Natural Protegida (ANP):</strong> Consulte el <strong>Programa de Manejo</strong> específico para esta zona.</div>;
+            if (status === 'CONSERVATION_SOIL') return <div className="p-3 bg-green-50 text-green-800 text-xs border-l-4 border-green-600 rounded-r"><strong>Nota:</strong> Este resultado es orientativo. La interpretación oficial corresponde a las áreas competentes de la Secretaría.</div>;
             return null;
         };
 
         const LocationSummary = ({ analysis }) => {
             const copyCoords = () => { navigator.clipboard.writeText(`${analysis.coordinate.lat},${analysis.coordinate.lng}`); alert("Coordenadas copiadas"); };
-            const statusLabel = analysis.status==='CONSERVATION_SOIL' ? 'Suelo de Conservación' : analysis.status==='URBAN_SOIL' ? 'Suelo Urbano' : 'Fuera de CDMX';
-            const statusColor = analysis.status==='CONSERVATION_SOIL' ? 'text-green-700' : analysis.status==='URBAN_SOIL' ? 'text-blue-700' : 'text-gray-500';
+            const statusLabel = analysis.isANP ? 'Área Natural Protegida' : analysis.status==='CONSERVATION_SOIL' ? 'Suelo de Conservación' : analysis.status==='URBAN_SOIL' ? 'Suelo Urbano' : 'Fuera de CDMX';
+            const statusColor = analysis.isANP ? 'text-purple-700' : analysis.status==='CONSERVATION_SOIL' ? 'text-green-700' : analysis.status==='URBAN_SOIL' ? 'text-blue-700' : 'text-gray-500';
 
             return (
                 <div className="bg-white border rounded-lg shadow-sm p-4 mb-4">
-                    <h2 className="text-lg font-bold text-gray-800 leading-tight mb-1">
-                        {analysis.alcaldia} {analysis.zoningKey ? `— ${analysis.zoningKey}` : ''}
-                    </h2>
+                    <h2 className="text-lg font-bold text-gray-800 leading-tight mb-1">{analysis.alcaldia} {analysis.zoningKey ? `— ${analysis.zoningKey}` : ''}</h2>
                     {analysis.zoningName && <p className="text-sm text-gray-600 mb-2">{analysis.zoningName}</p>}
                     <p className={`text-xs font-bold uppercase mb-3 ${statusColor}`}>{statusLabel}</p>
-                    
                     <ul className="text-xs space-y-1.5 text-gray-700 border-t pt-2">
-                        <li className="flex items-center gap-2">
-                            <span className="text-gray-400"><Icons.MapPin className="h-3 w-3"/></span>
-                            <span className="font-mono">{analysis.coordinate.lat.toFixed(5)}, {analysis.coordinate.lng.toFixed(5)}</span>
-                            <button onClick={copyCoords} className="text-[#9d2449] hover:bg-gray-100 p-1 rounded"><Icons.Copy className="h-3 w-3"/></button>
-                        </li>
+                        <li className="flex items-center gap-2"><span className="text-gray-400"><Icons.MapPin className="h-3 w-3"/></span><span className="font-mono">{analysis.coordinate.lat.toFixed(5)}, {analysis.coordinate.lng.toFixed(5)}</span><button onClick={copyCoords} className="text-[#9d2449] hover:bg-gray-100 p-1 rounded"><Icons.Copy className="h-3 w-3"/></button></li>
                         <li><strong>Alcaldía:</strong> {analysis.alcaldia}</li>
                         <li><strong>Zonificación:</strong> {analysis.zoningKey || 'N/A'}</li>
                     </ul>
@@ -212,14 +218,8 @@
 
         const GroupedActivities = ({ title, activities, icon, headerClass, bgClass, defaultOpen }) => {
             if (!activities || activities.length === 0) return null;
-
-            // Agrupar: Sector -> General -> [Specifics]
             const groups = {};
-            activities.forEach(a => {
-                if (!groups[a.sector]) groups[a.sector] = {};
-                if (!groups[a.sector][a.general]) groups[a.sector][a.general] = [];
-                groups[a.sector][a.general].push(a.specific);
-            });
+            activities.forEach(a => { if (!groups[a.sector]) groups[a.sector] = {}; if (!groups[a.sector][a.general]) groups[a.sector][a.general] = []; groups[a.sector][a.general].push(a.specific); });
 
             return (
                 <details className={`group rounded-lg border border-gray-200 overflow-hidden mb-3 shadow-sm ${bgClass}`} open={defaultOpen}>
@@ -232,35 +232,16 @@
                             const style = getSectorStyle(sector);
                             return (
                                 <div key={i} className="mb-3 rounded overflow-hidden border border-gray-100">
-                                    {/* CABECERA DEL SECTOR */}
-                                    <div 
-                                        className="px-3 py-2 font-bold text-[11px] uppercase tracking-wide border-l-4"
-                                        style={{ backgroundColor: style.bg, borderLeftColor: style.border, color: style.text }}
-                                    >
-                                        {sector}
-                                    </div>
-                                    
+                                    <div className="px-3 py-2 font-bold text-[11px] uppercase tracking-wide border-l-4" style={{ backgroundColor: style.bg, borderLeftColor: style.border, color: style.text }}>{sector}</div>
                                     <div className="bg-white">
                                         {Object.entries(generals).map(([gen, specifics], j) => (
                                             <details key={j} className="group/inner border-b border-gray-50 last:border-0">
                                                 <summary className="px-3 py-2 text-[11px] font-medium text-gray-700 cursor-pointer hover:bg-gray-50 list-none flex items-center justify-between">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="w-1.5 h-1.5 rounded-full" style={{backgroundColor: style.border}}></span>
-                                                        <span>{gen}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-[9px] text-gray-400 bg-gray-100 px-1.5 rounded-full">{specifics.length}</span>
-                                                        <Icons.ChevronDown className="h-3 w-3 text-gray-400 group-open/inner:rotate-180 transition-transform"/>
-                                                    </div>
+                                                    <div className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full" style={{backgroundColor: style.border}}></span><span>{gen}</span></div>
+                                                    <div className="flex items-center gap-2"><span className="text-[9px] text-gray-400 bg-gray-100 px-1.5 rounded-full">{specifics.length}</span><Icons.ChevronDown className="h-3 w-3 text-gray-400 group-open/inner:rotate-180 transition-transform"/></div>
                                                 </summary>
-                                                
                                                 <ul className="bg-gray-50/50 px-4 py-2 space-y-1 animate-in">
-                                                    {specifics.map((spec, k) => (
-                                                        <li key={k} className="text-[10px] text-gray-600 pl-4 relative">
-                                                            <span className="absolute left-0 top-1.5 w-1 h-1 bg-gray-300 rounded-full"></span>
-                                                            {spec}
-                                                        </li>
-                                                    ))}
+                                                    {specifics.map((spec, k) => (<li key={k} className="text-[10px] text-gray-600 pl-4 relative"><span className="absolute left-0 top-1.5 w-1 h-1 bg-gray-300 rounded-full"></span>{spec}</li>))}
                                                 </ul>
                                             </details>
                                         ))}
@@ -274,10 +255,7 @@
         };
 
         const LegalDisclaimer = () => (
-            <div className="mt-6 p-3 bg-gray-50 border-t border-gray-200 text-[10px] text-gray-500 text-justify">
-                <p className="mb-1"><strong>Aviso Legal:</strong> La información de este visor es de carácter orientativo y no sustituye la interpretación oficial de las disposiciones jurídicas aplicables.</p>
-                <p>Para trámites, certificaciones y autorizaciones, consulte a la Dirección General competente de la SEDEMA.</p>
-            </div>
+            <div className="mt-6 p-3 bg-gray-50 border-t border-gray-200 text-[10px] text-gray-500 text-justify"><p className="mb-1"><strong>Aviso Legal:</strong> La información es orientativa.</p><p>Para trámites, consulte a la Dirección General competente.</p></div>
         );
 
         const ResultsContent = ({ analysis }) => {
@@ -285,35 +263,23 @@
             return (
                 <div className="space-y-4 animate-in pb-20"> 
                     <LocationSummary analysis={analysis} />
-                    <StatusMessage status={analysis.status} outsideContext={analysis.outsideContext} />
-
-                    {analysis.status === 'CONSERVATION_SOIL' && (
+                    <StatusMessage analysis={analysis} />
+                    {analysis.status === 'CONSERVATION_SOIL' && !analysis.isANP && (
                         <div className="mt-4">
                             <GroupedActivities title="ACTIVIDADES PROHIBIDAS" activities={analysis.prohibitedActivities} icon={<Icons.XCircle className="h-4 w-4"/>} headerClass="text-red-900 bg-red-50" bgClass="bg-white" defaultOpen={true} />
                             <GroupedActivities title="ACTIVIDADES PERMITIDAS" activities={analysis.allowedActivities} icon={<Icons.CheckCircle className="h-4 w-4"/>} headerClass="text-green-900 bg-green-50" bgClass="bg-white" defaultOpen={false} />
                         </div>
                     )}
-                    
                     <LegalDisclaimer />
-
                     <div className="border-t pt-2"><details><summary className="text-xs font-bold text-gray-500 cursor-pointer flex justify-between">PREGUNTAS FRECUENTES <Icons.ChevronDown className="h-4 w-4"/></summary><div className="mt-2 space-y-2">{FAQ_ITEMS.map((f,i)=>(<div key={i} className="text-[10px] bg-gray-50 p-2 rounded"><strong>{f.q}</strong><p>{f.a}</p></div>))}</div></details></div>
                 </div>
             );
         };
 
-        /* --- COMPONENTES DE INTERFAZ GENERAL --- */
+        /* --- COMPONENTES DE INTERFAZ --- */
         const MobileSearchBar = ({ onLocationSelect, onReset }) => {
             const [query, setQuery] = useState('');
-            const handleSearch = async (e) => {
-                e.preventDefault(); if(!query.trim()) return;
-                const parts = query.split(',').map(s=>parseFloat(s.trim()));
-                if(parts.length===2 && !isNaN(parts[0])) { onLocationSelect({lat:parts[0],lng:parts[1]}); return; }
-                try {
-                    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query+', Ciudad de México')}&limit=1`);
-                    const d = await r.json();
-                    if(d?.[0]) { onLocationSelect({lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)}); } else alert("No encontrado");
-                } catch { alert("Error de conexión"); }
-            };
+            const handleSearch = async (e) => { e.preventDefault(); if(!query.trim()) return; const parts = query.split(',').map(s=>parseFloat(s.trim())); if(parts.length===2 && !isNaN(parts[0])) { onLocationSelect({lat:parts[0],lng:parts[1]}); return; } try { const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query+', Ciudad de México')}&limit=1`); const d = await r.json(); if(d?.[0]) { onLocationSelect({lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)}); } else alert("No encontrado"); } catch { alert("Error"); } };
             return (
                 <div className="md:hidden absolute top-4 left-4 right-4 z-[2000] flex flex-col gap-2">
                     <form onSubmit={handleSearch} className="bg-white rounded-full shadow-lg flex items-center p-1 border border-gray-200">
@@ -328,41 +294,27 @@
         const FloatingMapControls = ({ onUserLocation, onToggleLegend }) => {
             return (
                 <div className="md:hidden absolute z-[1500] pointer-events-none w-full h-full">
-                    <div className="absolute top-20 right-4 pointer-events-auto">
-                        <button onClick={onToggleLegend} className="bg-white p-2.5 rounded-full shadow-lg border border-gray-200 text-gray-600 active:bg-gray-100"><Icons.Layers className="h-6 w-6"/></button>
-                    </div>
-                    <div className="absolute bottom-40 right-4 pointer-events-auto transition-all duration-300">
-                        <button onClick={onUserLocation} className="bg-white p-2.5 rounded-full shadow-lg border border-gray-200 text-[#9d2449] active:bg-gray-100"><Icons.Navigation className="h-6 w-6"/></button>
-                    </div>
+                    <div className="absolute top-20 right-4 pointer-events-auto"><button onClick={onToggleLegend} className="bg-white p-2.5 rounded-full shadow-lg border border-gray-200 text-gray-600 active:bg-gray-100"><Icons.Layers className="h-6 w-6"/></button></div>
+                    <div className="absolute bottom-40 right-4 pointer-events-auto transition-all duration-300"><button onClick={onUserLocation} className="bg-white p-2.5 rounded-full shadow-lg border border-gray-200 text-[#9d2449] active:bg-gray-100"><Icons.Navigation className="h-6 w-6"/></button></div>
                 </div>
             );
         };
 
         const SearchLogicDesktop = ({ onLocationSelect, onReset }) => {
-            const [inputStr, setInputStr] = useState('');
-            const [addressStr, setAddressStr] = useState('');
+            const [inputStr, setInputStr] = useState(''); const [addressStr, setAddressStr] = useState('');
             const handleManual = (e) => { e.preventDefault(); const p = inputStr.split(',').map(s=>parseFloat(s.trim())); if(p.length===2 && !isNaN(p[0])) onLocationSelect({lat:p[0],lng:p[1]}); };
             const handleAddr = async (e) => { e.preventDefault(); if(!addressStr.trim()) return; try { const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressStr+', CDMX')}&limit=1`); const d = await r.json(); if(d?.[0]) { const lat=parseFloat(d[0].lat), lng=parseFloat(d[0].lon); setInputStr(`${lat.toFixed(5)},${lng.toFixed(5)}`); onLocationSelect({lat,lng}); } else alert("No encontrado"); } catch { alert("Error"); } };
             return (
                 <div className="space-y-2">
                     <form onSubmit={handleManual} className="flex relative shadow-sm"><input type="text" placeholder="Lat, Lng" className="w-full pl-3 pr-2 py-2 border rounded-l text-sm focus:outline-none" value={inputStr} onChange={e=>setInputStr(e.target.value)} /><button className="px-3 bg-[#9d2449] text-white rounded-r font-bold text-sm">Ir</button></form>
                     <form onSubmit={handleAddr} className="flex relative shadow-sm"><input type="text" placeholder="Dirección..." className="w-full pl-3 pr-8 py-2 border rounded text-sm focus:outline-none" value={addressStr} onChange={e=>setAddressStr(e.target.value)} /><Icons.Search className="absolute right-2 top-2.5 h-4 w-4 text-gray-400" /></form>
-                    <div className="flex gap-2">
-                        <button onClick={()=>navigator.geolocation.getCurrentPosition(p=>onLocationSelect({lat:p.coords.latitude,lng:p.coords.longitude}))} className="flex-1 py-2 bg-[#9d2449] text-white rounded text-sm font-medium flex items-center justify-center gap-1 shadow-sm"><Icons.Navigation className="h-3 w-3" /> Mi Ubicación</button>
-                        <button onClick={()=>{setInputStr('');setAddressStr('');onReset();}} className="px-3 py-2 bg-white border rounded text-gray-600 shadow-sm"><Icons.RotateCcw className="h-4 w-4" /></button>
-                    </div>
+                    <div className="flex gap-2"><button onClick={()=>navigator.geolocation.getCurrentPosition(p=>onLocationSelect({lat:p.coords.latitude,lng:p.coords.longitude}))} className="flex-1 py-2 bg-[#9d2449] text-white rounded text-sm font-medium flex items-center justify-center gap-1 shadow-sm"><Icons.Navigation className="h-3 w-3" /> Mi Ubicación</button><button onClick={()=>{setInputStr('');setAddressStr('');onReset();}} className="px-3 py-2 bg-white border rounded text-gray-600 shadow-sm"><Icons.RotateCcw className="h-4 w-4" /></button></div>
                 </div>
             );
         };
 
-        /* --- BOTONES DE ACCIÓN (Desktop vs Mobile) --- */
         const ActionButtonsDesktop = ({ analysis }) => {
-            const handleCopyLink = () => {
-                const url = `${window.location.origin}${window.location.pathname}?lat=${analysis.coordinate.lat}&lng=${analysis.coordinate.lng}`;
-                navigator.clipboard.writeText(url);
-                alert("Enlace copiado al portapapeles");
-            };
-
+            const handleCopyLink = () => { const url = `${window.location.origin}${window.location.pathname}?lat=${analysis.coordinate.lat}&lng=${analysis.coordinate.lng}`; navigator.clipboard.writeText(url); alert("Enlace copiado"); };
             return (
                 <div className="grid grid-cols-2 gap-2 w-full">
                     <a href={`https://www.google.com/maps/search/?api=1&query=${analysis.coordinate.lat},${analysis.coordinate.lng}`} target="_blank" className="flex flex-col items-center justify-center p-2 bg-white border rounded hover:border-[#9d2449] text-gray-600 hover:text-[#9d2449]"><Icons.MapIcon className="h-5 w-5 mb-1"/><span className="text-[9px] font-bold">Google Maps</span></a>
@@ -378,12 +330,10 @@
             </div>
         );
 
-        /* --- BOTTOM SHEET MÓVIL --- */
         const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => {
             const [isExpanded, setIsExpanded] = useState(false);
             const sheetRef = useRef(null);
             const startY = useRef(0);
-
             useEffect(() => { if(analysis) setIsExpanded(false); }, [analysis]);
             const toggleSheet = () => setIsExpanded(!isExpanded);
             const handleTouchStart = (e) => { if(e.target.closest('.sheet-header')) { startY.current = e.touches[0].clientY; } };
@@ -391,27 +341,16 @@
             
             const handleShare = async () => {
                 const url = `${window.location.origin}${window.location.pathname}?lat=${analysis.coordinate.lat}&lng=${analysis.coordinate.lng}`;
-                if (navigator.share) {
-                    try { await navigator.share({ title: 'Consulta Ciudadana SEDEMA', text: `Ubicación: ${analysis.alcaldia}`, url: url }); } catch (err) { console.log('Error sharing', err); }
-                } else {
-                    navigator.clipboard.writeText(url); alert("Enlace copiado");
-                }
+                if (navigator.share) { try { await navigator.share({ title: 'Consulta Ciudadana SEDEMA', text: `Ubicación: ${analysis.alcaldia}`, url: url }); } catch (err) { console.log(err); } } else { navigator.clipboard.writeText(url); alert("Enlace copiado"); }
             };
 
             if(!analysis) return null;
 
             return (
                 <div ref={sheetRef} className="md:hidden fixed bottom-0 left-0 w-full bg-white rounded-t-2xl shadow-[0_-5px_20px_rgba(0,0,0,0.2)] z-[3000] flex flex-col transition-all duration-300 ease-out" style={{ height: isExpanded ? '85vh' : '35vh' }}>
-                    <div className="sheet-header flex-shrink-0 h-8 flex justify-center items-center cursor-grab active:cursor-grabbing" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onClick={toggleSheet}>
-                        <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
-                    </div>
-                    <div className="px-4 pb-2 flex justify-between items-center border-b border-gray-100 flex-shrink-0">
-                        <h3 className="font-bold text-gray-800 text-sm truncate pr-2">{analysis.alcaldia}</h3>
-                        <button onClick={onClose} className="p-1 bg-gray-100 rounded-full"><Icons.X className="h-5 w-5 text-gray-500"/></button>
-                    </div>
-                    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 bg-gray-50/50">
-                        <ResultsContent analysis={analysis} />
-                    </div>
+                    <div className="sheet-header flex-shrink-0 h-8 flex justify-center items-center cursor-grab active:cursor-grabbing" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onClick={toggleSheet}><div className="w-12 h-1.5 bg-gray-300 rounded-full"></div></div>
+                    <div className="px-4 pb-2 flex justify-between items-center border-b border-gray-100 flex-shrink-0"><h3 className="font-bold text-gray-800 text-sm truncate pr-2">{analysis.alcaldia}</h3><button onClick={onClose} className="p-1 bg-gray-100 rounded-full"><Icons.X className="h-5 w-5 text-gray-500"/></button></div>
+                    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 bg-gray-50/50"><ResultsContent analysis={analysis} /></div>
                     <div className="flex-shrink-0 p-3 bg-white border-t border-gray-200 safe-area-bottom flex gap-3 overflow-x-auto">
                         <a href={`https://www.google.com/maps/search/?api=1&query=${analysis.coordinate.lat},${analysis.coordinate.lng}`} target="_blank" className="flex-1 min-w-[100px] flex items-center justify-center gap-2 bg-[#9d2449] text-white py-2.5 px-4 rounded-full text-xs font-bold shadow-sm hover:bg-[#7d1d3a] transition-colors"><Icons.MapIcon className="h-4 w-4"/> Google Maps</a>
                         <button onClick={handleShare} className="flex-1 min-w-[100px] flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-300 py-2.5 px-4 rounded-full text-xs font-bold shadow-sm hover:bg-gray-50"><Icons.Share className="h-4 w-4"/> Compartir</button>
@@ -435,19 +374,18 @@
                 const map = window.L.map(mapRef.current, { zoomControl: false }).setView(INITIAL_CENTER, INITIAL_ZOOM);
                 window.L.control.zoom({ position: 'topright' }).addTo(map);
                 mapInstance.current = map;
-                const tileLayer = window.L.tileLayer(BASE_LAYERS[activeBaseLayer], { maxZoom: 19 }).addTo(map);
-                layersRef.current.base = tileLayer;
+                layersRef.current.base = window.L.tileLayer(BASE_LAYERS[activeBaseLayer], { maxZoom: 19 }).addTo(map);
 
                 const chk = setInterval(() => {
                     if (dataCache.cdmx) {
                         clearInterval(chk);
                         const { edomex, morelos, sc, zoning, alcaldias } = dataCache;
                         const add = (n, d, s, t) => { if(!d?.features) return; const l = window.L.geoJSON(d, { style:s, interactive:true, onEachFeature:(f,l)=>{if(t && f.properties?.[t]) l.bindTooltip(f.properties[t], {sticky:true, className:'custom-tooltip'});} }); layersRef.current[n]=l; };
-                        add('edomex', edomex, {color:'#fbbf24', weight:1, dashArray:'4,4', fillOpacity:0.1}, 'NOMGEO');
-                        add('morelos', morelos, {color:'#a855f7', weight:1, dashArray:'4,4', fillOpacity:0.1}, 'NOMGEO');
-                        add('sc', sc, {color:'#d6d6d6', weight:1, fillColor:'#9d2449', fillOpacity:0.1, interactive:false}, null);
+                        add('edomex', edomex, {color: LAYER_STYLES.edomex.color, weight:1, dashArray:'4,4', fillOpacity:0.1}, 'NOMGEO');
+                        add('morelos', morelos, {color: LAYER_STYLES.morelos.color, weight:1, dashArray:'4,4', fillOpacity:0.1}, 'NOMGEO');
+                        add('sc', sc, {color: LAYER_STYLES.sc.color, weight:1, fillColor: LAYER_STYLES.sc.color, fillOpacity:0.1, interactive:false}, null);
                         add('zoning', zoning, getZoningStyle, 'PGOEDF');
-                        add('alcaldias', alcaldias, {color:'#ffffff', weight:2, dashArray:'8,4', fillOpacity:0}, 'NOMBRE');
+                        add('alcaldias', alcaldias, {color: LAYER_STYLES.alcaldias.color, weight:2, dashArray:'8,4', fillOpacity:0}, 'NOMBRE');
                         ['sc','zoning','alcaldias','edomex','morelos'].forEach(k => { if(layersRef.current[k]) layersRef.current[k].addTo(map); });
                     }
                 }, 500);
@@ -466,9 +404,10 @@
                 });
                 if(layersRef.current.zoning && mapInstance.current.hasLayer(layersRef.current.zoning)) {
                     layersRef.current.zoning.eachLayer(l => {
-                        const k = (l.feature.properties.CLAVE||'').toString().trim().toUpperCase();
-                        const vis = visibleLayers.zoning && (visibleLayers[k] !== false);
-                        if(vis) { const s = getZoningStyle(l.feature); l.setStyle({stroke:true, fill:true, opacity:1, fillOpacity:0.25, interactive:true, color:s.color, fillColor:s.fillColor}); if(l._path) l._path.style.pointerEvents='auto'; }
+                        const rawKey = l.feature.properties.CLAVE || l.feature.properties.PGOEDF;
+                        const key = (rawKey || '').toString().trim().toUpperCase();
+                        const isVisible = visibleLayers.zoning && (visibleLayers[key] !== false);
+                        if(isVisible) { const s = getZoningStyle(l.feature); l.setStyle({stroke:true, fill:true, opacity:1, fillOpacity:0.25, interactive:true, color:s.color, fillColor:s.fillColor}); if(l._path) l._path.style.pointerEvents='auto'; }
                         else { l.setStyle({stroke:false, fill:false, interactive:false}); if(l._path) l._path.style.pointerEvents='none'; }
                     });
                 }
@@ -496,10 +435,18 @@
                                         <div onClick={()=>setActiveBaseLayer('SATELLITE')} className={`flex-1 cursor-pointer p-1 rounded text-center text-[10px] font-bold border ${activeBaseLayer==='SATELLITE'?'bg-white border-[#9d2449] text-[#9d2449] shadow-sm':'border-transparent text-gray-500 hover:bg-white'}`}>Satélite</div>
                                     </div>
                                 </div>
-                                {['sc','alcaldias','edomex','morelos'].map(k=>(<div key={k} className="flex justify-between cursor-pointer" onClick={()=>toggleLayer(k)}><span className="text-[10px] capitalize">{k==='sc'?'Suelo Cons.':k}</span>{visibleLayers[k]?<Icons.Eye className="h-4 w-4 text-[#9d2449]"/>:<Icons.EyeOff className="h-4 w-4 text-gray-300"/>}</div>))}
+                                {['sc','alcaldias','edomex','morelos'].map(k=>(
+                                    <div key={k} className="flex justify-between items-center p-2 rounded hover:bg-gray-50 cursor-pointer" onClick={()=>toggleLayer(k)}>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`w-3 h-3 ${k==='alcaldias'?'border-2 border-gray-500 border-dashed bg-white':'rounded-sm'}`} style={{backgroundColor: k!=='alcaldias'?LAYER_STYLES[k].color:''}}></span>
+                                            <span className="text-xs text-gray-700 capitalize">{LAYER_STYLES[k].label}</span>
+                                        </div>
+                                        {visibleLayers[k]?<Icons.Eye className="h-4 w-4 text-[#9d2449]"/>:<Icons.EyeOff className="h-4 w-4 text-gray-300"/>}
+                                    </div>
+                                ))}
                                 <hr/>
                                 <details open><summary className="flex justify-between cursor-pointer text-[10px] font-bold py-1"><span>Zonificación</span><span onClick={(e)=>{e.preventDefault();toggleZoningGroup()}}>{visibleLayers.zoning?<Icons.Eye className="h-4 w-4 text-[#9d2449]"/>:<Icons.EyeOff className="h-4 w-4 text-gray-300"/>}</span></summary>
-                                    <div className="pl-2 mt-1 space-y-1">{Object.entries(ZONING_CAT_INFO).map(([k,i])=>(<div key={k} className="flex justify-between cursor-pointer text-[9px]" onClick={()=>toggleLayer(k)}><div className="flex gap-1"><span className="w-2 h-2 rounded-full" style={{backgroundColor:i.color}}></span><span>{i.label}</span></div>{visibleLayers[k]?<Icons.CheckCircle className="h-4 w-4 text-green-600"/>:<div className="h-4 w-4 border rounded-full"/>}</div>))}</div>
+                                    <div className="pl-2 mt-1 space-y-1">{Object.entries(ZONING_CAT_INFO).map(([k,i])=>(<div key={k} className="flex justify-between items-center p-1 cursor-pointer hover:bg-gray-50 rounded" onClick={()=>toggleLayer(k)}><div className="flex items-center gap-2"><span className="w-3 h-3 rounded-sm" style={{backgroundColor:i.color}}></span><span className="text-[10px] text-gray-600">{i.label}</span></div>{visibleLayers[k]?<Icons.CheckCircle className="h-4 w-4 text-green-600"/>:<div className="h-4 w-4 border rounded-full border-gray-300"/>}</div>))}</div>
                                 </details>
                             </div>
                         </div>
@@ -521,7 +468,6 @@
             useEffect(() => { 
                 loadData().then(() => {
                     setLoading(false);
-                    // URL Params Check
                     const params = new URLSearchParams(window.location.search);
                     const lat = parseFloat(params.get('lat'));
                     const lng = parseFloat(params.get('lng'));
