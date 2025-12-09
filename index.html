@@ -16,14 +16,87 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
-    <!-- Tus estilos -->
-    <link rel="stylesheet" href="styles.css" />
+    <!-- Estilos Personalizados (Incluye Bottom Sheet y Scrollbar) -->
+    <style>
+        :root {
+            --color-guinda: #9d2449;
+            --font-main: 'Roboto', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-main);
+            color: #54565a;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f3f4f6;
+        }
+
+        /* Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+
+        /* Tooltips Leaflet */
+        .leaflet-tooltip.custom-tooltip {
+            background-color: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 11px;
+            padding: 2px 6px;
+        }
+
+        /* --- ESTILOS DESKTOP DEFAULT --- */
+        #sidebar-wrapper {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 2000;
+        }
+
+        /* --- ESTILOS MOBILE BOTTOM SHEET --- */
+        @media (max-width: 768px) {
+            #sidebar-wrapper {
+                position: fixed !important;
+                left: 0;
+                bottom: 0;
+                width: 100% !important;
+                height: 85vh !important; /* Altura máxima del panel */
+                border-radius: 20px 20px 0 0; /* Bordes redondeados superiores */
+                box-shadow: 0 -5px 25px rgba(0,0,0,0.15);
+                transform: translateY(110%); /* Oculto por defecto hacia abajo */
+                border-right: none;
+            }
+
+            #sidebar-wrapper.mobile-visible {
+                transform: translateY(0); /* Visible */
+            }
+
+            /* Área de "Agarradera" para el gesto */
+            .drag-handle-area {
+                width: 100%;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: grab;
+                background: white;
+                border-radius: 20px 20px 0 0;
+            }
+
+            .drag-pill {
+                width: 40px;
+                height: 5px;
+                background-color: #e5e7eb;
+                border-radius: 10px;
+            }
+        }
+    </style>
     
     <!-- Libraries -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     
-    <!-- React & Babel (for JSX) -->
+    <!-- React & Babel -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -34,7 +107,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        /* --- 1. DEFINICIÓN DE CATEGORÍAS (CLAVES EXACTAS) --- */
+        /* --- DATOS Y LÓGICA (Sin cambios funcionales) --- */
         const ZONING_CAT_INFO = {
             'PE':  { color: '#0072B2', label: 'Preservación Ecológica' },
             'RE':  { color: '#009E73', label: 'Rescate Ecológico' },
@@ -50,34 +123,18 @@
         const getZoningColor = (claveRaw) => {
           const clave = (claveRaw || 'DEFAULT').toString().toUpperCase().trim();
           if (ZONING_CAT_INFO[clave]) return ZONING_CAT_INFO[clave].color;
-
           let hash = 0;
-          for (let i = 0; i < clave.length; i++) {
-            hash = ((hash << 5) - hash) + clave.charCodeAt(i);
-            hash |= 0;
-          }
-          const index = Math.abs(hash) % ZONING_COLORS.length;
-          return ZONING_COLORS[index];
+          for (let i = 0; i < clave.length; i++) { hash = ((hash << 5) - hash) + clave.charCodeAt(i); hash |= 0; }
+          return ZONING_COLORS[Math.abs(hash) % ZONING_COLORS.length];
         };
 
         const getZoningStyle = (feature) => {
           const props = feature.properties || {};
           const clave = props.CLAVE || props.PGOEDF || props.UGA || 'DEFAULT';
           const color = getZoningColor(clave);
-
-          return {
-            color: color,
-            weight: 1.2,
-            dashArray: '3, 3',
-            fillColor: color,
-            fillOpacity: 0.25,
-            interactive: true,
-            stroke: true, // Asegura que el borde se dibuje
-            fill: true    // Asegura que el relleno se dibuje
-          };
+          return { color, weight: 1.2, dashArray: '3, 3', fillColor: color, fillOpacity: 0.25, interactive: true, stroke: true, fill: true };
         };
 
-        /* --- CONSTANTES --- */
         const DATA_FILES = {
             LIMITES_CDMX: './limites_cdmx.geojson',
             LIMITES_ALCALDIAS: './limites_alcaldias.geojson',
@@ -91,38 +148,34 @@
         const INITIAL_CENTER = [19.3200, -99.1500];
         const INITIAL_ZOOM = 10;
         const CONTACT_INFO = { phone: "55-5345-8000 ext. 1234", hours: "Lunes a Viernes de 9:00 a 18:00 hrs" };
-
         const FAQ_ITEMS = [
             { q: "1. ¿Qué beneficios obtengo del Sistema?", a: "Conocer la información normativa urbana y ambiental..." },
             { q: "2. ¿Qué es Zonificación?", a: "La zonificación es la clasificación de áreas dentro de un territorio..." },
         ];
 
-        /* --- ICONOS (SVG) --- */
+        /* --- ICONOS --- */
         const Icons = {
-            Search: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>,
-            MapPin: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>,
-            Navigation: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>,
-            Layers: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>,
-            Eye: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>,
-            EyeOff: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>,
-            CheckCircle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>,
-            XCircle: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>,
-            ChevronDown: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="6 9 12 15 18 9"></polyline></svg>,
-            ChevronUp: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="18 15 12 9 6 15"></polyline></svg>,
-            RotateCcw: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>,
-            StreetView: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>,
-            MapIcon: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>,
-            Link: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>,
-            Loader2: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>,
-            Info: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>,
-            Phone: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.12 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>,
-            Clock: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>,
-            X: (props) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
+            Search: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>,
+            MapPin: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>,
+            Navigation: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>,
+            Layers: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>,
+            Eye: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>,
+            EyeOff: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>,
+            CheckCircle: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>,
+            XCircle: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>,
+            ChevronDown: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}><polyline points="6 9 12 15 18 9"></polyline></svg>,
+            ChevronUp: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}><polyline points="18 15 12 9 6 15"></polyline></svg>,
+            RotateCcw: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>,
+            StreetView: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>,
+            MapIcon: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>,
+            Link: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>,
+            Loader2: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>,
+            Info: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>,
+            Phone: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.12 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>,
+            X: (p) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" {...p}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
         };
 
-        /* --- GEO LOGIC --- */
         let dataCache = {};
-        
         const isPointInPolygon = (point, feature) => {
             const { lat, lng } = point;
             const { type, coordinates } = feature.geometry;
@@ -138,18 +191,14 @@
             };
             if (type === 'Polygon') return checkPolygon(coordinates[0]);
             else if (type === 'MultiPolygon') {
-                for (const polygon of coordinates) {
-                    if (checkPolygon(polygon[0])) return true;
-                }
+                for (const polygon of coordinates) { if (checkPolygon(polygon[0])) return true; }
             }
             return false;
         };
 
         const findFeatureContainingPoint = (point, collection) => {
             if (!collection || !collection.features) return null;
-            for (const feature of collection.features) {
-                if (isPointInPolygon(point, feature)) return feature;
-            }
+            for (const feature of collection.features) { if (isPointInPolygon(point, feature)) return feature; }
             return null;
         };
 
@@ -157,7 +206,6 @@
             try {
                 const fetchJson = async (url) => (await fetch(url)).json().catch(() => ({ type: "FeatureCollection", features: [] }));
                 const fetchCsv = async (url) => new Promise((resolve) => Papa.parse(url, { download: true, header: true, skipEmptyLines: true, encoding: "UTF-8", complete: (r) => resolve(r.data), error: () => resolve([]) }));
-
                 const [cdmx, alcaldias, edomex, morelos, sc, zoning, rules] = await Promise.all([
                     fetchJson(DATA_FILES.LIMITES_CDMX),
                     fetchJson(DATA_FILES.LIMITES_ALCALDIAS),
@@ -173,15 +221,7 @@
         };
 
         const analyzeLocation = async (coord) => {
-            const result = {
-                status: 'LOADING',
-                isRestricted: false,
-                allowedActivities: [],
-                prohibitedActivities: [],
-                timestamp: new Date().toLocaleString(),
-                coordinate: coord
-            };
-
+            const result = { status: 'LOADING', isRestricted: false, allowedActivities: [], prohibitedActivities: [], timestamp: new Date().toLocaleString(), coordinate: coord };
             const inCDMX = dataCache.cdmx?.features.length ? findFeatureContainingPoint(coord, dataCache.cdmx) : null;
             if (dataCache.cdmx?.features.length && !inCDMX) {
                 result.status = 'OUTSIDE_CDMX';
@@ -190,53 +230,34 @@
                 result.outsideContext = inEdoMex ? "Estado de México" : inMorelos ? "Estado de Morelos" : null;
                 return result;
             }
-
             const alcaldiaFeature = findFeatureContainingPoint(coord, dataCache.alcaldias);
             result.alcaldia = alcaldiaFeature ? (alcaldiaFeature.properties.NOMBRE || alcaldiaFeature.properties.NOMGEO) : "Ciudad de México";
-
             const scFeature = findFeatureContainingPoint(coord, dataCache.sc);
-            if (!scFeature) {
-                result.status = 'URBAN_SOIL';
-                return result;
-            }
-
-            result.status = 'CONSERVATION_SOIL';
-            result.isRestricted = true;
-
+            if (!scFeature) { result.status = 'URBAN_SOIL'; return result; }
+            result.status = 'CONSERVATION_SOIL'; result.isRestricted = true;
             const zoningFeature = findFeatureContainingPoint(coord, dataCache.zoning);
             if (zoningFeature) {
                 result.zoningKey = zoningFeature.properties.CLAVE;
                 result.zoningName = zoningFeature.properties.PGOEDF || zoningFeature.properties.UGA;
-
                 if (result.zoningKey && dataCache.rules) {
                     const allowed = [], prohibited = [];
                     dataCache.rules.forEach(row => {
                         const ruleValue = (row[result.zoningKey] || '').trim().toUpperCase();
                         if (!ruleValue) return; 
-                        const activityObj = {
-                            sector: (row['Sector'] || row['ector'] || row['SECTOR'] || '').trim(),
-                            general: (row['Actividad general'] || row['Act_general'] || '').trim(),
-                            specific: (row['Actividad específica'] || row['Actividad especifica'] || row['Act_especifica'] || '').trim()
-                        };
-                        if (ruleValue === 'A') allowed.push(activityObj); 
-                        else if (ruleValue === 'P') prohibited.push(activityObj);
+                        const activityObj = { sector: (row['Sector'] || row['ector'] || row['SECTOR'] || '').trim(), general: (row['Actividad general'] || row['Act_general'] || '').trim(), specific: (row['Actividad específica'] || row['Actividad especifica'] || row['Act_especifica'] || '').trim() };
+                        if (ruleValue === 'A') allowed.push(activityObj); else if (ruleValue === 'P') prohibited.push(activityObj);
                     });
-                    result.allowedActivities = allowed;
-                    result.prohibitedActivities = prohibited;
+                    result.allowedActivities = allowed; result.prohibitedActivities = prohibited;
                 }
-            } else {
-                result.zoningName = scFeature.properties.PGOEDF || "Sin zonificación específica";
-                result.zoningKey = scFeature.properties.CLAVE || "SC";
-            }
+            } else { result.zoningName = scFeature.properties.PGOEDF || "Sin zonificación específica"; result.zoningKey = scFeature.properties.CLAVE || "SC"; }
             return result;
         };
 
         /* --- COMPONENTES --- */
-       const ActivitySection = ({ title, activities, icon, headerClass, bgClass, defaultOpen }) => {
+        const ActivitySection = ({ title, activities, icon, headerClass, bgClass, defaultOpen }) => {
             const [filter, setFilter] = useState('');
             if (!activities || activities.length === 0) return null;
             const filtered = activities.filter(a => `${a.sector} ${a.general} ${a.specific}`.toLowerCase().includes(filter.toLowerCase()));
-
             return (
                 <details className={`group rounded-lg border border-gray-200 overflow-hidden mb-3 shadow-sm ${bgClass}`} open={defaultOpen}>
                     <summary className={`flex items-center justify-between px-3 py-2 cursor-pointer ${headerClass} hover:opacity-90`}>
@@ -247,24 +268,10 @@
                         <input type="text" value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Buscar actividad..." className="w-full px-2 py-1.5 mb-2 border border-gray-300 rounded text-[11px] focus:outline-none focus:border-[#9d2449]" />
                         <div className="max-h-60 overflow-y-auto custom-scrollbar border rounded border-gray-100">
                             <table className="min-w-full text-[10px] text-left">
-                                <thead className="bg-gray-100 text-gray-600 font-bold sticky top-0 shadow-sm">
-                                    <tr>
-                                        <th className="px-2 py-2 w-1/4">Sector</th>
-                                        <th className="px-2 py-2 w-1/3">Actividad General</th>
-                                        <th className="px-2 py-2">Actividad Específica</th>
-                                    </tr>
-                                </thead>
+                                <thead className="bg-gray-100 text-gray-600 font-bold sticky top-0 shadow-sm"><tr><th className="px-2 py-2 w-1/4">Sector</th><th className="px-2 py-2 w-1/3">Actividad General</th><th className="px-2 py-2">Actividad Específica</th></tr></thead>
                                 <tbody className="divide-y divide-gray-50">
-                                    {filtered.map((a, i) => (
-                                        <tr key={i} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-2 py-1.5 align-top font-semibold text-gray-700">{a.sector}</td>
-                                            <td className="px-2 py-1.5 align-top text-gray-600">{a.general}</td>
-                                            <td className="px-2 py-1.5 align-top text-gray-500 italic">{a.specific}</td>
-                                        </tr>
-                                    ))}
-                                    {filtered.length === 0 && (
-                                        <tr><td colSpan="3" className="p-4 text-center text-gray-400 italic">No se encontraron resultados.</td></tr>
-                                    )}
+                                    {filtered.map((a, i) => (<tr key={i} className="hover:bg-gray-50 transition-colors"><td className="px-2 py-1.5 align-top font-semibold text-gray-700">{a.sector}</td><td className="px-2 py-1.5 align-top text-gray-600">{a.general}</td><td className="px-2 py-1.5 align-top text-gray-500 italic">{a.specific}</td></tr>))}
+                                    {filtered.length === 0 && (<tr><td colSpan="3" className="p-4 text-center text-gray-400 italic">No se encontraron resultados.</td></tr>)}
                                 </tbody>
                             </table>
                         </div>
@@ -276,38 +283,67 @@
         const Sidebar = ({ analysis, onLocationSelect, onReset, isOpen, onClose }) => {
             const [inputStr, setInputStr] = useState('');
             const [addressStr, setAddressStr] = useState('');
+            
+            /* Lógica para Gestos Táctiles (Swipe Down) */
+            const sheetRef = useRef(null);
+            const [dragY, setDragY] = useState(0);
+            const startY = useRef(0);
+            const isDragging = useRef(false);
 
-            const handleManualInput = (e) => {
-                e.preventDefault();
-                const parts = inputStr.split(',').map(s => parseFloat(s.trim()));
-                if (parts.length === 2 && !isNaN(parts[0])) onLocationSelect({ lat: parts[0], lng: parts[1] });
-                else alert("Formato inválido. Use: Lat, Lng");
+            const handleTouchStart = (e) => {
+                // Solo iniciar drag si estamos tocando el "handle" o el header
+                if (e.target.closest('.drag-handle-area') || e.target.closest('.mobile-header')) {
+                    startY.current = e.touches[0].clientY;
+                    isDragging.current = true;
+                }
             };
 
-            const handleAddressSearch = async (e) => {
-                e.preventDefault();
-                if (!addressStr.trim()) return;
-                try {
-                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressStr + ', Ciudad de México')}&limit=1`);
-                    const data = await res.json();
-                    if (data?.[0]) {
-                        const lat = parseFloat(data[0].lat), lng = parseFloat(data[0].lon);
-                        setInputStr(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-                        onLocationSelect({ lat, lng });
-                    } else alert("Dirección no encontrada");
-                } catch { alert("Error en búsqueda"); }
+            const handleTouchMove = (e) => {
+                if (!isDragging.current) return;
+                const currentY = e.touches[0].clientY;
+                const delta = currentY - startY.current;
+                
+                // Solo permitir arrastrar hacia abajo (delta positivo)
+                if (delta > 0) {
+                    setDragY(delta);
+                    // Prevenir scroll de la página mientras se arrastra
+                    if (e.cancelable) e.preventDefault();
+                }
             };
 
-            const copyToClipboard = () => {
-                navigator.clipboard.writeText(`Consulta SEDEMA: ${analysis.alcaldia}, Zonificación: ${analysis.zoningKey || 'N/A'}. Coordenadas: ${analysis.coordinate.lat}, ${analysis.coordinate.lng}`);
-                alert("Información copiada al portapapeles");
+            const handleTouchEnd = () => {
+                if (!isDragging.current) return;
+                isDragging.current = false;
+
+                // Umbral para cerrar: 150px
+                if (dragY > 150) {
+                    onClose(); // Cerrar panel
+                }
+                setDragY(0); // Resetear posición
             };
+
+            const handleManualInput = (e) => { e.preventDefault(); const parts = inputStr.split(',').map(s => parseFloat(s.trim())); if (parts.length === 2 && !isNaN(parts[0])) onLocationSelect({ lat: parts[0], lng: parts[1] }); else alert("Formato inválido. Use: Lat, Lng"); };
+            const handleAddressSearch = async (e) => { e.preventDefault(); if (!addressStr.trim()) return; try { const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressStr + ', Ciudad de México')}&limit=1`); const data = await res.json(); if (data?.[0]) { const lat = parseFloat(data[0].lat), lng = parseFloat(data[0].lon); setInputStr(`${lat.toFixed(6)}, ${lng.toFixed(6)}`); onLocationSelect({ lat, lng }); } else alert("Dirección no encontrada"); } catch { alert("Error en búsqueda"); } };
+            const copyToClipboard = () => { navigator.clipboard.writeText(`Consulta SEDEMA: ${analysis.alcaldia}, Zonificación: ${analysis.zoningKey || 'N/A'}. Coordenadas: ${analysis.coordinate.lat}, ${analysis.coordinate.lng}`); alert("Información copiada al portapapeles"); };
 
             return (
-                <div id="sidebar-wrapper" className={`flex flex-col h-full bg-white md:w-[420px] shadow-2xl border-r border-gray-200 overflow-y-auto custom-scrollbar ${isOpen ? 'mobile-visible' : ''}`}>
-                    <div className="md:hidden flex justify-between items-center p-4 bg-[#9d2449] text-white">
-                        <h2 className="font-bold text-sm">Detalles del Predio</h2>
-                        <button onClick={onClose}><Icons.X className="h-6 w-6 text-white" /></button>
+                <div 
+                    id="sidebar-wrapper" 
+                    ref={sheetRef}
+                    className={`flex flex-col h-full bg-white md:w-[420px] shadow-2xl border-r border-gray-200 overflow-y-auto custom-scrollbar ${isOpen ? 'mobile-visible' : ''}`}
+                    style={{ transform: isOpen && window.innerWidth <= 768 ? `translateY(${dragY}px)` : undefined, transition: isDragging.current ? 'none' : undefined }}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                >
+                    {/* Handle visual para Móvil */}
+                    <div className="md:hidden drag-handle-area">
+                        <div className="drag-pill"></div>
+                    </div>
+
+                    <div className="md:hidden flex justify-between items-center px-4 pb-2 mobile-header">
+                        <h2 className="font-bold text-sm text-gray-700">Detalles del Predio</h2>
+                        <button onClick={onClose} className="p-1 rounded-full bg-gray-100 hover:bg-gray-200"><Icons.X className="h-5 w-5 text-gray-500" /></button>
                     </div>
 
                     <div className="flex-1 p-5 space-y-5">
@@ -344,41 +380,21 @@
                                     <div className="p-4 space-y-3">
                                         <div className="flex items-start gap-3">
                                             <div className="mt-0.5">{analysis.status === 'CONSERVATION_SOIL' ? <Icons.XCircle className="h-4 w-4 text-red-600"/> : <Icons.CheckCircle className="h-4 w-4 text-green-600"/>}</div>
-                                            <div>
-                                                <p className="text-xs font-bold text-gray-500 uppercase">Estatus</p>
-                                                <p className={`text-sm font-bold ${analysis.status === 'CONSERVATION_SOIL' ? 'text-red-700' : 'text-green-700'}`}>
-                                                    {analysis.status === 'CONSERVATION_SOIL' ? 'Suelo de Conservación' : analysis.status === 'URBAN_SOIL' ? 'Suelo Urbano' : 'Fuera de CDMX'}
-                                                </p>
-                                            </div>
+                                            <div><p className="text-xs font-bold text-gray-500 uppercase">Estatus</p><p className={`text-sm font-bold ${analysis.status === 'CONSERVATION_SOIL' ? 'text-red-700' : 'text-green-700'}`}>{analysis.status === 'CONSERVATION_SOIL' ? 'Suelo de Conservación' : analysis.status === 'URBAN_SOIL' ? 'Suelo Urbano' : 'Fuera de CDMX'}</p></div>
                                         </div>
                                         <div className="flex items-start gap-3">
                                             <div className="mt-0.5"><Icons.MapPin className="h-4 w-4 text-gray-400"/></div>
-                                            <div>
-                                                <p className="text-xs font-bold text-gray-500 uppercase">Alcaldía / Ubicación</p>
-                                                <p className="text-sm text-gray-800 font-medium">{analysis.alcaldia} {analysis.outsideContext ? `(${analysis.outsideContext})` : ''}</p>
-                                            </div>
+                                            <div><p className="text-xs font-bold text-gray-500 uppercase">Alcaldía / Ubicación</p><p className="text-sm text-gray-800 font-medium">{analysis.alcaldia} {analysis.outsideContext ? `(${analysis.outsideContext})` : ''}</p></div>
                                         </div>
                                         {analysis.status !== 'OUTSIDE_CDMX' && (
                                             <div className="flex items-start gap-3">
                                                 <div className="mt-0.5"><Icons.Layers className="h-4 w-4 text-gray-400"/></div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-gray-500 uppercase">Zonificación Ecológica</p>
-                                                    {analysis.status === 'URBAN_SOIL' ? (
-                                                        <p className="text-xs text-gray-500 italic">No aplica (Suelo Urbano)</p>
-                                                    ) : (
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <span className="text-white px-2 py-0.5 rounded text-xs font-bold shadow-sm" style={{ backgroundColor: getZoningColor(analysis.zoningKey) }}>{analysis.zoningKey}</span>
-                                                            <span className="text-xs text-gray-800 leading-tight">{analysis.zoningName}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                <div><p className="text-xs font-bold text-gray-500 uppercase">Zonificación Ecológica</p>{analysis.status === 'URBAN_SOIL' ? (<p className="text-xs text-gray-500 italic">No aplica (Suelo Urbano)</p>) : (<div className="flex items-center gap-2 mt-1"><span className="text-white px-2 py-0.5 rounded text-xs font-bold shadow-sm" style={{ backgroundColor: getZoningColor(analysis.zoningKey) }}>{analysis.zoningKey}</span><span className="text-xs text-gray-800 leading-tight">{analysis.zoningName}</span></div>)}</div>
                                             </div>
                                         )}
                                         <div className="flex items-start gap-3 pt-2 border-t border-dashed border-gray-200">
                                             <div className="mt-0.5"><Icons.Info className="h-4 w-4 text-blue-500"/></div>
-                                            <div className="text-xs text-justify text-gray-600 leading-relaxed">
-                                                {analysis.status === 'URBAN_SOIL' ? <span>Este predio se encuentra fuera del Suelo de Conservación. Consulte a <strong>SEDUVI</strong>.</span> : analysis.status === 'CONSERVATION_SOIL' ? <span>Regulado por el <strong>PGOEDF</strong>. Aplican restricciones ambientales estrictas.</span> : <span>Predio fuera de la jurisdicción administrativa de la CDMX.</span>}
-                                            </div>
+                                            <div className="text-xs text-justify text-gray-600 leading-relaxed">{analysis.status === 'URBAN_SOIL' ? <span>Este predio se encuentra fuera del Suelo de Conservación. Consulte a <strong>SEDUVI</strong>.</span> : analysis.status === 'CONSERVATION_SOIL' ? <span>Regulado por el <strong>PGOEDF</strong>. Aplican restricciones ambientales estrictas.</span> : <span>Predio fuera de la jurisdicción administrativa de la CDMX.</span>}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -419,131 +435,55 @@
             const mapInstance = useRef(null);
             const layersRef = useRef({});
             const markerRef = useRef(null);
-            
-            const [visibleLayers, setVisibleLayers] = useState(() => {
-                const defaults = { sc: true, zoning: true, alcaldias: true, edomex: true, morelos: true };
-                Object.keys(ZONING_CAT_INFO).forEach(key => defaults[key] = true);
-                return defaults;
-            });
+            const [visibleLayers, setVisibleLayers] = useState(() => { const d = { sc: true, zoning: true, alcaldias: true, edomex: true, morelos: true }; Object.keys(ZONING_CAT_INFO).forEach(k => d[k] = true); return d; });
             const [isLegendOpen, setIsLegendOpen] = useState(true);
 
             const toggleLayer = (k) => setVisibleLayers(p => ({...p, [k]: !p[k]}));
-            const toggleAllZoning = () => {
-                const newState = !visibleLayers.zoning;
-                const updates = { zoning: newState };
-                Object.keys(ZONING_CAT_INFO).forEach(key => updates[key] = newState);
-                setVisibleLayers(p => ({...p, ...updates}));
-            };
+            const toggleAllZoning = () => { const n = !visibleLayers.zoning; const u = { zoning: n }; Object.keys(ZONING_CAT_INFO).forEach(k => u[k] = n); setVisibleLayers(p => ({...p, ...u})); };
 
             useEffect(() => {
                 if (!mapRef.current || mapInstance.current) return;
                 const map = window.L.map(mapRef.current, { zoomControl: false }).setView(INITIAL_CENTER, INITIAL_ZOOM);
                 window.L.control.zoom({ position: 'topright' }).addTo(map);
                 mapInstance.current = map;
-                
                 window.L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
                 window.L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map);
-
                 const checkData = setInterval(() => {
                     if (dataCache.cdmx) {
                         clearInterval(checkData);
                         const { edomex, morelos, sc, zoning, alcaldias } = dataCache;
-
-                        const addLayer = (name, data, style, tooltipField) => {
-                            if (!data?.features?.length) return;
-                            const l = window.L.geoJSON(data, {
-                                style: style,
-                                interactive: true,
-                                onEachFeature: (feature, layer) => {
-                                    if (tooltipField && feature.properties) {
-                                        const val = feature.properties[tooltipField] || feature.properties.NOMBRE || feature.properties.NOMGEO;
-                                        if (val) layer.bindTooltip(val, { sticky: true, className: 'custom-tooltip' });
-                                    }
-                                }
-                            });
-                            layersRef.current[name] = l;
-                        };
-
+                        const addLayer = (n, d, s, t) => { if (!d?.features?.length) return; const l = window.L.geoJSON(d, { style: s, interactive: true, onEachFeature: (f, l) => { if (t && f.properties) { const v = f.properties[t] || f.properties.NOMBRE || f.properties.NOMGEO; if (v) l.bindTooltip(v, { sticky: true, className: 'custom-tooltip' }); } } }); layersRef.current[n] = l; };
                         addLayer('edomex', edomex, { color: '#fbbf24', weight: 1, dashArray: '4, 4', fillOpacity: 0.1 }, 'NOMGEO');
                         addLayer('morelos', morelos, { color: '#a855f7', weight: 1, dashArray: '4, 4', fillOpacity: 0.1 }, 'NOMGEO');
                         addLayer('sc', sc, { color: '#d6d6d6', weight: 1, fillColor: '#9d2449', fillOpacity: 0.1, interactive: false }, null); 
                         addLayer('zoning', zoning, getZoningStyle, 'PGOEDF'); 
                         addLayer('alcaldias', alcaldias, { color: '#ffffff', weight: 2, dashArray: '8, 4', fillOpacity: 0 }, 'NOMBRE');
-
-                        Object.keys(visibleLayers).forEach(k => { 
-                            if(['sc','zoning','alcaldias','edomex','morelos'].includes(k) && layersRef.current[k]) layersRef.current[k].addTo(map);
-                        });
-                        
+                        Object.keys(visibleLayers).forEach(k => { if(['sc','zoning','alcaldias','edomex','morelos'].includes(k) && layersRef.current[k]) layersRef.current[k].addTo(map); });
                         if(layersRef.current.sc) layersRef.current.sc.bringToBack();
                         if(layersRef.current.zoning) layersRef.current.zoning.bringToBack();
                         if(layersRef.current.alcaldias) layersRef.current.alcaldias.bringToFront();
                     }
                 }, 500);
-
                 map.on('click', (e) => onLocationSelect(e.latlng));
                 return () => { map.remove(); mapInstance.current = null; };
             }, []);
 
-            /* --- CORRECCIÓN DE LA LÓGICA DE ACTIVACIÓN DE CAPAS --- */
             useEffect(() => {
                 if(!mapInstance.current) return;
-                
-                ['sc', 'alcaldias', 'edomex', 'morelos', 'zoning'].forEach(k => {
-                    const l = layersRef.current[k];
-                    if(!l) return;
-                    if(visibleLayers[k] && !mapInstance.current.hasLayer(l)) {
-                        mapInstance.current.addLayer(l);
-                        if(k === 'alcaldias') l.bringToFront();
-                        if(k === 'sc') l.bringToBack();
-                        if(k === 'zoning') { l.bringToBack(); if(layersRef.current.sc) layersRef.current.sc.bringToBack(); }
-                    } else if(!visibleLayers[k] && mapInstance.current.hasLayer(l)) {
-                        mapInstance.current.removeLayer(l);
-                    }
-                });
-
+                ['sc', 'alcaldias', 'edomex', 'morelos', 'zoning'].forEach(k => { const l = layersRef.current[k]; if(!l) return; if(visibleLayers[k] && !mapInstance.current.hasLayer(l)) { mapInstance.current.addLayer(l); if(k === 'alcaldias') l.bringToFront(); if(k === 'sc') l.bringToBack(); if(k === 'zoning') { l.bringToBack(); if(layersRef.current.sc) layersRef.current.sc.bringToBack(); } } else if(!visibleLayers[k] && mapInstance.current.hasLayer(l)) mapInstance.current.removeLayer(l); });
                 if(layersRef.current.zoning && mapInstance.current.hasLayer(layersRef.current.zoning)) {
                     layersRef.current.zoning.eachLayer(layer => {
-                        const rawClave = layer.feature.properties.CLAVE || layer.feature.properties.PGOEDF;
-                        // Asegurar formato estricto para coincidir con ZONING_CAT_INFO
-                        const clave = (rawClave || '').toString().trim().toUpperCase();
-                        
-                        // Si la capa zoning está activa globalmente Y la categoría específica no está desactivada
+                        const clave = (layer.feature.properties.CLAVE || '').toString().trim().toUpperCase();
                         const isVisible = visibleLayers.zoning && (visibleLayers[clave] !== false); 
-                        
-                        if (isVisible) {
-                            // IMPORTANTE: Resetear todas las propiedades de estilo
-                            const originalStyle = getZoningStyle(layer.feature);
-                            layer.setStyle({ 
-                                stroke: true,
-                                fill: true,
-                                opacity: 1, 
-                                fillOpacity: 0.25, 
-                                interactive: true,
-                                color: originalStyle.color,
-                                fillColor: originalStyle.fillColor
-                            });
-                            // Traer al frente si es necesario para detectar clic
-                            if(layer._path) layer._path.style.pointerEvents = 'auto';
-                        } else {
-                            // IMPORTANTE: Stroke false y Fill false ocultan el renderizado por completo
-                            layer.setStyle({ 
-                                stroke: false, 
-                                fill: false, 
-                                interactive: false 
-                            });
-                            if(layer._path) layer._path.style.pointerEvents = 'none';
-                        }
+                        if (isVisible) { const s = getZoningStyle(layer.feature); layer.setStyle({ stroke: true, fill: true, opacity: 1, fillOpacity: 0.25, interactive: true, color: s.color, fillColor: s.fillColor }); if(layer._path) layer._path.style.pointerEvents = 'auto'; } 
+                        else { layer.setStyle({ stroke: false, fill: false, interactive: false }); if(layer._path) layer._path.style.pointerEvents = 'none'; }
                     });
                 }
             }, [visibleLayers]);
 
             useEffect(() => {
                 if(!mapInstance.current) return;
-                if(!location) {
-                    if(markerRef.current) markerRef.current.remove();
-                    mapInstance.current.setView(INITIAL_CENTER, INITIAL_ZOOM);
-                    return;
-                }
+                if(!location) { if(markerRef.current) markerRef.current.remove(); mapInstance.current.setView(INITIAL_CENTER, INITIAL_ZOOM); return; }
                 const color = analysisStatus === 'CONSERVATION_SOIL' ? '#ef4444' : analysisStatus === 'URBAN_SOIL' ? '#22c55e' : '#9ca3af';
                 if(markerRef.current) markerRef.current.setLatLng([location.lat, location.lng]).setStyle({ fillColor: color });
                 else markerRef.current = window.L.circleMarker([location.lat, location.lng], { radius: 12, fillColor: color, color: '#fff', weight: 3, fillOpacity: 0.9 }).addTo(mapInstance.current);
@@ -553,90 +493,26 @@
             return (
                 <div id="map-wrapper">
                     <div id="map-container-div" ref={mapRef} className="h-full w-full bg-gray-200" />
-                    
-                    {/* 
-                        LEYENDA EXTENDIDA 
-                        Cambios: 'bottom-28' en móvil para separar del botón buscar. 'md:bottom-8' en desktop.
-                    */}
                     <div className={`absolute bottom-28 left-4 md:bottom-8 bg-white shadow-xl rounded-lg z-[999] overflow-hidden transition-all flex flex-col max-h-[70vh] ${isLegendOpen ? 'w-72' : 'w-12 h-12 md:w-10 md:h-10 rounded-full flex items-center justify-center'}`}>
                         {isLegendOpen ? (
                             <div className="flex flex-col h-full">
-                                <div className="flex justify-between items-center p-3 bg-gray-50 border-b cursor-pointer shrink-0" onClick={() => setIsLegendOpen(false)}>
-                                    <span className="text-sm font-bold text-gray-700">Capas y Simbología</span>
-                                    <Icons.ChevronDown className="h-4 w-4" />
-                                </div>
-                                
+                                <div className="flex justify-between items-center p-3 bg-gray-50 border-b cursor-pointer shrink-0" onClick={() => setIsLegendOpen(false)}><span className="text-sm font-bold text-gray-700">Capas y Simbología</span><Icons.ChevronDown className="h-4 w-4" /></div>
                                 <div className="p-3 space-y-3 overflow-y-auto custom-scrollbar flex-1">
                                     <div className="space-y-2">
-                                        <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('sc')}>
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-4 h-4 bg-[#9d2449]/30 border border-[#9d2449] rounded-sm"></span>
-                                                <span className="text-xs font-medium text-gray-700">Suelo de Conservación</span>
-                                            </div>
-                                            {visibleLayers.sc ? <Icons.Eye className="h-3 w-3 text-gray-400"/> : <Icons.EyeOff className="h-3 w-3 text-gray-300"/>}
-                                        </div>
-                                        <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('alcaldias')}>
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-4 h-4 bg-white border-2 border-gray-500 border-dashed rounded-sm"></span>
-                                                <span className="text-xs font-medium text-gray-700">Límites Alcaldías</span>
-                                            </div>
-                                            {visibleLayers.alcaldias ? <Icons.Eye className="h-3 w-3 text-gray-400"/> : <Icons.EyeOff className="h-3 w-3 text-gray-300"/>}
-                                        </div>
-                                        <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('edomex')}>
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-4 h-4 bg-[#fbbf24]/20 border border-[#fbbf24] border-dashed rounded-sm"></span>
-                                                <span className="text-xs font-medium text-gray-700">Estado de México</span>
-                                            </div>
-                                            {visibleLayers.edomex ? <Icons.Eye className="h-3 w-3 text-gray-400"/> : <Icons.EyeOff className="h-3 w-3 text-gray-300"/>}
-                                        </div>
-                                        <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('morelos')}>
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-4 h-4 bg-[#a855f7]/20 border border-[#a855f7] border-dashed rounded-sm"></span>
-                                                <span className="text-xs font-medium text-gray-700">Estado de Morelos</span>
-                                            </div>
-                                            {visibleLayers.morelos ? <Icons.Eye className="h-3 w-3 text-gray-400"/> : <Icons.EyeOff className="h-3 w-3 text-gray-300"/>}
-                                        </div>
+                                        <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('sc')}><div className="flex items-center gap-2"><span className="w-4 h-4 bg-[#9d2449]/30 border border-[#9d2449] rounded-sm"></span><span className="text-xs font-medium text-gray-700">Suelo de Conservación</span></div>{visibleLayers.sc ? <Icons.Eye className="h-3 w-3 text-gray-400"/> : <Icons.EyeOff className="h-3 w-3 text-gray-300"/>}</div>
+                                        <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('alcaldias')}><div className="flex items-center gap-2"><span className="w-4 h-4 bg-white border-2 border-gray-500 border-dashed rounded-sm"></span><span className="text-xs font-medium text-gray-700">Límites Alcaldías</span></div>{visibleLayers.alcaldias ? <Icons.Eye className="h-3 w-3 text-gray-400"/> : <Icons.EyeOff className="h-3 w-3 text-gray-300"/>}</div>
+                                        <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('edomex')}><div className="flex items-center gap-2"><span className="w-4 h-4 bg-[#fbbf24]/20 border border-[#fbbf24] border-dashed rounded-sm"></span><span className="text-xs font-medium text-gray-700">Estado de México</span></div>{visibleLayers.edomex ? <Icons.Eye className="h-3 w-3 text-gray-400"/> : <Icons.EyeOff className="h-3 w-3 text-gray-300"/>}</div>
+                                        <div className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-1 rounded" onClick={() => toggleLayer('morelos')}><div className="flex items-center gap-2"><span className="w-4 h-4 bg-[#a855f7]/20 border border-[#a855f7] border-dashed rounded-sm"></span><span className="text-xs font-medium text-gray-700">Estado de Morelos</span></div>{visibleLayers.morelos ? <Icons.Eye className="h-3 w-3 text-gray-400"/> : <Icons.EyeOff className="h-3 w-3 text-gray-300"/>}</div>
                                     </div>
-
                                     <hr className="border-gray-100"/>
-
                                     <details className="group" open>
-                                        <summary className="flex items-center justify-between cursor-pointer list-none py-1">
-                                            <div className="flex items-center gap-2">
-                                                <Icons.Layers className="h-4 w-4 text-gray-500"/>
-                                                <span className="text-xs font-bold text-gray-700">Zonificación PGOEDF</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <div onClick={(e) => { e.preventDefault(); toggleAllZoning(); }} className="cursor-pointer">
-                                                    {visibleLayers.zoning ? <Icons.Eye className="h-3 w-3 text-gray-400 hover:text-gray-600"/> : <Icons.EyeOff className="h-3 w-3 text-gray-300 hover:text-gray-500"/>}
-                                                </div>
-                                                <Icons.ChevronDown className="h-3 w-3 text-gray-400 group-open:rotate-180 transition-transform"/>
-                                            </div>
-                                        </summary>
-                                        
-                                        <div className="mt-2 pl-2 space-y-1.5 border-l-2 border-gray-100 ml-1.5">
-                                            {Object.entries(ZONING_CAT_INFO).map(([key, info]) => (
-                                                <div 
-                                                    key={key} 
-                                                    className={`flex items-center justify-between p-1 rounded cursor-pointer text-[10px] ${!visibleLayers.zoning ? 'opacity-50 pointer-events-none' : 'hover:bg-gray-50'}`}
-                                                    onClick={() => toggleLayer(key)}
-                                                >
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="w-3 h-3 rounded-sm shadow-sm flex-shrink-0" style={{ backgroundColor: info.color }}></span>
-                                                        <span className="text-gray-600 leading-tight">{info.label} ({key})</span>
-                                                    </div>
-                                                    {visibleLayers[key] ? <Icons.CheckCircle className="h-3 w-3 text-green-600"/> : <div className="h-3 w-3 rounded-full border border-gray-300"></div>}
-                                                </div>
-                                            ))}
-                                        </div>
+                                        <summary className="flex items-center justify-between cursor-pointer list-none py-1"><div className="flex items-center gap-2"><Icons.Layers className="h-4 w-4 text-gray-500"/><span className="text-xs font-bold text-gray-700">Zonificación PGOEDF</span></div><div className="flex items-center gap-2"><div onClick={(e) => { e.preventDefault(); toggleAllZoning(); }} className="cursor-pointer">{visibleLayers.zoning ? <Icons.Eye className="h-3 w-3 text-gray-400 hover:text-gray-600"/> : <Icons.EyeOff className="h-3 w-3 text-gray-300 hover:text-gray-500"/>}</div><Icons.ChevronDown className="h-3 w-3 text-gray-400 group-open:rotate-180 transition-transform"/></div></summary>
+                                        <div className="mt-2 pl-2 space-y-1.5 border-l-2 border-gray-100 ml-1.5">{Object.entries(ZONING_CAT_INFO).map(([key, info]) => (<div key={key} className={`flex items-center justify-between p-1 rounded cursor-pointer text-[10px] ${!visibleLayers.zoning ? 'opacity-50 pointer-events-none' : 'hover:bg-gray-50'}`} onClick={() => toggleLayer(key)}><div className="flex items-center gap-2"><span className="w-3 h-3 rounded-sm shadow-sm flex-shrink-0" style={{ backgroundColor: info.color }}></span><span className="text-gray-600 leading-tight">{info.label} ({key})</span></div>{visibleLayers[key] ? <Icons.CheckCircle className="h-3 w-3 text-green-600"/> : <div className="h-3 w-3 rounded-full border border-gray-300"></div>}</div>))}</div>
                                     </details>
                                 </div>
                             </div>
                         ) : (
-                            <button onClick={() => setIsLegendOpen(true)} className="w-full h-full flex items-center justify-center bg-white hover:bg-gray-50 shadow-md" title="Abrir Simbología">
-                                {/* Icono más grande en móvil (w-6 h-6), normal en desktop (md:w-5) */}
-                                <Icons.Layers className="h-6 w-6 md:h-5 md:w-5 text-[#9d2449]" />
-                            </button>
+                            <button onClick={() => setIsLegendOpen(true)} className="w-full h-full flex items-center justify-center bg-white hover:bg-gray-50 shadow-md" title="Abrir Simbología"><Icons.Layers className="h-6 w-6 md:h-5 md:w-5 text-[#9d2449]" /></button>
                         )}
                     </div>
                 </div>
@@ -651,17 +527,8 @@
 
             useEffect(() => { loadData().then(() => setLoading(false)); }, []);
 
-            const handleSelect = async (coord) => {
-                setLocation(coord);
-                setAnalysis(await analyzeLocation(coord));
-                setMobileSidebarOpen(true); 
-            };
-
-            const handleReset = () => {
-                setLocation(null);
-                setAnalysis(null);
-                setMobileSidebarOpen(false);
-            };
+            const handleSelect = async (coord) => { setLocation(coord); setAnalysis(await analyzeLocation(coord)); setMobileSidebarOpen(true); };
+            const handleReset = () => { setLocation(null); setAnalysis(null); setMobileSidebarOpen(false); };
 
             if(loading) return <div className="h-screen flex items-center justify-center text-[#9d2449]"><Icons.Loader2 className="animate-spin h-10 w-10"/></div>;
 
@@ -669,26 +536,13 @@
                 <div className="flex flex-col h-full relative">
                     <header className="h-14 bg-[#9d2449] flex items-center px-4 justify-between shrink-0 z-10 shadow-md">
                         <img src="./logo-sedema.png" alt="SEDEMA" className="h-8 bg-white p-1 rounded" />
-                        <div className="text-white text-[10px] text-right">
-                            <div className="font-bold">{CONTACT_INFO.phone}</div>
-                            <div>{CONTACT_INFO.hours}</div>
-                        </div>
+                        <div className="text-white text-[10px] text-right"><div className="font-bold">{CONTACT_INFO.phone}</div><div>{CONTACT_INFO.hours}</div></div>
                     </header>
-
                     <div className="flex-1 relative overflow-hidden flex">
                         <Sidebar analysis={analysis} onLocationSelect={handleSelect} onReset={handleReset} isOpen={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
                         <MapViewer location={location} onLocationSelect={handleSelect} analysisStatus={analysis?.status} />
-
-                        {!mobileSidebarOpen && analysis && (
-                            <button id="mobile-fab" onClick={() => setMobileSidebarOpen(true)} className="md:hidden absolute bottom-24 right-4 z-[1000] bg-[#9d2449] text-white px-4 py-3 rounded-full shadow-lg font-bold flex items-center gap-2 animate-in">
-                                <Icons.Info className="h-6 w-6 md:h-5 md:w-5"/> Ver Detalles
-                            </button>
-                        )}
-                        {!mobileSidebarOpen && !analysis && (
-                            <button id="mobile-fab" onClick={() => setMobileSidebarOpen(true)} className="md:hidden absolute bottom-24 right-4 z-[1000] bg-white text-[#9d2449] px-4 py-3 rounded-full shadow-lg font-bold flex items-center gap-2 animate-in">
-                                <Icons.Search className="h-6 w-6 md:h-5 md:w-5"/> Buscar
-                            </button>
-                        )}
+                        {!mobileSidebarOpen && analysis && (<button id="mobile-fab" onClick={() => setMobileSidebarOpen(true)} className="md:hidden absolute bottom-24 right-4 z-[1000] bg-[#9d2449] text-white px-4 py-3 rounded-full shadow-lg font-bold flex items-center gap-2 animate-in"><Icons.Info className="h-6 w-6 md:h-5 md:w-5"/> Ver Detalles</button>)}
+                        {!mobileSidebarOpen && !analysis && (<button id="mobile-fab" onClick={() => setMobileSidebarOpen(true)} className="md:hidden absolute bottom-24 right-4 z-[1000] bg-white text-[#9d2449] px-4 py-3 rounded-full shadow-lg font-bold flex items-center gap-2 animate-in"><Icons.Search className="h-6 w-6 md:h-5 md:w-5"/> Buscar</button>)}
                     </div>
                 </div>
             );
