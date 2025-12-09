@@ -139,7 +139,7 @@ body {
     border-top-left-radius: 20px;
     border-top-right-radius: 20px;
     flex-shrink: 0; /* Evita que se aplaste */
-    touch-action: none; /* Mejora la respuesta táctil */
+    touch-action: none; /* Mejora la respuesta táctil y evita scroll del body */
   }
 
   /* La píldora gris visual */
