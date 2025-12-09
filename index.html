@@ -34,7 +34,12 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        /* --- CONFIGURACIÓN --- */
+        /* --- CONFIGURACIÓN DE DATOS --- */
+        const BASE_LAYERS = {
+            STREETS: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+            SATELLITE: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+        };
+
         const ZONING_CAT_INFO = {
             'PE':  { color: '#0072B2', label: 'Preservación Ecológica' },
             'RE':  { color: '#009E73', label: 'Rescate Ecológico' },
@@ -72,25 +77,27 @@
             return { color: c, weight: 1.2, dashArray: '3, 3', fillColor: c, fillOpacity: 0.25, interactive: true, stroke: true, fill: true };
         };
 
-        /* --- ICONS --- */
+        /* --- ICONOS CORREGIDOS (SVG STANDARD) --- */
+        // Todos usan viewBox 0 0 24 24 y herencia de tamaño
         const Icons = {
-            Search: (p)=><svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
-            MapPin: (p)=><svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
-            Navigation: (p)=><svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>,
-            Layers: (p)=><svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>,
-            Eye: (p)=><svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,
-            EyeOff: (p)=><svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>,
-            CheckCircle: (p)=><svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
-            XCircle: (p)=><svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>,
-            ChevronDown: (p)=><svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
-            ChevronUp: (p)=><svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>,
-            RotateCcw: (p)=><svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>,
-            StreetView: (p)=><svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,
-            MapIcon: (p)=><svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>,
-            Link: (p)=><svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>,
-            Info: (p)=><svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>,
-            Loader2: (p)=><svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>,
-            X: (p)=><svg {...p} xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+            Search: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>,
+            MapPin: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>,
+            Navigation: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>,
+            Layers: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>,
+            Eye: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>,
+            EyeOff: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>,
+            CheckCircle: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>,
+            XCircle: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>,
+            ChevronDown: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><polyline points="6 9 12 15 18 9"></polyline></svg>,
+            ChevronUp: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><polyline points="18 15 12 9 6 15"></polyline></svg>,
+            RotateCcw: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>,
+            StreetView: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>,
+            MapIcon: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>,
+            Link: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>,
+            Loader2: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>,
+            Info: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>,
+            X: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
+            Globe: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>,
         };
 
         /* --- LOGICA GEO --- */
@@ -148,14 +155,14 @@
         /* --- COMPONENTES UI --- */
         const ActivitySection = ({ title, activities, icon, headerClass, bgClass, defaultOpen }) => {
             const [filter, setFilter] = useState('');
-            if (!activities || activities.length === 0) return null;
+            if (!activities?.length) return null;
             const filtered = activities.filter(a => `${a.sector} ${a.general} ${a.specific}`.toLowerCase().includes(filter.toLowerCase()));
 
             return (
                 <details className={`group rounded-lg border border-gray-200 overflow-hidden mb-3 shadow-sm ${bgClass}`} open={defaultOpen}>
                     <summary className={`flex items-center justify-between px-3 py-2 cursor-pointer ${headerClass} hover:opacity-90`}>
                         <div className="flex items-center gap-2 font-bold text-xs">{icon}<span>{title} <span className="text-[10px] font-normal">({activities.length})</span></span></div>
-                        <Icons.ChevronDown className="h-3 w-3 group-open:rotate-180 transition-transform"/>
+                        <Icons.ChevronDown className="h-4 w-4 group-open:rotate-180 transition-transform"/>
                     </summary>
                     <div className="px-3 py-2 bg-white border-t border-gray-100">
                         <input type="text" value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Filtrar..." className="w-full px-2 py-1.5 mb-2 border rounded text-[10px] focus:outline-none focus:border-[#9d2449]" />
@@ -187,141 +194,74 @@
             );
         };
 
-        /* --- BARRA DE BÚSQUEDA FLOTANTE (MÓVIL) --- */
-        const MobileSearchBar = ({ onLocationSelect, onReset }) => {
-            const [query, setQuery] = useState('');
-            const handleSearch = async (e) => {
-                e.preventDefault(); if(!query.trim()) return;
-                const parts = query.split(',').map(s=>parseFloat(s.trim()));
-                if(parts.length===2 && !isNaN(parts[0])) { onLocationSelect({lat:parts[0],lng:parts[1]}); return; }
-                try {
-                    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query+', Ciudad de México')}&limit=1`);
-                    const d = await r.json();
-                    if(d?.[0]) { onLocationSelect({lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)}); } else alert("No encontrado");
-                } catch { alert("Error de conexión"); }
-            };
-
-            return (
-                <div className="md:hidden absolute top-4 left-4 right-4 z-[2000] flex flex-col gap-2">
-                    <form onSubmit={handleSearch} className="bg-white rounded-full shadow-lg flex items-center p-1 border border-gray-200">
-                        <button type="submit" className="p-2 text-gray-500"><Icons.Search className="h-5 w-5"/></button>
-                        <input type="text" className="flex-1 bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 h-10" placeholder="Buscar aquí (Calle, Lat/Lng)..." value={query} onChange={e => setQuery(e.target.value)} />
-                        {query && <button type="button" onClick={()=>{setQuery(''); onReset();}} className="p-2 text-gray-400"><Icons.X className="h-5 w-5"/></button>}
-                    </form>
-                </div>
-            );
-        };
-
-        /* --- BOTONES FLOTANTES (MÓVIL) --- */
-        const FloatingMapControls = ({ onUserLocation, onToggleLegend, isLegendOpen }) => {
-            return (
-                <div className="md:hidden absolute z-[1500] pointer-events-none w-full h-full">
-                    <div className="absolute top-20 right-4 pointer-events-auto">
-                        <button onClick={onToggleLegend} className="bg-white p-2.5 rounded-full shadow-lg border border-gray-200 text-gray-600 active:bg-gray-100">
-                            <Icons.Layers className="h-6 w-6"/>
-                        </button>
-                    </div>
-                    <div className="absolute bottom-40 right-4 pointer-events-auto transition-all duration-300">
-                        <button onClick={onUserLocation} className="bg-white p-2.5 rounded-full shadow-lg border border-gray-200 text-[#9d2449] active:bg-gray-100">
-                            <Icons.Navigation className="h-6 w-6"/>
-                        </button>
-                    </div>
-                </div>
-            );
-        };
-
-        /* --- BOTTOM SHEET (MÓVIL) --- */
-        const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => {
-            const [isExpanded, setIsExpanded] = useState(false);
-            const sheetRef = useRef(null);
-            const startY = useRef(0);
-
-            useEffect(() => { if(analysis) setIsExpanded(false); }, [analysis]);
-            const toggleSheet = () => setIsExpanded(!isExpanded);
-            const handleTouchStart = (e) => { if(e.target.closest('.sheet-header')) { startY.current = e.touches[0].clientY; } };
-            const handleTouchEnd = (e) => {
-                const endY = e.changedTouches[0].clientY;
-                const diff = startY.current - endY; 
-                if (Math.abs(diff) > 50) { setIsExpanded(diff > 0); }
-            };
-            const copyCoords = () => { navigator.clipboard.writeText(`${analysis.coordinate.lat},${analysis.coordinate.lng}`); alert("Copiado"); };
-
-            if(!analysis) return null;
-
-            return (
-                <div 
-                    ref={sheetRef}
-                    className={`md:hidden fixed bottom-0 left-0 w-full bg-white rounded-t-2xl shadow-[0_-5px_20px_rgba(0,0,0,0.2)] z-[3000] flex flex-col transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1)`}
-                    style={{ height: isExpanded ? '85vh' : '25vh' }}
-                >
-                    <div className="sheet-header flex-shrink-0 h-10 flex flex-col justify-center items-center cursor-pointer active:bg-gray-50 rounded-t-2xl" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onClick={toggleSheet}>
-                        <div className="w-12 h-1.5 bg-gray-300 rounded-full mb-1"></div>
-                    </div>
-                    
-                    <div className="flex-1 overflow-y-auto custom-scrollbar bg-white">
-                        <div className="px-5 pb-2" onClick={toggleSheet}>
-                            <h2 className="text-lg font-bold text-gray-800 leading-tight mb-1">{analysis.alcaldia} {analysis.outsideContext ? `(${analysis.outsideContext})` : ''}</h2>
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${analysis.status==='CONSERVATION_SOIL' ? 'text-red-700 bg-red-50 border-red-100' : 'text-green-700 bg-green-50 border-green-100'}`}>{analysis.status==='CONSERVATION_SOIL' ? 'Suelo de Conservación' : 'Suelo Urbano'}</span>
-                                {analysis.zoningKey && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white" style={{backgroundColor:getZoningColor(analysis.zoningKey)}}>{analysis.zoningKey}</span>}
-                            </div>
-                        </div>
-
-                        <div className="px-5 pb-20 space-y-4">
-                            <div className="text-sm text-gray-600 border-t pt-3">
-                                {analysis.status==='URBAN_SOIL' && <p className="italic">Este predio está fuera del Suelo de Conservación. Regulación por SEDUVI.</p>}
-                                {analysis.status==='CONSERVATION_SOIL' && <p>Regulado por el <strong>PGOEDF</strong>. Zonificación: <strong>{analysis.zoningName}</strong>.</p>}
-                            </div>
-                            {analysis.status === 'CONSERVATION_SOIL' && (
-                                <div className="space-y-2">
-                                    <ActivitySection title="PROHIBIDO" activities={analysis.prohibitedActivities} icon={<Icons.XCircle className="h-3 w-3"/>} headerClass="text-red-800 bg-red-50" bgClass="bg-white" defaultOpen={true} />
-                                    <ActivitySection title="PERMITIDO" activities={analysis.allowedActivities} icon={<Icons.CheckCircle className="h-3 w-3"/>} headerClass="text-green-800 bg-green-50" bgClass="bg-white" defaultOpen={false} />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="flex-shrink-0 p-3 bg-white border-t border-gray-100 safe-area-bottom flex gap-3 overflow-x-auto">
-                        <a href={`https://www.google.com/maps/search/?api=1&query=${analysis.coordinate.lat},${analysis.coordinate.lng}`} target="_blank" className="flex-1 min-w-[100px] flex items-center justify-center gap-2 bg-blue-600 text-white py-2.5 px-4 rounded-full text-xs font-bold shadow-sm hover:bg-blue-700 transition-colors"><Icons.MapIcon className="h-4 w-4"/> Cómo llegar</a>
-                        <a href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${analysis.coordinate.lat},${analysis.coordinate.lng}`} target="_blank" className="flex-1 min-w-[100px] flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-300 py-2.5 px-4 rounded-full text-xs font-bold shadow-sm hover:bg-gray-50"><Icons.StreetView className="h-4 w-4"/> Street View</a>
-                        <button onClick={copyCoords} className="flex items-center justify-center w-10 h-10 bg-white text-gray-600 border border-gray-300 rounded-full shadow-sm hover:bg-gray-50 flex-shrink-0"><Icons.Link className="h-5 w-5"/></button>
-                    </div>
-                </div>
-            );
-        };
-
-        /* --- SIDEBAR CLÁSICO (ESCRITORIO) --- */
-        const SearchLogicDesktop = ({ onLocationSelect, onReset }) => {
+        const SearchLogic = ({ onLocationSelect, onReset }) => {
             const [inputStr, setInputStr] = useState('');
             const [addressStr, setAddressStr] = useState('');
             const handleManual = (e) => { e.preventDefault(); const p = inputStr.split(',').map(s=>parseFloat(s.trim())); if(p.length===2 && !isNaN(p[0])) onLocationSelect({lat:p[0],lng:p[1]}); };
             const handleAddr = async (e) => { e.preventDefault(); if(!addressStr.trim()) return; try { const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressStr+', CDMX')}&limit=1`); const d = await r.json(); if(d?.[0]) { const lat=parseFloat(d[0].lat), lng=parseFloat(d[0].lon); setInputStr(`${lat.toFixed(5)},${lng.toFixed(5)}`); onLocationSelect({lat,lng}); } else alert("No encontrado"); } catch { alert("Error"); } };
+            
             return (
                 <div className="space-y-2">
                     <form onSubmit={handleManual} className="flex relative shadow-sm"><input type="text" placeholder="Lat, Lng" className="w-full pl-3 pr-2 py-2 border rounded-l text-sm focus:outline-none" value={inputStr} onChange={e=>setInputStr(e.target.value)} /><button className="px-3 bg-[#9d2449] text-white rounded-r font-bold text-sm">Ir</button></form>
                     <form onSubmit={handleAddr} className="flex relative shadow-sm"><input type="text" placeholder="Dirección..." className="w-full pl-3 pr-8 py-2 border rounded text-sm focus:outline-none" value={addressStr} onChange={e=>setAddressStr(e.target.value)} /><Icons.Search className="absolute right-2 top-2.5 h-4 w-4 text-gray-400" /></form>
                     <div className="flex gap-2">
-                        <button onClick={()=>navigator.geolocation.getCurrentPosition(p=>onLocationSelect({lat:p.coords.latitude,lng:p.coords.longitude}))} className="flex-1 py-2 bg-[#9d2449] text-white rounded text-sm font-medium flex items-center justify-center gap-1 shadow-sm"><Icons.Navigation className="h-3 w-3" /> Mi Ubicación</button>
+                        <button onClick={()=>navigator.geolocation.getCurrentPosition(p=>onLocationSelect({lat:p.coords.latitude,lng:p.coords.longitude}))} className="flex-1 py-2 bg-[#9d2449] text-white rounded text-sm font-medium flex items-center justify-center gap-1 shadow-sm"><Icons.Navigation className="h-4 w-4" /> Mi Ubicación</button>
                         <button onClick={()=>{setInputStr('');setAddressStr('');onReset();}} className="px-3 py-2 bg-white border rounded text-gray-600 shadow-sm"><Icons.RotateCcw className="h-4 w-4" /></button>
                     </div>
                 </div>
             );
         };
 
-        const ResultsContentDesktop = ({ analysis }) => {
+        const ResultsContent = ({ analysis }) => {
             if(!analysis) return <div className="p-4 text-center text-gray-400 text-sm">Selecciona un punto en el mapa</div>;
             return (
-                <div className="space-y-4 animate-in pb-10"> 
+                <div className="space-y-4 animate-in pb-20"> 
                     <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
-                        <div className="bg-gray-50 px-4 py-2 border-b flex items-center gap-2"><Icons.Info className="h-4 w-4 text-[#9d2449]" /><span className="text-sm font-bold text-gray-700">RESUMEN</span></div>
+                        <div className="bg-gray-50 px-4 py-2 border-b flex items-center gap-2"><Icons.Info className="h-4 w-4 text-[#9d2449]" /><span className="text-sm font-bold text-gray-700">RESUMEN DEL PREDIO</span></div>
                         <div className="p-4 space-y-3">
-                            <div className="flex gap-3 items-start"><div className="mt-1">{analysis.status === 'CONSERVATION_SOIL' ? <Icons.XCircle className="h-4 w-4 text-red-600"/> : <Icons.CheckCircle className="h-4 w-4 text-green-600"/>}</div><div><p className="text-[10px] font-bold text-gray-500 uppercase">Estatus</p><p className={`text-sm font-bold ${analysis.status==='CONSERVATION_SOIL'?'text-red-700':'text-green-700'}`}>{analysis.status==='CONSERVATION_SOIL'?'Suelo de Conservación':analysis.status==='URBAN_SOIL'?'Suelo Urbano':'Fuera de CDMX'}</p></div></div>
-                            <div className="flex gap-3 items-start"><div className="mt-1"><Icons.MapPin className="h-4 w-4 text-gray-400"/></div><div><p className="text-[10px] font-bold text-gray-500 uppercase">Ubicación</p><p className="text-sm text-gray-800">{analysis.alcaldia} {analysis.outsideContext?`(${analysis.outsideContext})`:''}</p></div></div>
-                            {analysis.status !== 'OUTSIDE_CDMX' && (<div className="flex gap-3 items-start"><div className="mt-1"><Icons.Layers className="h-4 w-4 text-gray-400"/></div><div><p className="text-[10px] font-bold text-gray-500 uppercase">Zonificación</p>{analysis.status==='URBAN_SOIL' ? <p className="text-xs italic text-gray-500">Suelo Urbano</p> : <div className="flex items-center gap-2 mt-1"><span className="text-white px-2 py-0.5 rounded text-[10px] font-bold" style={{backgroundColor:getZoningColor(analysis.zoningKey)}}>{analysis.zoningKey}</span><span className="text-xs leading-tight">{analysis.zoningName}</span></div>}</div></div>)}
+                            <div className="flex gap-3 items-start">
+                                <div className="mt-1">{analysis.status === 'CONSERVATION_SOIL' ? <Icons.XCircle className="h-4 w-4 text-red-600"/> : <Icons.CheckCircle className="h-4 w-4 text-green-600"/>}</div>
+                                <div><p className="text-[10px] font-bold text-gray-500 uppercase">Estatus</p><p className={`text-sm font-bold ${analysis.status==='CONSERVATION_SOIL'?'text-red-700':'text-green-700'}`}>{analysis.status==='CONSERVATION_SOIL'?'Suelo de Conservación':analysis.status==='URBAN_SOIL'?'Suelo Urbano':'Fuera de CDMX'}</p></div>
+                            </div>
+                            <div className="flex gap-3 items-start">
+                                <div className="mt-1"><Icons.MapPin className="h-4 w-4 text-gray-400"/></div>
+                                <div><p className="text-[10px] font-bold text-gray-500 uppercase">Ubicación</p><p className="text-sm text-gray-800">{analysis.alcaldia} {analysis.outsideContext?`(${analysis.outsideContext})`:''}</p></div>
+                            </div>
+                            {analysis.status !== 'OUTSIDE_CDMX' && (
+                                <div className="flex gap-3 items-start">
+                                    <div className="mt-1"><Icons.Layers className="h-4 w-4 text-gray-400"/></div>
+                                    <div><p className="text-[10px] font-bold text-gray-500 uppercase">Zonificación</p>
+                                        {analysis.status==='URBAN_SOIL' ? <p className="text-xs italic text-gray-500">Suelo Urbano (Ver SEDUVI)</p> : 
+                                        <div className="flex items-center gap-2 mt-1"><span className="text-white px-2 py-0.5 rounded text-[10px] font-bold" style={{backgroundColor:getZoningColor(analysis.zoningKey)}}>{analysis.zoningKey}</span><span className="text-xs leading-tight">{analysis.zoningName}</span></div>}
+                                    </div>
+                                </div>
+                            )}
+                             <div className="flex gap-3 items-start border-t pt-2 border-dashed border-gray-200">
+                                <div className="mt-1 text-gray-400 font-mono text-[10px]">COORDS:</div>
+                                <div className="text-[10px] font-mono text-gray-600">{analysis.coordinate.lat.toFixed(5)}, {analysis.coordinate.lng.toFixed(5)}</div>
+                            </div>
                         </div>
                     </div>
-                    {analysis.status === 'CONSERVATION_SOIL' && (<div><ActivitySection title="PROHIBIDO" activities={analysis.prohibitedActivities} icon={<Icons.XCircle className="h-3 w-3"/>} headerClass="text-red-900 bg-red-50" bgClass="bg-white" defaultOpen={true} /><ActivitySection title="PERMITIDO" activities={analysis.allowedActivities} icon={<Icons.CheckCircle className="h-3 w-3"/>} headerClass="text-green-900 bg-green-50" bgClass="bg-white" defaultOpen={false} /></div>)}
-                    <div className="grid grid-cols-3 gap-2 w-full"><a href={`https://www.google.com/maps/search/?api=1&query=${analysis.coordinate.lat},${analysis.coordinate.lng}`} target="_blank" className="flex flex-col items-center justify-center p-2 bg-white border rounded hover:border-[#9d2449] text-gray-600 hover:text-[#9d2449]"><Icons.MapIcon className="h-5 w-5 mb-1"/><span className="text-[9px] font-bold">Maps</span></a><a href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${analysis.coordinate.lat},${analysis.coordinate.lng}`} target="_blank" className="flex flex-col items-center justify-center p-2 bg-white border rounded hover:border-[#9d2449] text-gray-600 hover:text-[#9d2449]"><Icons.StreetView className="h-5 w-5 mb-1"/><span className="text-[9px] font-bold">Street</span></a><button onClick={()=>{navigator.clipboard.writeText(`${analysis.coordinate.lat},${analysis.coordinate.lng}`);alert('Copiado');}} className="flex flex-col items-center justify-center p-2 bg-white border rounded hover:border-[#9d2449] text-gray-600 hover:text-[#9d2449]"><Icons.Link className="h-5 w-5 mb-1"/><span className="text-[9px] font-bold">Copiar</span></button></div>
+
+                    {analysis.status === 'CONSERVATION_SOIL' && (
+                        <div>
+                            <ActivitySection title="ACTIVIDADES PROHIBIDAS" activities={analysis.prohibitedActivities} icon={<Icons.XCircle className="h-4 w-4"/>} headerClass="text-red-900 bg-red-50" bgClass="bg-white" defaultOpen={true} />
+                            <ActivitySection title="ACTIVIDADES PERMITIDAS" activities={analysis.allowedActivities} icon={<Icons.CheckCircle className="h-4 w-4"/>} headerClass="text-green-900 bg-green-50" bgClass="bg-white" defaultOpen={false} />
+                        </div>
+                    )}
+                    <div className="border-t pt-2"><details><summary className="text-xs font-bold text-gray-500 cursor-pointer flex justify-between">PREGUNTAS FRECUENTES <Icons.ChevronDown className="h-4 w-4"/></summary><div className="mt-2 space-y-2">{FAQ_ITEMS.map((f,i)=>(<div key={i} className="text-[10px] bg-gray-50 p-2 rounded"><strong>{f.q}</strong><p>{f.a}</p></div>))}</div></details></div>
+                </div>
+            );
+        };
+
+        const ActionButtons = ({ analysis }) => {
+            const copy = () => { navigator.clipboard.writeText(`${analysis.alcaldia}, ${analysis.zoningKey}. ${analysis.coordinate.lat},${analysis.coordinate.lng}`); alert("Copiado"); };
+            // CAMBIO: Color Institucional #9d2449
+            return (
+                <div className="grid grid-cols-3 gap-2 w-full">
+                    <a href={`https://www.google.com/maps/search/?api=1&query=${analysis.coordinate.lat},${analysis.coordinate.lng}`} target="_blank" className="flex flex-col items-center justify-center p-2 bg-white border rounded hover:border-[#9d2449] text-gray-600 hover:text-[#9d2449]"><Icons.MapIcon className="h-5 w-5 mb-1"/><span className="text-[9px] font-bold">Maps</span></a>
+                    <a href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${analysis.coordinate.lat},${analysis.coordinate.lng}`} target="_blank" className="flex flex-col items-center justify-center p-2 bg-white border rounded hover:border-[#9d2449] text-gray-600 hover:text-[#9d2449]"><Icons.StreetView className="h-5 w-5 mb-1"/><span className="text-[9px] font-bold">Street View</span></a>
+                    <button onClick={copy} className="flex flex-col items-center justify-center p-2 bg-white border rounded hover:border-[#9d2449] text-gray-600 hover:text-[#9d2449]"><Icons.Link className="h-5 w-5 mb-1"/><span className="text-[9px] font-bold">Copiar</span></button>
                 </div>
             );
         };
@@ -329,16 +269,82 @@
         const SidebarDesktop = ({ analysis, onLocationSelect, onReset }) => (
             <div id="sidebar-desktop" className="hidden md:flex flex-col h-full bg-white w-[400px] shadow-xl z-[2000] overflow-y-auto custom-scrollbar border-r">
                 <div className="p-4 bg-[#9d2449] text-white"><h2 className="font-bold">Consulta Ciudadana</h2></div>
-                <div className="p-4 space-y-4"><SearchLogicDesktop onLocationSelect={onLocationSelect} onReset={onReset} /><ResultsContentDesktop analysis={analysis} /></div>
+                <div className="p-4 space-y-4">
+                    <SearchLogic onLocationSelect={onLocationSelect} onReset={onReset} />
+                    {analysis && <div className="pt-2"><ResultsContent analysis={analysis} /><div className="mt-4"><ActionButtons analysis={analysis} /></div></div>}
+                </div>
             </div>
         );
 
-        /* --- MAPA --- */
+        /* --- BOTTOM SHEET MÓVIL --- */
+        const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => {
+            const [isExpanded, setIsExpanded] = useState(false);
+            const sheetRef = useRef(null);
+            const startY = useRef(0);
+
+            useEffect(() => { if(analysis) setIsExpanded(false); }, [analysis]);
+
+            const handleTouchStart = (e) => { if(e.target.closest('.sheet-header')) { startY.current = e.touches[0].clientY; } };
+            const handleTouchEnd = (e) => {
+                const endY = e.changedTouches[0].clientY;
+                const diff = startY.current - endY; 
+                if (Math.abs(diff) > 50) { setIsExpanded(diff > 0); }
+            };
+            const toggleSheet = () => setIsExpanded(!isExpanded);
+
+            const copyCoords = () => { navigator.clipboard.writeText(`${analysis.coordinate.lat},${analysis.coordinate.lng}`); alert("Copiado"); };
+
+            if(!analysis) return null;
+
+            return (
+                <div 
+                    ref={sheetRef}
+                    className={`md:hidden fixed bottom-0 left-0 w-full bg-white rounded-t-2xl shadow-[0_-5px_20px_rgba(0,0,0,0.2)] z-[3000] flex flex-col transition-all duration-300 ease-out`}
+                    style={{ height: isExpanded ? '85vh' : '35vh' }}
+                >
+                    {/* Header con click y touch */}
+                    <div 
+                        className="sheet-header flex-shrink-0 h-8 flex justify-center items-center cursor-grab active:cursor-grabbing" 
+                        onTouchStart={handleTouchStart} 
+                        onTouchEnd={handleTouchEnd}
+                        onClick={toggleSheet}
+                    >
+                        <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+                    </div>
+                    
+                    <div className="px-4 pb-2 flex justify-between items-center border-b border-gray-100 flex-shrink-0">
+                        <h3 className="font-bold text-gray-800 text-sm truncate pr-2">{analysis.alcaldia}</h3>
+                        <button onClick={onClose} className="p-1 bg-gray-100 rounded-full"><Icons.X className="h-5 w-5 text-gray-500"/></button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 bg-gray-50/50">
+                        <ResultsContent analysis={analysis} />
+                    </div>
+
+                    {/* FOOTER MÓVIL (Pills Institucionales) */}
+                    <div className="flex-shrink-0 p-3 bg-white border-t border-gray-200 safe-area-bottom flex gap-3 overflow-x-auto">
+                        <a href={`https://www.google.com/maps/search/?api=1&query=${analysis.coordinate.lat},${analysis.coordinate.lng}`} target="_blank" className="flex-1 min-w-[100px] flex items-center justify-center gap-2 bg-[#9d2449] text-white py-2.5 px-4 rounded-full text-xs font-bold shadow-sm hover:bg-[#7d1d3a] transition-colors">
+                            <Icons.MapIcon className="h-4 w-4"/> Cómo llegar
+                        </a>
+                        <a href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${analysis.coordinate.lat},${analysis.coordinate.lng}`} target="_blank" className="flex-1 min-w-[100px] flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-300 py-2.5 px-4 rounded-full text-xs font-bold shadow-sm hover:bg-gray-50">
+                            <Icons.StreetView className="h-4 w-4"/> Street View
+                        </a>
+                        <button onClick={copyCoords} className="flex items-center justify-center w-10 h-10 bg-white text-gray-600 border border-gray-300 rounded-full shadow-sm hover:bg-gray-50 flex-shrink-0">
+                            <Icons.Link className="h-5 w-5"/>
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
         const MapViewer = ({ location, onLocationSelect, analysisStatus, visibleLayers, setVisibleLayers, isLegendOpen, setIsLegendOpen }) => {
             const mapRef = useRef(null);
             const mapInstance = useRef(null);
             const layersRef = useRef({});
             const markerRef = useRef(null);
+            
+            /* ESTADO DE CAPA BASE (Calles / Satélite) */
+            const [activeBaseLayer, setActiveBaseLayer] = useState('STREETS');
 
             const toggleLayer = (k) => setVisibleLayers(p => ({...p, [k]: !p[k]}));
             const toggleZoningGroup = () => { const v=!visibleLayers.zoning; const u={zoning:v}; Object.keys(ZONING_CAT_INFO).forEach(k=>u[k]=v); setVisibleLayers(p=>({...p,...u})); };
@@ -349,38 +355,64 @@
                 window.L.control.zoom({ position: 'topright' }).addTo(map);
                 mapInstance.current = map;
                 
-                ['World_Imagery', 'Reference/World_Boundaries_and_Places'].forEach(l => window.L.tileLayer(`https://server.arcgisonline.com/ArcGIS/rest/services/${l}/MapServer/tile/{z}/{y}/{x}`, { maxZoom: 19 }).addTo(map));
+                // Carga inicial
+                const tileLayer = window.L.tileLayer(BASE_LAYERS[activeBaseLayer], { maxZoom: 19 }).addTo(map);
+                layersRef.current.base = tileLayer;
 
                 const chk = setInterval(() => {
                     if (dataCache.cdmx) {
                         clearInterval(chk);
                         const { edomex, morelos, sc, zoning, alcaldias } = dataCache;
                         const add = (n, d, s, t) => { if(!d?.features) return; const l = window.L.geoJSON(d, { style:s, interactive:true, onEachFeature:(f,l)=>{if(t && f.properties?.[t]) l.bindTooltip(f.properties[t], {sticky:true, className:'custom-tooltip'});} }); layersRef.current[n]=l; };
+                        
                         add('edomex', edomex, {color:'#fbbf24', weight:1, dashArray:'4,4', fillOpacity:0.1}, 'NOMGEO');
                         add('morelos', morelos, {color:'#a855f7', weight:1, dashArray:'4,4', fillOpacity:0.1}, 'NOMGEO');
                         add('sc', sc, {color:'#d6d6d6', weight:1, fillColor:'#9d2449', fillOpacity:0.1, interactive:false}, null);
                         add('zoning', zoning, getZoningStyle, 'PGOEDF');
                         add('alcaldias', alcaldias, {color:'#ffffff', weight:2, dashArray:'8,4', fillOpacity:0}, 'NOMBRE');
+
                         ['sc','zoning','alcaldias','edomex','morelos'].forEach(k => { if(layersRef.current[k]) layersRef.current[k].addTo(map); });
+                        if(layersRef.current.sc) layersRef.current.sc.bringToBack();
+                        if(layersRef.current.zoning) layersRef.current.zoning.bringToBack();
+                        if(layersRef.current.alcaldias) layersRef.current.alcaldias.bringToFront();
                     }
                 }, 500);
                 map.on('click', e => onLocationSelect(e.latlng));
                 return () => { map.remove(); mapInstance.current = null; };
             }, []);
 
+            /* CAMBIO DE CAPA BASE (Efecto) */
+            useEffect(() => {
+                if(!mapInstance.current || !layersRef.current.base) return;
+                layersRef.current.base.setUrl(BASE_LAYERS[activeBaseLayer]);
+            }, [activeBaseLayer]);
+
+            /* CONTROL CAPAS VECTORIALES */
             useEffect(() => {
                 if(!mapInstance.current) return;
                 ['sc', 'alcaldias', 'edomex', 'morelos', 'zoning'].forEach(k => {
                     const l = layersRef.current[k]; if(!l) return;
-                    if(visibleLayers[k] && !mapInstance.current.hasLayer(l)) { mapInstance.current.addLayer(l); if(k==='alcaldias') l.bringToFront(); else l.bringToBack(); }
+                    if(visibleLayers[k] && !mapInstance.current.hasLayer(l)) { 
+                        mapInstance.current.addLayer(l); 
+                        if(k==='alcaldias') l.bringToFront(); else l.bringToBack(); 
+                    }
                     else if(!visibleLayers[k] && mapInstance.current.hasLayer(l)) mapInstance.current.removeLayer(l);
                 });
+
                 if(layersRef.current.zoning && mapInstance.current.hasLayer(layersRef.current.zoning)) {
                     layersRef.current.zoning.eachLayer(l => {
-                        const k = (l.feature.properties.CLAVE||'').toString().trim().toUpperCase();
-                        const vis = visibleLayers.zoning && (visibleLayers[k] !== false);
-                        if(vis) { const s = getZoningStyle(l.feature); l.setStyle({stroke:true, fill:true, opacity:1, fillOpacity:0.25, interactive:true, color:s.color, fillColor:s.fillColor}); if(l._path) l._path.style.pointerEvents='auto'; }
-                        else { l.setStyle({stroke:false, fill:false, interactive:false}); if(l._path) l._path.style.pointerEvents='none'; }
+                        const rawKey = l.feature.properties.CLAVE || l.feature.properties.PGOEDF;
+                        const key = (rawKey || '').toString().trim().toUpperCase();
+                        const isVisible = visibleLayers.zoning && (visibleLayers[key] !== false);
+                        
+                        if(isVisible) { 
+                            const s = getZoningStyle(l.feature); 
+                            l.setStyle({stroke:true, fill:true, opacity:1, fillOpacity:0.25, interactive:true, color:s.color, fillColor:s.fillColor}); 
+                            if(l._path) l._path.style.pointerEvents='auto'; 
+                        } else { 
+                            l.setStyle({stroke:false, fill:false, interactive:false}); 
+                            if(l._path) l._path.style.pointerEvents='none'; 
+                        }
                     });
                 }
             }, [visibleLayers]);
@@ -394,50 +426,40 @@
             }, [location, analysisStatus]);
 
             return (
-                <>
+                <div className="relative h-full w-full">
                     <div ref={mapRef} className="h-full w-full bg-gray-200" />
                     
-                    {/* MENÚ DE CAPAS (Escritorio Flotante / Móvil Flotante) */}
+                    {/* MENÚ DE CAPAS Y BASE */}
                     {isLegendOpen && (
-                        <div className="absolute top-36 right-4 md:bottom-8 md:top-auto md:left-4 md:right-auto bg-white shadow-xl rounded-xl z-[2500] w-64 flex flex-col max-h-[50vh] animate-in overflow-hidden border border-gray-100">
+                        <div className="absolute top-24 right-4 md:bottom-8 md:top-auto md:left-4 md:right-auto bg-white shadow-xl rounded-xl z-[2500] w-64 flex flex-col max-h-[50vh] animate-in overflow-hidden border border-gray-100">
                             <div className="flex justify-between items-center p-3 bg-gray-50 border-b cursor-pointer" onClick={()=>setIsLegendOpen(false)}>
                                 <span className="text-xs font-bold text-gray-700">Capas del Mapa</span>
                                 <Icons.X className="h-4 w-4 text-gray-500"/>
                             </div>
-                            <div className="p-2 space-y-1 overflow-y-auto custom-scrollbar">
-                                {['sc','alcaldias','edomex','morelos'].map(k=>(
-                                    <div key={k} className="flex justify-between items-center p-2 rounded hover:bg-gray-50 cursor-pointer" onClick={()=>toggleLayer(k)}>
-                                        <span className="text-xs text-gray-700 capitalize">{k==='sc'?'Suelo de Cons.':k}</span>
-                                        {visibleLayers[k] ? <Icons.Eye className="h-4 w-4 text-[#9d2449]"/> : <Icons.EyeOff className="h-4 w-4 text-gray-400"/>}
-                                    </div>
-                                ))}
-                                <hr className="my-1 border-gray-100"/>
-                                <div className="px-2 py-1">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="text-xs font-bold text-gray-700">Zonificación</span>
-                                        <button onClick={toggleZoningGroup}>{visibleLayers.zoning ? <Icons.Eye className="h-4 w-4 text-[#9d2449]"/> : <Icons.EyeOff className="h-4 w-4 text-gray-400"/>}</button>
-                                    </div>
-                                    <div className="space-y-1 pl-1">
-                                        {Object.entries(ZONING_CAT_INFO).map(([k,i])=>(
-                                            <div key={k} className="flex justify-between items-center p-1 cursor-pointer hover:bg-gray-50 rounded" onClick={()=>toggleLayer(k)}>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="w-3 h-3 rounded-sm" style={{backgroundColor:i.color}}></span>
-                                                    <span className="text-[10px] text-gray-600">{i.label}</span>
-                                                </div>
-                                                {visibleLayers[k] ? <Icons.CheckCircle className="h-3 w-3 text-green-600"/> : <div className="h-3 w-3 border rounded-full border-gray-300"/>}
-                                            </div>
-                                        ))}
+                            <div className="p-2 space-y-2 overflow-y-auto custom-scrollbar flex-1">
+                                {/* SELECCIÓN TIPO DE MAPA */}
+                                <div className="bg-gray-50 p-2 rounded-lg border border-gray-100 mb-2">
+                                    <span className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Tipo de Mapa</span>
+                                    <div className="flex gap-2">
+                                        <div onClick={()=>setActiveBaseLayer('STREETS')} className={`flex-1 cursor-pointer p-1 rounded text-center text-[10px] font-bold border ${activeBaseLayer==='STREETS'?'bg-white border-[#9d2449] text-[#9d2449] shadow-sm':'border-transparent text-gray-500 hover:bg-white'}`}>Mapa</div>
+                                        <div onClick={()=>setActiveBaseLayer('SATELLITE')} className={`flex-1 cursor-pointer p-1 rounded text-center text-[10px] font-bold border ${activeBaseLayer==='SATELLITE'?'bg-white border-[#9d2449] text-[#9d2449] shadow-sm':'border-transparent text-gray-500 hover:bg-white'}`}>Satélite</div>
                                     </div>
                                 </div>
+
+                                {['sc','alcaldias','edomex','morelos'].map(k=>(<div key={k} className="flex justify-between cursor-pointer" onClick={()=>toggleLayer(k)}><span className="text-[10px] capitalize">{k==='sc'?'Suelo Cons.':k}</span>{visibleLayers[k]?<Icons.Eye className="h-4 w-4 text-[#9d2449]"/>:<Icons.EyeOff className="h-4 w-4 text-gray-300"/>}</div>))}
+                                <hr/>
+                                <details open><summary className="flex justify-between cursor-pointer text-[10px] font-bold py-1"><span>Zonificación</span><span onClick={(e)=>{e.preventDefault();toggleZoningGroup()}}>{visibleLayers.zoning?<Icons.Eye className="h-4 w-4 text-[#9d2449]"/>:<Icons.EyeOff className="h-4 w-4 text-gray-300"/>}</span></summary>
+                                    <div className="pl-2 mt-1 space-y-1">{Object.entries(ZONING_CAT_INFO).map(([k,i])=>(<div key={k} className="flex justify-between cursor-pointer text-[9px]" onClick={()=>toggleLayer(k)}><div className="flex gap-1"><span className="w-2 h-2 rounded-full" style={{backgroundColor:i.color}}></span><span>{i.label}</span></div>{visibleLayers[k]?<Icons.CheckCircle className="h-4 w-4 text-green-600"/>:<div className="h-4 w-4 border rounded-full"/>}</div>))}</div>
+                                </details>
                             </div>
                         </div>
                     )}
                     
-                    {/* Botón de capas para escritorio (el de móvil está en FloatingMapControls) */}
+                    {/* Botón Desktop */}
                     <div className="hidden md:block absolute bottom-8 left-4 z-[1000]">
-                         {!isLegendOpen && <button onClick={()=>setIsLegendOpen(true)} className="w-10 h-10 flex items-center justify-center bg-white shadow-md rounded-full"><Icons.Layers className="h-5 w-5 text-[#9d2449]"/></button>}
+                         {!isLegendOpen && <button onClick={()=>setIsLegendOpen(true)} className="w-10 h-10 flex items-center justify-center bg-white shadow-md rounded-full text-[#9d2449] hover:bg-gray-50"><Icons.Layers className="h-6 w-6"/></button>}
                     </div>
-                </>
+                </div>
             );
         };
 
@@ -447,7 +469,6 @@
             const [analysis, setAnalysis] = useState(null);
             const [location, setLocation] = useState(null);
             
-            // Estado de capas
             const [visibleLayers, setVisibleLayers] = useState(() => {
                 const defaults = { sc: true, zoning: true, alcaldias: true, edomex: true, morelos: true };
                 Object.keys(ZONING_CAT_INFO).forEach(k => defaults[k] = true);
@@ -474,6 +495,7 @@
                         <SidebarDesktop analysis={analysis} onLocationSelect={handleSelect} onReset={handleReset} />
 
                         <div className="flex-1 relative w-full h-full">
+                            {/* Componentes Flotantes Móviles */}
                             <MobileSearchBar onLocationSelect={handleSelect} onReset={handleReset} />
                             <FloatingMapControls 
                                 onUserLocation={handleUserLocation} 
