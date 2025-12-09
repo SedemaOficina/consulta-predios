@@ -42,7 +42,7 @@ body {
   font-size: 11px;
   padding: 3px 8px;
   text-shadow: none;
-  z-index: 1000; /* Asegurar visibilidad */
+  z-index: 1000;
 }
 .leaflet-tooltip-left:before, .leaflet-tooltip-right:before {
   border-left-color: rgba(0,0,0,0.85);
