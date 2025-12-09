@@ -394,7 +394,7 @@
                         add('morelos', morelos, {color: LAYER_STYLES.morelos.color, weight:1, dashArray:'4,4', fillOpacity:0.1}, 'NOMGEO');
                         add('sc', sc, {color: LAYER_STYLES.sc.color, weight:1, fillColor: LAYER_STYLES.sc.color, fillOpacity:0.1, interactive:false}, null);
                         add('zoning', zoning, getZoningStyle, 'PGOEDF');
-                        add('alcaldias', alcaldias, {color: LAYER_STYLES.alcaldias.color, weight:2, dashArray:'8,4', fillOpacity:0}, 'NOMBRE');
+                        add('alcaldias', alcaldias, {color: LAYER_STYLES.alcaldias.color, weight:2, dashArray:'8,4', fillOpacity:0}, null);
                         ['sc','zoning','alcaldias','edomex','morelos'].forEach(k => { if(layersRef.current[k]) layersRef.current[k].addTo(map); });
                     }
                 }, 500);
