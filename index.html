@@ -503,6 +503,11 @@ const LocationSummary = ({ analysis }) => {
             ? 'bg-gray-100 text-gray-600 border border-gray-200'
             : 'bg-gray-100 text-gray-600 border border-gray-200';
 
+    // Color de la zonificación (badge) usando la misma paleta del mapa
+    const zoningColor = analysis.zoningKey
+        ? getZoningColor(analysis.zoningKey)
+        : '#6b7280';
+
     const copyCoords = () => {
         navigator.clipboard.writeText(`${analysis.coordinate.lat},${analysis.coordinate.lng}`);
         setCopied(true);
@@ -511,26 +516,49 @@ const LocationSummary = ({ analysis }) => {
 
     return (
         <>
+            {/* Etiqueta fija de resultado orientativo */}
             <div className="text-[10px] text-gray-500 mb-2 bg-gray-50 p-1 pl-2 rounded border border-gray-200">
                 Resultado orientativo — No sustituye dictamen oficial.
             </div>
 
             <div className="bg-white border rounded-lg shadow-sm p-4 mb-4">
-                <h2 className="text-lg font-bold text-gray-800 leading-tight mb-1">
-                    {analysis.alcaldia}
-                    {analysis.zoningKey ? ` — ${analysis.zoningKey}` : ''}
-                </h2>
+                {/* Encabezado: Alcaldía + nombre de zonificación */}
+                <div className="mb-2">
+                    <h2 className="text-sm font-bold text-gray-800 leading-snug">
+                        {analysis.alcaldia || 'Ciudad de México'}
+                    </h2>
+                    {analysis.zoningName && (
+                        <p className="text-[11px] text-gray-600">
+                            {analysis.zoningName}
+                        </p>
+                    )}
+                </div>
 
-                {analysis.zoningName && (
-                    <p className="text-sm text-gray-600 mb-2">{analysis.zoningName}</p>
-                )}
+                {/* Fila de badges: zonificación y tipo de suelo */}
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                    {/* Badge principal: siglas de zonificación con color de la capa */}
+                    {analysis.zoningKey && (
+                        <span
+                            className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border shadow-xs"
+                            style={{
+                                backgroundColor: zoningColor,
+                                borderColor: zoningColor,
+                                color: '#ffffff'
+                            }}
+                        >
+                            {analysis.zoningKey}
+                        </span>
+                    )}
 
-                <p className="mb-3">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${chipClasses}`}>
+                    {/* Chip de estado de suelo / ANP */}
+                    <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${chipClasses}`}
+                    >
                         {statusLabel}
                     </span>
-                </p>
+                </div>
 
+                {/* Lista de datos básicos */}
                 <ul className="text-xs space-y-1.5 text-gray-700 border-t pt-2">
                     <li className="flex items-center gap-2">
                         <span className="text-gray-400">
@@ -545,18 +573,25 @@ const LocationSummary = ({ analysis }) => {
                             className="text-[#9d2449] hover:bg-gray-100 p-1 rounded flex items-center gap-1"
                         >
                             <Icons.Copy className="h-3 w-3" />
-                            {copied && <span className="text-[9px] text-gray-500">Copiado</span>}
+                            {copied && (
+                                <span className="text-[9px] text-gray-500">Copiado</span>
+                            )}
                         </button>
                     </li>
 
-                    <li><strong>Alcaldía:</strong> {analysis.alcaldia}</li>
-                    <li><strong>Zonificación:</strong> {analysis.zoningKey || 'N/A'}</li>
+                    <li>
+                        <strong>Alcaldía:</strong> {analysis.alcaldia}
+                    </li>
+
+                    <li>
+                        <strong>Zonificación:</strong>{' '}
+                        {analysis.zoningKey || 'N/A'}
+                    </li>
                 </ul>
             </div>
         </>
     );
 };
-
 /* ------------------------------------------------ */
 /* 6.3 Actividades agrupadas */
 /* ------------------------------------------------ */
