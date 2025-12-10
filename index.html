@@ -1049,18 +1049,40 @@ const MobileSearchBar = ({ onLocationSelect, onReset }) => {
         }, 300);
     };
 
-    const handleSubmit = async (e) => {
+   const handleSubmit = async (e) => {
         e.preventDefault();
         if (!query.trim()) return;
 
-        // Si escriben lat,lng manualmente
-        const parts = query.split(',').map(s => parseFloat(s.trim()));
-        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-            onLocationSelect({ lat: parts[0], lng: parts[1] });
+        // Intentar interpretar como coordenadas (decimal, DMS, copy/paste Google)
+        const coord = parseCoordinateInput(query);
+        if (coord) {
+            onLocationSelect(coord);
             setSuggestions([]);
             return;
         }
 
+        // Si hay sugerencias, toma la primera
+        if (suggestions.length > 0) {
+            const s = suggestions[0];
+            onLocationSelect({ lat: s.lat, lng: s.lng });
+            setQuery(s.label);
+            setSuggestions([]);
+            return;
+        }
+
+        // Si no hay sugerencias aún, intenta una búsqueda directa
+        setIsSearching(true);
+        const res = await searchMapboxPlaces(query);
+        setIsSearching(false);
+        if (res.length > 0) {
+            const s = res[0];
+            onLocationSelect({ lat: s.lat, lng: s.lng });
+            setQuery(s.label);
+            setSuggestions([]);
+        } else {
+            alert('No se encontraron coincidencias en Mapbox.');
+        }
+    };
         // Si hay sugerencias, toma la primera
         if (suggestions.length > 0) {
             const s = suggestions[0];
@@ -1237,11 +1259,15 @@ const SearchLogicDesktop = ({ onLocationSelect, onReset }) => {
     const [isSearching, setIsSearching] = useState(false);
     const debounceRef = useRef(null);
 
-    const handleManual = (e) => {
+  const handleManual = (e) => {
         e.preventDefault();
-        const p = inputStr.split(',').map(s => parseFloat(s.trim()));
-        if (p.length === 2 && !isNaN(p[0]) && !isNaN(p[1])) {
-            onLocationSelect({ lat: p[0], lng: p[1] });
+        if (!inputStr.trim()) return;
+
+        const coord = parseCoordinateInput(inputStr);
+        if (coord) {
+            onLocationSelect(coord);
+        } else {
+            alert('Formato de coordenadas no reconocido. Ejemplos: "19.417849, -99.143846" o "19°25\'04.3\"N 99°08\'37.9\"W"');
         }
     };
 
@@ -1858,13 +1884,7 @@ const MapViewer = ({
         markerRef.current.remove();
     }
 
-      const c =
-    analysisStatus === 'CONSERVATION_SOIL'
-        ? '#ef4444'      // rojo para Suelo de Conservación
-        : analysisStatus === 'URBAN_SOIL'
-        ? '#3b82f6'      // azul para Suelo Urbano
-        : '#9ca3af';     // gris para otros casos
-
+     
        const label =
     analysisStatus === 'CONSERVATION_SOIL'
         ? 'SC'   // Suelo de Conservación
