@@ -159,6 +159,70 @@ const searchMapboxPlaces = async (query) => {
     }
 };
 
+    // ----------------------------------------------------
+// Parser de coordenadas: decimal, DMS, Google copy-paste
+// (UTM removido por completo)
+// ----------------------------------------------------
+const parseCoordinateInput = (value) => {
+    if (!value) return null;
+    let s = value.trim();
+    if (!s) return null;
+
+    // Quitar paréntesis envolventes: (19.41, -99.14)
+    if (s.startsWith('(') && s.endsWith(')')) {
+        s = s.slice(1, -1).trim();
+    }
+
+    // ------------ 1) Intento decimal (coma / espacio) ------------
+    const tryDecimal = (text) => {
+        // Con coma
+        if (text.includes(',')) {
+            const parts = text.split(',').map(p => p.trim());
+            if (parts.length === 2) {
+                const lat = parseFloat(parts[0]);
+                const lng = parseFloat(parts[1]);
+                if (!isNaN(lat) && !isNaN(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+                    return { lat, lng };
+                }
+            }
+        }
+
+        // Con espacio: "19.41 -99.14"
+        const spaceParts = text.split(/\s+/);
+        if (spaceParts.length === 2) {
+            const lat = parseFloat(spaceParts[0]);
+            const lng = parseFloat(spaceParts[1]);
+            if (!isNaN(lat) && !isNaN(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+                return { lat, lng };
+            }
+        }
+        return null;
+    };
+
+    const decimal = tryDecimal(s);
+    if (decimal) return decimal;
+
+    // ------------ 2) Intento DMS tipo Google: 19°25'04.3"N 99°08'37.9"W ------------
+    const dmsToDecimal = (deg, min, sec, hemi) => {
+        let d = parseFloat(deg) + parseFloat(min) / 60 + parseFloat(sec) / 3600;
+        hemi = (hemi || '').toUpperCase();
+        if (hemi === 'S' || hemi === 'W') d *= -1;
+        return d;
+    };
+
+    const latMatch = s.match(/(\d+)[°\s]+(\d+)[\'’\s]+(\d+(?:\.\d+)?)[\"\s]*([NnSs])/);
+    const lonMatch = s.match(/(\d+)[°\s]+(\d+)[\'’\s]+(\d+(?:\.\d+)?)[\"\s]*([EeWw])/);
+
+    if (latMatch && lonMatch) {
+        const lat = dmsToDecimal(latMatch[1], latMatch[2], latMatch[3], latMatch[4]);
+        const lng = dmsToDecimal(lonMatch[1], lonMatch[2], lonMatch[3], lonMatch[4]);
+        if (!isNaN(lat) && !isNaN(lng)) return { lat, lng };
+    }
+
+    // Si nada coincide
+    return null;
+};
+
 /* ------------------------------------------------ */
 /* 3. ICONOS (SVG) – CORREGIDOS */
 /* ------------------------------------------------ */
