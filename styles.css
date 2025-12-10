@@ -24,3 +24,9 @@ body { font-family: var(--font); color: #54565a; margin: 0; height: 100vh; overf
 
 /* Bottom Sheet Header Handle */
 .sheet-header:active { cursor: grabbing; }
+
+animation: pop 0.25s ease-out;
+@keyframes pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
