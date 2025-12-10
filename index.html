@@ -74,7 +74,16 @@ const DATA_FILES = {
 };
 
     const MAPBOX_TOKEN = 'pk.eyJ1Ijoiam9yZ2VsaWJlcjI4IiwiYSI6ImNtajA0eHR2eTA0b2gzZnB0NnU2a2xwY2oifQ.2BDJUISBBvrm1wM8RwXusg';
+// Helper para elegir URL de tiles según base layer
+const getBaseLayerUrl = (name) => {
+    if (name === 'SATELLITE') {
+        // Satélite + calles + labels (Mapbox satellite-streets)
+        return `https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/256/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`;
+    }
 
+    // Para STREETS y cualquier otro, usa las constantes existentes
+    return BASE_LAYERS[name];
+};
 const INITIAL_CENTER = [19.3200, -99.1500];
 const INITIAL_ZOOM = 10;
 const FOCUS_ZOOM = 15; // Zoom al hacer una consulta puntual
@@ -1719,9 +1728,11 @@ const MapViewer = ({
         window.L.control.zoom({ position: 'topright' }).addTo(map);
         mapInstance.current = map;
 
-        const base = window.L.tileLayer(BASE_LAYERS[activeBaseLayer], {
-            maxZoom: 19
-        });
+       const base = window.L.tileLayer(getBaseLayerUrl(activeBaseLayer), {
+    maxZoom: 19,
+    tileSize: 256,
+    zoomOffset: 0
+});
 
         base.on('loading', () => setTilesLoading(true));
         base.on('load', () => setTilesLoading(false));
@@ -1811,11 +1822,11 @@ const MapViewer = ({
         };
     }, []);
 
-    useEffect(() => {
-        if (!mapInstance.current || !layersRef.current.base) return;
-        setTilesLoading(true);
-        layersRef.current.base.setUrl(BASE_LAYERS[activeBaseLayer]);
-    }, [activeBaseLayer]);
+   useEffect(() => {
+    if (!mapInstance.current || !layersRef.current.base) return;
+    setTilesLoading(true);
+    layersRef.current.base.setUrl(getBaseLayerUrl(activeBaseLayer));
+}, [activeBaseLayer]);
 
     useEffect(() => {
         if (!mapInstance.current) return;
