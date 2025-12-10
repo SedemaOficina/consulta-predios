@@ -667,6 +667,19 @@ const ResultsContent = ({ analysis }) => {
                     <li>Paso 1: Busca una dirección o usa “Mi ubicación”.</li>
                     <li>Paso 2: Haz clic en el mapa para fijar el punto.</li>
                     <li>Paso 3: Revisa la zonificación y las actividades permitidas o prohibidas.</li>
+                    <li>
+                        El color del punto indica el tipo de suelo:
+                        <ul className="list-disc ml-5 mt-1 space-y-0.5">
+                            <li>
+                                <span className="font-semibold text-[#22c55e]">Verde</span>: Suelo Urbano
+                                (la regulación corresponde a SEDUVI).
+                            </li>
+                            <li>
+                                <span className="font-semibold text-[#ef4444]">Rojo</span>: Suelo de Conservación
+                                (referencia normativa PGOEDF 2000).
+                            </li>
+                        </ul>
+                    </li>
                 </ul>
             </div>
         );
