@@ -1112,22 +1112,19 @@ const SidebarDesktop = ({ analysis, onLocationSelect, onReset, isOpen, onToggle 
         "
     >
         {/* Panel principal (se colapsa) */}
-        <div
-            id="sidebar-desktop"
-            className={`
-                flex flex-col 
-                h-full 
-                bg-white 
-                shadow-xl 
-                border-r 
-                overflow-y-auto 
-                custom-scrollbar 
-                transition-[width] 
-                duration-300 
-                ease-out
-                ${isOpen ? 'w-[360px]' : 'w-0'}
-            `}
-        >
+       <div
+    id="sidebar-desktop"
+    className={`
+        flex flex-col 
+        h-full 
+        overflow-y-auto 
+        custom-scrollbar 
+        transition-all 
+        duration-300 
+        ease-out
+        ${isOpen ? 'w-[360px] bg-white border-r shadow-xl' : 'w-0 bg-transparent border-0 shadow-none'}
+    `}
+>
             {isOpen && (
                 <>
                     <div className="p-4 bg-[#9d2449] text-white flex items-center gap-2">
@@ -1143,30 +1140,32 @@ const SidebarDesktop = ({ analysis, onLocationSelect, onReset, isOpen, onToggle 
         </div>
 
         {/* Pestaña de colapsar/expandir */}
-        <button
-            onClick={onToggle}
-            className="
-                relative
-                mt-16
-                -ml-2
-                w-6 
-                h-16 
-                bg-white 
-                border border-gray-200 
-                shadow-md 
-                rounded-r-full 
-                flex items-center justify-center 
-                text-[#9d2449]
-                hover:bg-gray-50
-                active:scale-95
-                transition
-            "
-            title={isOpen ? 'Ocultar panel' : 'Mostrar panel'}
-        >
-            <span className="text-xs font-bold">
-                {isOpen ? '«' : '»'}
-            </span>
-        </button>
+       {/* Botón flotante para colapsar/expandir */}
+<button
+    onClick={onToggle}
+    className={`
+        absolute
+        top-24
+        left-${isOpen ? '[360px]' : '0'}
+        transform -translate-x-1/2
+        z-[5000]
+        w-8 h-16
+        bg-[#9d2449]
+        text-white
+        shadow-lg
+        rounded-r-full
+        flex items-center justify-center
+        cursor-pointer
+        hover:bg-[#7d1d3a]
+        active:scale-95
+        transition-all duration-200
+    `}
+    title={isOpen ? 'Ocultar panel' : 'Mostrar panel'}
+>
+    <span className="text-base font-extrabold">
+        {isOpen ? '«' : '»'}
+    </span>
+</button>
     </div>
 );
 /* ------------------------------------------------ */
