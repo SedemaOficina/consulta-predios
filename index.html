@@ -44,24 +44,24 @@ const BASE_LAYERS = {
 };
 
 const ZONING_CAT_INFO = {
-    'AEE': { color: '#1f77b4', label: 'Agroecológico Especial (AEE)' },
-    'AE': { color: '#aec7e8', label: 'Agroecológico (AE)' },
-    'AFE': { color: '#ff7f0e', label: 'Agroforestal Especial (AFE)' },
-    'AF': { color: '#ffbb78', label: 'Agroforestal (AF)' },
-    'FPE': { color: '#2ca02c', label: 'Forestal Protección Esp. (FPE)' },
-    'FP': { color: '#98df8a', label: 'Forestal Protección (FP)' },
-    'FCE': { color: '#005a32', label: 'Forestal Conservación Esp. (FCE)' },
-    'FC': { color: '#74c476', label: 'Forestal Conservación (FC)' },
-    'ANP': { color: '#9467bd', label: 'Área Natural Protegida' }
+    AEE: { color: '#FF5F5F', label: 'Agroecológico Especial (AEE)' },        // rojo coral claro
+    AE:  { color: '#FFB55A', label: 'Agroecológico (AE)' },                  // naranja claro
+    AFE: { color: '#FFD447', label: 'Agroforestal Especial (AFE)' },         // amarillo suave
+    AF:  { color: '#7BE495', label: 'Agroforestal (AF)' },                   // verde menta
+    FPE: { color: '#5AD2FF', label: 'Forestal Protección Esp. (FPE)' },      // cyan claro
+    FP:  { color: '#7FA6FF', label: 'Forestal Protección (FP)' },            // azul claro
+    FCE: { color: '#C77DFF', label: 'Forestal Conservación Esp. (FCE)' },    // violeta claro
+    FC:  { color: '#FF85D6', label: 'Forestal Conservación (FC)' },          // magenta claro
+    ANP: { color: '#00FFA6', label: 'Área Natural Protegida' }               // verde aqua neón
 };
-
+    
 const LAYER_STYLES = {
-    sc: { color: '#9d2449', label: 'Suelo de Conservación' },
-    alcaldias: { color: '#ffffff', border: '#555', label: 'Límite Alcaldías' },
-    edomex: { color: '#fbbf24', label: 'Estado de México' },
-    morelos: { color: '#a855f7', label: 'Estado de Morelos' }
+    sc: { color: '#FFFFFF', label: 'Suelo de Conservación' },          // borde blanco sobre satélite
+    alcaldias: { color: '#FFFFFF', border: '#555', label: 'Límite Alcaldías' },
+    edomex: { color: '#FFD86B', label: 'Estado de México' },           // amarillo tenue
+    morelos: { color: '#B8A1FF', label: 'Estado de Morelos' }          // lila tenue
 };
-
+    
 const DATA_FILES = {
     LIMITES_CDMX: './limites_cdmx.geojson',
     LIMITES_ALCALDIAS: './limites_alcaldias.geojson',
@@ -98,10 +98,11 @@ const getZoningStyle = (f) => {
     const c = getZoningColor(f.properties?.CLAVE);
     return {
         color: c,
-        weight: 1.2,
-        dashArray: '3, 3',
+        weight: 1.4,
+        dashArray: '3,3',
         fillColor: c,
-        fillOpacity: 0.25,
+        fillOpacity: 0.22,   // un poco más transparente
+        opacity: 0.8,        // borde visible
         stroke: true,
         interactive: true
     };
@@ -1123,36 +1124,38 @@ const MapViewer = ({
                     layersRef.current[name] = layer;
                 };
 
-                add('edomex', edomex, {
-                    color: LAYER_STYLES.edomex.color,
-                    weight: 1,
-                    dashArray: '4,4',
-                    fillOpacity: 0.1
-                }, 'NOMGEO');
-
-                add('morelos', morelos, {
-                    color: LAYER_STYLES.morelos.color,
-                    weight: 1,
-                    dashArray: '4,4',
-                    fillOpacity: 0.1
-                }, 'NOMGEO');
-
-                add('sc', sc, {
-                    color: LAYER_STYLES.sc.color,
-                    weight: 1,
-                    fillColor: LAYER_STYLES.sc.color,
-                    fillOpacity: 0.1,
-                    interactive: false
-                }, null);
+             add('edomex', edomex, {
+    color: LAYER_STYLES.edomex.color,
+    weight: 1,
+    dashArray: '4,4',
+    opacity: 0.7,
+    fillOpacity: 0.05
+}, 'NOMGEO');
+               add('morelos', morelos, {
+    color: LAYER_STYLES.morelos.color,
+    weight: 1,
+    dashArray: '4,4',
+    opacity: 0.7,
+    fillOpacity: 0.05
+}, 'NOMGEO');
+             add('sc', sc, {
+    color: LAYER_STYLES.sc.color,
+    weight: 1.8,
+    opacity: 0.8,
+    fillColor: LAYER_STYLES.sc.color,
+    fillOpacity: 0.10,
+    interactive: false
+}, null);
 
                 add('zoning', zoning, getZoningStyle, 'PGOEDF');
 
-                add('alcaldias', alcaldias, {
-                    color: LAYER_STYLES.alcaldias.color,
-                    weight: 2,
-                    dashArray: '8,4',
-                    fillOpacity: 0
-                }, null);
+             add('alcaldias', alcaldias, {
+    color: LAYER_STYLES.alcaldias.color,
+    weight: 3,
+    dashArray: '8,4',
+    opacity: 0.9,
+    fillOpacity: 0
+}, null);
 
                 ['sc', 'zoning', 'alcaldias', 'edomex', 'morelos'].forEach(k => {
                     if (layersRef.current[k]) layersRef.current[k].addTo(map);
