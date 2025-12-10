@@ -74,7 +74,8 @@ const DATA_FILES = {
 
 const INITIAL_CENTER = [19.3200, -99.1500];
 const INITIAL_ZOOM = 10;
-
+const FOCUS_ZOOM = 15; // Zoom al hacer una consulta puntual
+    
 const CONTACT_INFO = {
     phone: "55-5345-8000 ext. 1234",
     hours: "Lunes a Viernes de 9:00 a 18:00 hrs"
@@ -1518,12 +1519,12 @@ const MapViewer = ({
         }
     }, [visibleLayers, extraDataLoaded]);
 
-    useEffect(() => {
-        if (!mapInstance.current || !location) return;
+   useEffect(() => {
+    if (!mapInstance.current || !location) return;
 
-        if (markerRef.current) {
-            markerRef.current.remove();
-        }
+    if (markerRef.current) {
+        markerRef.current.remove();
+    }
 
       const c =
     analysisStatus === 'CONSERVATION_SOIL'
@@ -1568,15 +1569,15 @@ const iconHtml = `
 `;
 
 const icon = window.L.divIcon({
-    html: iconHtml,
-    className: '',
-    iconSize: [32, 32],
-    iconAnchor: [16, 16]
-});
+        html: iconHtml,
+        className: '',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+    });
 
-markerRef.current = window.L.marker([location.lat, location.lng], { icon }).addTo(mapInstance.current);
-mapInstance.current.flyTo([location.lat, location.lng], 15, { duration: 0.8 });
-    }, [location, analysisStatus]);
+   markerRef.current = window.L.marker([location.lat, location.lng], { icon }).addTo(mapInstance.current);
+    mapInstance.current.flyTo([location.lat, location.lng], FOCUS_ZOOM, { duration: 0.8 });
+}, [location, analysisStatus]);
 
     return (
         <div className="relative h-full w-full">
