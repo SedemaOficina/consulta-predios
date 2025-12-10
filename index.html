@@ -1322,12 +1322,12 @@ const MapViewer = ({
             markerRef.current.remove();
         }
 
-        const c =
-            analysisStatus === 'CONSERVATION_SOIL'
-                ? '#ef4444'
-                : analysisStatus === 'URBAN_SOIL'
-                ? '#22c55e'
-                : '#9ca3af';
+      const c =
+    analysisStatus === 'CONSERVATION_SOIL'
+        ? '#ef4444'      // rojo para Suelo de Conservación
+        : analysisStatus === 'URBAN_SOIL'
+        ? '#3b82f6'      // azul para Suelo Urbano
+        : '#9ca3af';     // gris para otros casos
 
         markerRef.current = window.L.circleMarker(
             [location.lat, location.lng],
