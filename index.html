@@ -1329,17 +1329,50 @@ const MapViewer = ({
         ? '#3b82f6'      // azul para Suelo Urbano
         : '#9ca3af';     // gris para otros casos
 
-        markerRef.current = window.L.circleMarker(
-            [location.lat, location.lng],
-            {
-                radius: 12,
-                fillColor: c,
-                color: '#fff',
-                weight: 3,
-                fillOpacity: 0.9
-            }
-        ).addTo(mapInstance.current);
+       const label =
+    analysisStatus === 'CONSERVATION_SOIL'
+        ? 'SC'   // Suelo de Conservación
+        : analysisStatus === 'URBAN_SOIL'
+        ? 'SU'   // Suelo Urbano
+        : '';
 
+const bgColor =
+    analysisStatus === 'CONSERVATION_SOIL'
+        ? '#ef4444'    // rojo
+        : analysisStatus === 'URBAN_SOIL'
+        ? '#3b82f6'    // azul
+        : '#9ca3af';   // gris
+
+const textColor = '#ffffff'; // siempre blanco para máximo contraste
+
+const iconHtml = `
+    <div style="
+        width:32px;
+        height:32px;
+        background:${bgColor};
+        color:${textColor};
+        border:3px solid white;
+        border-radius:50%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-weight:bold;
+        font-size:12px;
+        box-shadow:0 0 6px rgba(0,0,0,0.25);
+    ">
+        ${label}
+    </div>
+`;
+
+const icon = window.L.divIcon({
+    html: iconHtml,
+    className: '',
+    iconSize: [32, 32],
+    iconAnchor: [16, 16]
+});
+
+markerRef.current = window.L.marker([location.lat, location.lng], { icon }).addTo(mapInstance.current);
+mapInstance.current.setView([location.lat, location.lng], 15);
         mapInstance.current.setView([location.lat, location.lng], 15);
     }, [location, analysisStatus]);
 
