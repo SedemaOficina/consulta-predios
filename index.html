@@ -158,49 +158,48 @@ const searchMapboxPlaces = async (query) => {
             .map(f => {
                 const ctx = f.context || [];
 
-                let colonia = null;
                 let alcaldia = null;
                 let ciudad = null;
 
                 ctx.forEach(c => {
-                    if (c.id.startsWith('neighborhood')) {
-                        colonia = c.text;
-                    } else if (c.id.startsWith('locality') || c.id.startsWith('place')) {
-                        // En CDMX suele venir aquí la alcaldía
+                    // En CDMX, la alcaldía/municipio suele venir como locality o place
+                    if (c.id.startsWith('locality') || c.id.startsWith('place')) {
                         alcaldia = c.text;
                     } else if (c.id.startsWith('region')) {
                         ciudad = c.text;
                     }
                 });
 
-                // Texto corto para el dropdown
-                const principal = f.text; // calle o punto principal
+                // Texto corto para el dropdown: Calle · Alcaldía (o Ciudad)
+                const principal = f.text; // nombre corto: calle, colonia, etc.
                 const partesSecundarias = [];
-                if (colonia) partesSecundarias.push(`Col. ${colonia}`);
                 if (alcaldia) partesSecundarias.push(alcaldia);
+                else if (ciudad) partesSecundarias.push(ciudad);
 
                 const shortLabel = partesSecundarias.length
                     ? `${principal} · ${partesSecundarias.join(' · ')}`
-                    : f.place_name;
+                    : principal;
 
                 return {
                     id: f.id,
-                    label: shortLabel,       // texto corto para lista
-                    fullLabel: f.place_name, // texto completo
+                    label: shortLabel,       // lo que verás en la lista
+                    fullLabel: f.place_name, // texto completo de Mapbox
                     lat: f.center[1],
                     lng: f.center[0],
-                    colonia,
                     alcaldia,
                     ciudad
                 };
             })
             .filter(f => {
                 const full = f.fullLabel.toLowerCase();
+                const alc = (f.alcaldia || '').toLowerCase();
+
+                // Nos quedamos solo con CDMX / muy cercano
                 return (
                     full.includes("ciudad de méxico") ||
                     full.includes("cdmx") ||
-                    full.includes("méxico city") ||
-                    (f.alcaldia && f.alcaldia.length > 0)
+                    alc.includes("ciudad de méxico") ||
+                    alc.includes("cdmx")
                 );
             });
     } catch (e) {
