@@ -921,33 +921,75 @@ const ResultsContent = ({ analysis }) => {
 
 const MobileSearchBar = ({ onLocationSelect, onReset }) => {
     const [query, setQuery] = useState('');
+    const [suggestions, setSuggestions] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const debounceRef = useRef(null);
 
-    const handleSearch = async (e) => {
-        e.preventDefault();
-        if (!query.trim()) return;
+    const handleChange = (e) => {
+        const value = e.target.value;
+        setQuery(value);
 
-        const parts = query.split(',').map(s => parseFloat(s.trim()));
-        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-            onLocationSelect({ lat: parts[0], lng: parts[1] });
+        // Si es muy corto, limpiamos sugerencias
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        if (!value.trim() || value.trim().length < 3) {
+            setSuggestions([]);
             return;
         }
 
-        try {
-            const r = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + ', Ciudad de México')}&limit=1`
-            );
-            const d = await r.json();
-            if (d?.[0]) {
-                onLocationSelect({
-                    lat: parseFloat(d[0].lat),
-                    lng: parseFloat(d[0].lon)
-                });
-            } else {
-                alert("No encontrado");
-            }
-        } catch {
-            alert("Error de conexión");
+        // Debounce de 300ms antes de llamar a Mapbox
+        debounceRef.current = setTimeout(async () => {
+            setIsSearching(true);
+            const res = await searchMapboxPlaces(value);
+            setSuggestions(res);
+            setIsSearching(false);
+        }, 300);
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!query.trim()) return;
+
+        // Si escriben lat,lng manualmente
+        const parts = query.split(',').map(s => parseFloat(s.trim()));
+        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+            onLocationSelect({ lat: parts[0], lng: parts[1] });
+            setSuggestions([]);
+            return;
         }
+
+        // Si hay sugerencias, toma la primera
+        if (suggestions.length > 0) {
+            const s = suggestions[0];
+            onLocationSelect({ lat: s.lat, lng: s.lng });
+            setQuery(s.label);
+            setSuggestions([]);
+            return;
+        }
+
+        // Si no hay sugerencias aún, intenta una búsqueda directa
+        setIsSearching(true);
+        const res = await searchMapboxPlaces(query);
+        setIsSearching(false);
+        if (res.length > 0) {
+            const s = res[0];
+            onLocationSelect({ lat: s.lat, lng: s.lng });
+            setQuery(s.label);
+            setSuggestions([]);
+        } else {
+            alert('No se encontraron coincidencias en Mapbox.');
+        }
+    };
+
+    const handleSelectSuggestion = (s) => {
+        setQuery(s.label);
+        setSuggestions([]);
+        onLocationSelect({ lat: s.lat, lng: s.lng });
+    };
+
+    const handleClear = () => {
+        setQuery('');
+        setSuggestions([]);
+        onReset();
     };
 
     return (
@@ -960,48 +1002,70 @@ const MobileSearchBar = ({ onLocationSelect, onReset }) => {
                 pointer-events-none
             "
         >
-            <form
-                onSubmit={handleSearch}
-                className="
-                    pointer-events-auto
-                    bg-white 
-                    rounded-full 
-                    shadow-[0_2px_8px_rgba(0,0,0,0.18)]
-                    flex items-center 
-                    px-2 py-1 
-                    border border-transparent
-                    focus-within:border-gray-300
-                    transition-all duration-200 ease-out
-                "
-            >
-                <button type="submit" className="p-2 text-gray-500">
-                    <Icons.Search className="h-5 w-5" />
-                </button>
-                <input
-                    type="text"
+            <div className="pointer-events-auto">
+                <form
+                    onSubmit={handleSubmit}
                     className="
-                        flex-1 
-                        bg-transparent 
-                        outline-none 
-                        text-[13px] 
-                        text-gray-800 
-                        placeholder-gray-400 
-                        h-10
+                        bg-white 
+                        rounded-full 
+                        shadow-[0_2px_8px_rgba(0,0,0,0.18)]
+                        flex items-center 
+                        px-2 py-1 
+                        border border-transparent
+                        focus-within:border-gray-300
+                        transition-all duration-200 ease-out
                     "
-                    placeholder="Buscar aquí (calle, colonia o Lat/Lng)..."
-                    value={query}
-                    onChange={e => setQuery(e.target.value)}
-                />
-                {query && (
-                    <button
-                        type="button"
-                        onClick={() => { setQuery(''); onReset(); }}
-                        className="p-2 text-gray-400"
-                    >
-                        <Icons.X className="h-4 w-4" />
+                >
+                    <button type="submit" className="p-2 text-gray-500">
+                        <Icons.Search className="h-5 w-5" />
                     </button>
+                    <input
+                        type="text"
+                        className="
+                            flex-1 
+                            bg-transparent 
+                            outline-none 
+                            text-[13px] 
+                            text-gray-800 
+                            placeholder-gray-400 
+                            h-10
+                        "
+                        placeholder="Buscar dirección o Lat/Lng…"
+                        value={query}
+                        onChange={handleChange}
+                    />
+                    {query && (
+                        <button
+                            type="button"
+                            onClick={handleClear}
+                            className="p-2 text-gray-400"
+                        >
+                            <Icons.X className="h-4 w-4" />
+                        </button>
+                    )}
+                </form>
+
+                {/* Dropdown de sugerencias en móvil */}
+                {(suggestions.length > 0 || isSearching) && (
+                    <div className="mt-1 bg-white border border-gray-200 rounded-lg shadow-md max-h-64 overflow-y-auto">
+                        {isSearching && (
+                            <div className="px-3 py-1.5 text-[11px] text-gray-500">
+                                Buscando en Mapbox…
+                            </div>
+                        )}
+                        {suggestions.map(s => (
+                            <button
+                                key={s.id}
+                                type="button"
+                                onClick={() => handleSelectSuggestion(s)}
+                                className="w-full text-left px-3 py-1.5 text-[11px] hover:bg-gray-50 border-t border-gray-50"
+                            >
+                                {s.label}
+                            </button>
+                        ))}
+                    </div>
                 )}
-            </form>
+            </div>
         </div>
     );
 };
