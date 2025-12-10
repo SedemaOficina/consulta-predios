@@ -856,18 +856,44 @@ const MobileSearchBar = ({ onLocationSelect, onReset }) => {
     };
 
     return (
-        <div className="md:hidden absolute top-4 left-4 right-4 z-[2000] flex flex-col gap-2">
+        <div
+            className="
+                md:hidden 
+                fixed top-3 left-3 right-3 
+                z-[2000] 
+                flex flex-col gap-2
+                pointer-events-none
+            "
+        >
             <form
                 onSubmit={handleSearch}
-                className="bg-white rounded-full shadow-lg flex items-center p-1 border border-gray-200"
+                className="
+                    pointer-events-auto
+                    bg-white 
+                    rounded-full 
+                    shadow-[0_2px_8px_rgba(0,0,0,0.18)]
+                    flex items-center 
+                    px-2 py-1 
+                    border border-transparent
+                    focus-within:border-gray-300
+                    transition-all duration-200 ease-out
+                "
             >
                 <button type="submit" className="p-2 text-gray-500">
                     <Icons.Search className="h-5 w-5" />
                 </button>
                 <input
                     type="text"
-                    className="flex-1 bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 h-10"
-                    placeholder="Buscar aquí (Calle, Lat/Lng)..."
+                    className="
+                        flex-1 
+                        bg-transparent 
+                        outline-none 
+                        text-[13px] 
+                        text-gray-800 
+                        placeholder-gray-400 
+                        h-10
+                    "
+                    placeholder="Buscar aquí (calle, colonia o Lat/Lng)..."
                     value={query}
                     onChange={e => setQuery(e.target.value)}
                 />
@@ -877,7 +903,7 @@ const MobileSearchBar = ({ onLocationSelect, onReset }) => {
                         onClick={() => { setQuery(''); onReset(); }}
                         className="p-2 text-gray-400"
                     >
-                        <Icons.X className="h-5 w-5" />
+                        <Icons.X className="h-4 w-4" />
                     </button>
                 )}
             </form>
@@ -886,23 +912,55 @@ const MobileSearchBar = ({ onLocationSelect, onReset }) => {
 };
 
 const FloatingMapControls = ({ onUserLocation, onToggleLegend }) => {
+    const [open, setOpen] = useState(false);
+
     return (
-        <div className="md:hidden absolute z-[1500] pointer-events-none w-full h-full">
-            <div className="absolute top-20 right-4 pointer-events-auto">
-                <button
-                    onClick={onToggleLegend}
-                    className="bg-white p-2.5 rounded-full shadow-lg border border-gray-200 text-gray-600 active:bg-gray-100"
-                >
-                    <Icons.Layers className="h-6 w-6" />
-                </button>
-            </div>
-            <div className="absolute bottom-40 right-4 pointer-events-auto transition-all duration-300">
-                <button
-                    onClick={onUserLocation}
-                    className="bg-white p-2.5 rounded-full shadow-lg border border-gray-200 text-[#9d2449] active:bg-gray-100"
-                >
-                    <Icons.Navigation className="h-6 w-6" />
-                </button>
+        <div className="md:hidden absolute z-[1500] w-full h-full pointer-events-none">
+            {/* FAB principal */}
+            <div className="absolute bottom-24 right-4 pointer-events-auto">
+                <div className="flex flex-col items-end gap-2">
+                    {/* Menú expandido */}
+                    {open && (
+                        <div className="flex flex-col items-end gap-2 mb-1 transition-all duration-200 ease-out">
+                            <button
+                                onClick={() => { setOpen(false); onToggleLegend(); }}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full shadow-md border border-gray-200 text-[11px] text-gray-700 active:scale-95"
+                            >
+                                <span>Capas</span>
+                                <Icons.Layers className="h-4 w-4" />
+                            </button>
+                            <button
+                                onClick={() => { setOpen(false); onUserLocation(); }}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full shadow-md border border-gray-200 text-[11px] text-gray-700 active:scale-95"
+                            >
+                                <span>Mi ubicación</span>
+                                <Icons.Navigation className="h-4 w-4 text-[#9d2449]" />
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Botón FAB */}
+                    <button
+                        onClick={() => setOpen(o => !o)}
+                        className="
+                            w-12 h-12 
+                            flex items-center justify-center 
+                            rounded-full 
+                            bg-white 
+                            shadow-lg 
+                            border border-gray-200 
+                            text-[#9d2449]
+                            active:scale-95
+                            pointer-events-auto
+                        "
+                    >
+                        {open ? (
+                            <Icons.X className="h-5 w-5" />
+                        ) : (
+                            <Icons.Layers className="h-5 w-5" />
+                        )}
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -1051,15 +1109,39 @@ const SidebarDesktop = ({ analysis, onLocationSelect, onReset }) => (
 /* ------------------------------------------------ */
 
 const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [sheetState, setSheetState] = useState('collapsed'); // 'collapsed' | 'mid' | 'full'
     const sheetRef = useRef(null);
     const startY = useRef(0);
 
     useEffect(() => {
-        if (analysis) setIsExpanded(false);
+        if (analysis) setSheetState('mid');
     }, [analysis]);
 
-    const toggleSheet = () => setIsExpanded(prev => !prev);
+    if (!analysis) return null;
+
+    const goUp = () => {
+        setSheetState(prev =>
+            prev === 'collapsed' ? 'mid' :
+            prev === 'mid' ? 'full' :
+            'full'
+        );
+    };
+
+    const goDown = () => {
+        setSheetState(prev =>
+            prev === 'full' ? 'mid' :
+            prev === 'mid' ? 'collapsed' :
+            'collapsed'
+        );
+    };
+
+    const toggleFromTap = () => {
+        setSheetState(prev =>
+            prev === 'collapsed' ? 'mid' :
+            prev === 'mid' ? 'full' :
+            'collapsed'
+        );
+    };
 
     const handleTouchStart = (e) => {
         if (e.target.closest('.sheet-header')) {
@@ -1070,56 +1152,99 @@ const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => 
     const handleTouchEnd = (e) => {
         const endY = e.changedTouches[0].clientY;
         const diff = startY.current - endY;
-        if (Math.abs(diff) > 50) setIsExpanded(diff > 0);
-    };
-
-    const handleShare = async () => {
-        const url = `${window.location.origin}${window.location.pathname}?lat=${analysis.coordinate.lat}&lng=${analysis.coordinate.lng}&open=1`;
-        if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: 'Consulta Ciudadana SEDEMA',
-                    text: `Ubicación: ${analysis.alcaldia}`,
-                    url
-                });
-            } catch (err) {
-                console.log(err);
-            }
+        if (Math.abs(diff) < 40) return;
+        if (diff > 0) {
+            // swipe up
+            goUp();
         } else {
-            navigator.clipboard.writeText(url);
+            // swipe down
+            goDown();
         }
     };
 
-    if (!analysis) return null;
+    const getHeight = () => {
+        if (sheetState === 'collapsed') return '18vh';
+        if (sheetState === 'mid') return '45vh';
+        return '85vh';
+    };
+
+    // Texto de tipo de suelo (igual que en LocationSummary)
+    const statusLabel =
+        analysis.isANP ? 'Área Natural Protegida' :
+        analysis.status === 'CONSERVATION_SOIL' ? 'Suelo de Conservación — Referencia normativa PGOEDF 2000' :
+        analysis.status === 'URBAN_SOIL' ? 'Suelo Urbano — Regulación a cargo de SEDUVI' :
+        'Información no disponible';
+
+    const zoningColor = analysis.zoningKey
+        ? getZoningColor(analysis.zoningKey)
+        : '#6b7280';
 
     return (
         <div
             ref={sheetRef}
-            className="md:hidden fixed bottom-0 left-0 w-full bg-white rounded-t-2xl shadow-[0_-5px_20px_rgba(0,0,0,0.2)] z-[3000] flex flex-col transition-all duration-300 ease-out"
-            style={{ height: isExpanded ? '85vh' : '35vh' }}
+            className="
+                md:hidden 
+                fixed bottom-0 left-0 w-full 
+                bg-white 
+                rounded-t-2xl 
+                shadow-[0_-5px_20px_rgba(0,0,0,0.2)] 
+                z-[3000] 
+                flex flex-col 
+                transition-all duration-300 ease-out
+            "
+            style={{ height: getHeight() }}
         >
+            {/* HANDLE + ENCABEZADO */}
             <div
-                className="sheet-header flex-shrink-0 h-8 flex justify-center items-center cursor-grab active:cursor-grabbing"
+                className="sheet-header flex-shrink-0 pt-1 pb-2 px-4 cursor-grab active:cursor-grabbing"
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
-                onClick={toggleSheet}
+                onClick={toggleFromTap}
             >
-                <div className="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+                {/* Handle */}
+                <div className="w-10 h-1.5 bg-gray-300 rounded-full mx-auto mb-2" />
+
+                <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-900 text-sm truncate">
+                            {analysis.alcaldia}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-0.5">
+                            <p className="text-[11px] text-gray-600 line-clamp-2">
+                                {statusLabel}
+                            </p>
+                            {analysis.zoningKey && (
+                                <span
+                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm flex-shrink-0"
+                                    style={{
+                                        backgroundColor: zoningColor,
+                                        borderColor: zoningColor,
+                                        color: '#ffffff'
+                                    }}
+                                >
+                                    {analysis.zoningKey}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onClose(); }}
+                        className="p-1.5 rounded-full bg-[#9d2449] shadow-sm active:scale-95 transition"
+                    >
+                        <Icons.X className="h-4 w-4 text-white" />
+                    </button>
+                </div>
             </div>
-            <div className="px-4 pb-2 flex justify-between items-center border-b border-gray-100 flex-shrink-0">
-                <h3 className="font-bold text-gray-800 text-sm truncate pr-2">
-                    {analysis.alcaldia}
-                </h3>
-                <button
-                    onClick={onClose}
-                    className="p-1 bg-gray-100 rounded-full"
-                >
-                    <Icons.X className="h-5 w-5 text-gray-500" />
-                </button>
-            </div>
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 bg-gray-50/50">
-                <ResultsContent analysis={analysis} />
-            </div>
+
+            {/* CONTENIDO: solo se muestra en mid / full */}
+            {(sheetState === 'mid' || sheetState === 'full') && (
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-4 bg-gray-50/50">
+                    <ResultsContent analysis={analysis} />
+                </div>
+            )}
+
+            {/* Acciones rápidas (se mantienen igual) */}
             <div className="flex-shrink-0 p-3 bg-white border-t border-gray-200 safe-area-bottom flex gap-3 overflow-x-auto">
                 <a
                     href={`https://www.google.com/maps/search/?api=1&query=${analysis.coordinate.lat},${analysis.coordinate.lng}`}
@@ -1129,7 +1254,22 @@ const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => 
                     <Icons.MapIcon className="h-4 w-4" /> Google Maps
                 </a>
                 <button
-                    onClick={handleShare}
+                    onClick={async () => {
+                        const url = `${window.location.origin}${window.location.pathname}?lat=${analysis.coordinate.lat}&lng=${analysis.coordinate.lng}&open=1`;
+                        if (navigator.share) {
+                            try {
+                                await navigator.share({
+                                    title: 'Consulta Ciudadana SEDEMA',
+                                    text: `Ubicación: ${analysis.alcaldia}`,
+                                    url
+                                });
+                            } catch {
+                                // silencio
+                            }
+                        } else {
+                            navigator.clipboard.writeText(url);
+                        }
+                    }}
                     className="flex-1 min-w-[100px] flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-300 py-2.5 px-4 rounded-full text-xs font-bold shadow-sm hover:bg-gray-50"
                 >
                     <Icons.Share className="h-4 w-4" /> Compartir
@@ -1138,7 +1278,6 @@ const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => 
         </div>
     );
 };
-
 /* ------------------------------------------------ */
 /* 8. MAPA */
 /* ------------------------------------------------ */
@@ -1346,7 +1485,7 @@ const bgColor =
 const textColor = '#ffffff'; // siempre blanco para máximo contraste
 
 const iconHtml = `
-    <div style="
+    <div class="marker-pop" style="
         width:32px;
         height:32px;
         background:${bgColor};
