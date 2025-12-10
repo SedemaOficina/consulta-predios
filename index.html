@@ -1293,33 +1293,37 @@ const MapViewer = ({
                         <Icons.X className="h-4 w-4 text-gray-500" />
                     </div>
                     <div className="p-2 space-y-2 overflow-y-auto custom-scrollbar flex-1">
-                        <div className="bg-gray-50 p-2 rounded-lg border border-gray-100 mb-2">
-                            <span className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">
-                                Tipo de Mapa
-                            </span>
-                            <div className="flex gap-2">
-                                <div
-                                    onClick={() => setActiveBaseLayer('STREETS')}
-                                    className={`flex-1 cursor-pointer p-1 rounded text-center text-[10px] font-bold border flex flex-col items-center justify-center gap-1 ${
-                                        activeBaseLayer === 'STREETS'
-                                            ? 'bg-white border-[#9d2449] text-[#9d2449] shadow-sm'
-                                            : 'border-transparent text-gray-500 hover:bg-white'
-                                    }`}
-                                >
-                                    Mapa
-                                </div>
-                                <div
-                                    onClick={() => setActiveBaseLayer('SATELLITE')}
-                                    className={`flex-1 cursor-pointer p-1 rounded text-center text-[10px] font-bold border flex flex-col items-center justify-center gap-1 ${
-                                        activeBaseLayer === 'SATELLITE'
-                                            ? 'bg-white border-[#9d2449] text-[#9d2449] shadow-sm'
-                                            : 'border-transparent text-gray-500 hover:bg-white'
-                                    }`}
-                                >
-                                    Satélite
-                                </div>
-                            </div>
-                        </div>
+                       <div className="bg-gray-50 p-2 rounded-lg border border-gray-100 mb-2">
+    <span className="text-[10px] font-bold text-gray-500 block mb-1 uppercase">
+        TIPO DE MAPA
+    </span>
+
+    <div className="mt-1 space-y-1">
+        {/* Opción: Mapa (Carto light) */}
+        <div
+            className="flex items-center justify-between px-1 py-1 rounded hover:bg-white cursor-pointer"
+            onClick={() => setActiveBaseLayer('STREETS')}
+        >
+            <span className="text-[11px] text-gray-700">Mapa</span>
+            <ToggleSwitch
+                checked={activeBaseLayer === 'STREETS'}
+                onChange={() => setActiveBaseLayer('STREETS')}
+            />
+        </div>
+
+        {/* Opción: Satélite */}
+        <div
+            className="flex items-center justify-between px-1 py-1 rounded hover:bg-white cursor-pointer"
+            onClick={() => setActiveBaseLayer('SATELLITE')}
+        >
+            <span className="text-[11px] text-gray-700">Satélite</span>
+            <ToggleSwitch
+                checked={activeBaseLayer === 'SATELLITE'}
+                onChange={() => setActiveBaseLayer('SATELLITE')}
+            />
+        </div>
+    </div>
+</div>
 
                         <div className="mb-1 text-[10px] font-semibold text-gray-500 uppercase">
                             Límites y contexto
