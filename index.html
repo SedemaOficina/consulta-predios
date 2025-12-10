@@ -70,7 +70,10 @@ const DATA_FILES = {
     SUELO_CONSERVACION: './suelo-de-conservacion-2020.geojson',
     ZONIFICACION: './zoonificación_pgoedf_2000.geojson',
     USOS_SUELO_CSV: './usos_suelo.csv'
+    
 };
+
+    const MAPBOX_TOKEN = 'pk.eyJ1Ijoiam9yZ2VsaWJlcjI4IiwiYSI6ImNtajA0eHR2eTA0b2gzZnB0NnU2a2xwY2oifQ.2BDJUISBBvrm1wM8RwXusg';
 
 const INITIAL_CENTER = [19.3200, -99.1500];
 const INITIAL_ZOOM = 10;
@@ -122,6 +125,38 @@ const getSectorStyle = (str) => {
         hash = str.charCodeAt(i) + ((hash << 5) - hash);
     }
     return styles[Math.abs(hash) % styles.length];
+};
+
+    // ----------------------------------------------------
+// Búsqueda en Mapbox (autocompletado de direcciones)
+// ----------------------------------------------------
+const searchMapboxPlaces = async (query) => {
+    const q = query.trim();
+    if (!q || q.length < 3) return [];
+
+    if (!MAPBOX_TOKEN || MAPBOX_TOKEN === 'TU_MAPBOX_TOKEN_AQUI') {
+        console.warn('MAPBOX_TOKEN no configurado');
+        return [];
+    }
+
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json` +
+        `?autocomplete=true&language=es&limit=5&proximity=-99.1332,19.4326&access_token=${MAPBOX_TOKEN}`;
+
+    try {
+        const res = await fetch(url);
+        if (!res.ok) return [];
+        const data = await res.json();
+        if (!data.features) return [];
+        return data.features.map(f => ({
+            id: f.id,
+            label: f.place_name,
+            lat: f.center[1],
+            lng: f.center[0]
+        }));
+    } catch (e) {
+        console.error('Error en búsqueda Mapbox', e);
+        return [];
+    }
 };
 
 /* ------------------------------------------------ */
@@ -1030,6 +1065,9 @@ const FloatingMapControls = ({ onUserLocation, onToggleLegend }) => {
 const SearchLogicDesktop = ({ onLocationSelect, onReset }) => {
     const [inputStr, setInputStr] = useState('');
     const [addressStr, setAddressStr] = useState('');
+    const [suggestions, setSuggestions] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const debounceRef = useRef(null);
 
     const handleManual = (e) => {
         e.preventDefault();
@@ -1039,30 +1077,69 @@ const SearchLogicDesktop = ({ onLocationSelect, onReset }) => {
         }
     };
 
-    const handleAddr = async (e) => {
+    const handleAddressChange = (e) => {
+        const value = e.target.value;
+        setAddressStr(value);
+
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+
+        if (!value.trim() || value.trim().length < 3) {
+            setSuggestions([]);
+            return;
+        }
+
+        debounceRef.current = setTimeout(async () => {
+            setIsSearching(true);
+            const res = await searchMapboxPlaces(value);
+            setSuggestions(res);
+            setIsSearching(false);
+        }, 300);
+    };
+
+    const handleAddressSubmit = async (e) => {
         e.preventDefault();
         if (!addressStr.trim()) return;
 
-        try {
-            const r = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressStr + ', CDMX')}&limit=1`
-            );
-            const d = await r.json();
-            if (d?.[0]) {
-                const lat = parseFloat(d[0].lat);
-                const lng = parseFloat(d[0].lon);
-                setInputStr(`${lat.toFixed(5)},${lng.toFixed(5)}`);
-                onLocationSelect({ lat, lng });
-            } else {
-                alert("No encontrado");
-            }
-        } catch {
-            alert("Error");
+        // Si hay sugerencias, toma la primera
+        if (suggestions.length > 0) {
+            const s = suggestions[0];
+            onLocationSelect({ lat: s.lat, lng: s.lng });
+            setInputStr(`${s.lat.toFixed(5)},${s.lng.toFixed(5)}`);
+            setSuggestions([]);
+            return;
         }
+
+        // Si no hay sugerencias aún, intenta buscar una vez
+        setIsSearching(true);
+        const res = await searchMapboxPlaces(addressStr);
+        setIsSearching(false);
+        if (res.length > 0) {
+            const s = res[0];
+            onLocationSelect({ lat: s.lat, lng: s.lng });
+            setInputStr(`${s.lat.toFixed(5)},${s.lng.toFixed(5)}`);
+            setSuggestions([]);
+        } else {
+            alert('No se encontraron coincidencias en Mapbox.');
+        }
+    };
+
+    const handleSelectSuggestion = (s) => {
+        setAddressStr(s.label);
+        setInputStr(`${s.lat.toFixed(5)},${s.lng.toFixed(5)}`);
+        setSuggestions([]);
+        onLocationSelect({ lat: s.lat, lng: s.lng });
+    };
+
+    const handleResetAll = () => {
+        setInputStr('');
+        setAddressStr('');
+        setSuggestions([]);
+        onReset();
     };
 
     return (
         <div className="space-y-2">
+            {/* Campo Lat,Lng manual */}
             <form onSubmit={handleManual} className="flex relative shadow-sm">
                 <input
                     type="text"
@@ -1075,16 +1152,43 @@ const SearchLogicDesktop = ({ onLocationSelect, onReset }) => {
                     Ir
                 </button>
             </form>
-            <form onSubmit={handleAddr} className="flex relative shadow-sm">
-                <input
-                    type="text"
-                    placeholder="Dirección..."
-                    className="w-full pl-3 pr-8 py-2 border rounded text-sm focus:outline-none"
-                    value={addressStr}
-                    onChange={e => setAddressStr(e.target.value)}
-                />
-                <Icons.Search className="absolute right-2 top-2.5 h-4 w-4 text-gray-400" />
-            </form>
+
+            {/* Campo de dirección con autocompletado Mapbox */}
+            <div className="relative shadow-sm">
+                <form onSubmit={handleAddressSubmit} className="flex relative">
+                    <input
+                        type="text"
+                        placeholder="Dirección (Mapbox)..."
+                        className="w-full pl-3 pr-8 py-2 border rounded text-sm focus:outline-none"
+                        value={addressStr}
+                        onChange={handleAddressChange}
+                    />
+                    <Icons.Search className="absolute right-2 top-2.5 h-4 w-4 text-gray-400" />
+                </form>
+
+                {/* Dropdown de sugerencias */}
+                {(suggestions.length > 0 || isSearching) && (
+                    <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-b shadow-md z-[1500] max-h-60 overflow-y-auto">
+                        {isSearching && (
+                            <div className="px-3 py-1.5 text-[11px] text-gray-500">
+                                Buscando en Mapbox…
+                            </div>
+                        )}
+                        {suggestions.map(s => (
+                            <button
+                                key={s.id}
+                                type="button"
+                                onClick={() => handleSelectSuggestion(s)}
+                                className="w-full text-left px-3 py-1.5 text-[11px] hover:bg-gray-50 border-t border-gray-50"
+                            >
+                                {s.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Botones Mi ubicación / Reset */}
             <div className="flex gap-2">
                 <button
                     onClick={() =>
@@ -1101,7 +1205,7 @@ const SearchLogicDesktop = ({ onLocationSelect, onReset }) => {
                     <Icons.Navigation className="h-3 w-3" /> Mi Ubicación
                 </button>
                 <button
-                    onClick={() => { setInputStr(''); setAddressStr(''); onReset(); }}
+                    onClick={handleResetAll}
                     className="px-3 py-2 bg-white border rounded text-gray-600 shadow-sm"
                 >
                     <Icons.RotateCcw className="h-4 w-4" />
@@ -1110,7 +1214,6 @@ const SearchLogicDesktop = ({ onLocationSelect, onReset }) => {
         </div>
     );
 };
-
 /* ------------------------------------------------ */
 /* 7.1 Acciones rápidas */
 /* ------------------------------------------------ */
