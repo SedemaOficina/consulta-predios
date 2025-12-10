@@ -139,20 +139,60 @@ const searchMapboxPlaces = async (query) => {
         return [];
     }
 
+    // Puedes afinar types para priorizar direcciones urbanas
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json` +
-        `?autocomplete=true&language=es&limit=5&proximity=-99.1332,19.4326&access_token=${MAPBOX_TOKEN}`;
+        `?autocomplete=true` +
+        `&language=es` +
+        `&limit=5` +
+        `&proximity=-99.1332,19.4326` +
+        `&types=address,neighborhood,locality,place` +
+        `&access_token=${MAPBOX_TOKEN}`;
 
     try {
         const res = await fetch(url);
         if (!res.ok) return [];
         const data = await res.json();
         if (!data.features) return [];
-        return data.features.map(f => ({
-            id: f.id,
-            label: f.place_name,
-            lat: f.center[1],
-            lng: f.center[0]
-        }));
+
+        return data.features.map(f => {
+            const ctx = f.context || [];
+
+            let colonia = null;
+            let alcaldia = null;
+            let ciudad = null;
+
+            ctx.forEach(c => {
+                if (c.id.startsWith('neighborhood')) {
+                    colonia = c.text;
+                } else if (c.id.startsWith('locality') || c.id.startsWith('place')) {
+                    // En CDMX suele venir aquí la alcaldía
+                    alcaldia = c.text;
+                } else if (c.id.startsWith('region')) {
+                    ciudad = c.text;
+                }
+            });
+
+            // Texto corto para el dropdown
+            const principal = f.text; // calle o punto principal
+            const partesSecundarias = [];
+            if (colonia) partesSecundarias.push(`Col. ${colonia}`);
+            if (alcaldia) partesSecundarias.push(alcaldia);
+
+            const shortLabel = partesSecundarias.length
+                ? `${principal} · ${partesSecundarias.join(' · ')}`
+                : f.place_name;
+
+            return {
+                id: f.id,
+                label: shortLabel,     // lo que verás en la lista
+                fullLabel: f.place_name, // texto completo si lo quieres mostrar después
+                lat: f.center[1],
+                lng: f.center[0],
+                colonia,
+                alcaldia,
+                ciudad
+            };
+        });
     } catch (e) {
         console.error('Error en búsqueda Mapbox', e);
         return [];
