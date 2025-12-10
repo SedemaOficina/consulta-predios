@@ -16,6 +16,9 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
+    <!-- Tus Estilos -->
+    <link rel="stylesheet" href="styles.css" />
+    
     <!-- Libraries -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -24,36 +27,6 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-    <!-- ESTILOS CSS -->
-    <style>
-        :root { --color-guinda: #9d2449; --font: 'Roboto', sans-serif; }
-        body { font-family: var(--font); color: #54565a; margin: 0; height: 100vh; overflow: hidden; background: #f3f4f6; }
-        
-        /* Scrollbars */
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
-        
-        /* Leaflet Tooltips */
-        .leaflet-tooltip.custom-tooltip { background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 11px; padding: 2px 6px; }
-        
-        /* Layout */
-        #root { height: 100%; display: flex; flex-direction: column; }
-        
-        /* Animaciones */
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .animate-in { animation: fadeIn 0.3s ease-out forwards; }
-        
-        /* MOBILE SPECIFIC */
-        @media (max-width: 768px) {
-            .leaflet-control-zoom { display: none !important; }
-            .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
-            #map-wrapper { height: 100vh !important; }
-        }
-        
-        /* Bottom Sheet Header Handle */
-        .sheet-header:active { cursor: grabbing; }
-    </style>
 </head>
 <body>
     <div id="root"></div>
@@ -122,7 +95,7 @@
             return styles[Math.abs(hash) % styles.length];
         };
 
-        /* --- ICONS --- */
+        /* --- ICONOS SVG STANDARD (No cortados) --- */
         const Icons = {
             Search: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>,
             MapPin: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>,
@@ -139,15 +112,17 @@
             X: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
             Copy: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>,
             Share: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>,
+            Eye: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>,
+            EyeOff: (p)=><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>,
         };
 
-        /* --- COMPONENTE TOGGLE SWITCH --- */
+        /* --- COMPONENTE TOGGLE SWITCH (Compacto) --- */
         const ToggleSwitch = ({ checked, onChange }) => (
             <button 
                 onClick={(e) => { e.stopPropagation(); onChange(!checked); }}
                 className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors duration-200 focus:outline-none ${checked ? 'bg-[#9d2449]' : 'bg-gray-300'}`}
             >
-                <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition duration-200 ${checked ? 'translate-x-3' : 'translate-x-0.5'}`} />
+                <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition duration-200 ${checked ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
             </button>
         );
 
@@ -157,7 +132,7 @@
         const isPointInPolygon = (p, f) => { const {lat,lng}=p; const {type,coordinates}=f.geometry; const c=(r)=>{let inP=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const xi=r[i][0],yi=r[i][1],xj=r[j][0],yj=r[j][1];if(((yi>lat)!==(yj>lat))&&(lng<(xj-xi)*(lat-yi)/(yj-yi)+xi))inP=!inP}return inP}; if(type==='Polygon')return c(coordinates[0]); if(type==='MultiPolygon'){for(const poly of coordinates)if(c(poly[0]))return true}return false; };
         const findFeature = (p, c) => { if(!c?.features) return null; for(const f of c.features) if(isPointInPolygon(p, f)) return f; return null; };
         
-        // Fase 1: Datos Críticos (Loader activo)
+        // Fase 1: Datos Críticos
         const loadCoreData = async () => {
             const fJ = async (u) => (await fetch(u)).json().catch(() => ({ type: "FC", features: [] }));
             const [cdmx, alcaldias, sc] = await Promise.all([
@@ -171,7 +146,7 @@
             return true;
         };
 
-        // Fase 2: Datos Secundarios (Background)
+        // Fase 2: Datos Secundarios
         const loadExtraData = async () => {
             const fJ = async (u) => (await fetch(u)).json().catch(() => ({ type: "FC", features: [] }));
             const fC = async (u) => new Promise(r => Papa.parse(u, { download: true, header: true, skipEmptyLines: true, encoding: "UTF-8", complete: res => r(res.data), error: () => r([]) }));
@@ -193,13 +168,10 @@
         const analyzeLocation = async (c) => {
             const r = { status: 'LOADING', isRestricted: false, allowedActivities: [], prohibitedActivities: [], timestamp: new Date().toLocaleString(), coordinate: c };
             
-            // Si CDMX no ha cargado (muy raro), salir
             if (!dataCache.cdmx) return r;
 
-            // 1. Checar si está dentro de CDMX
             if (dataCache.cdmx?.features.length && !findFeature(c, dataCache.cdmx)) {
                 r.status = 'OUTSIDE_CDMX';
-                // Si ya cargaron los vecinos, revisarlos
                 if (dataCache.edomex && dataCache.morelos) {
                     const inEM = findFeature(c, dataCache.edomex);
                     const inMOR = findFeature(c, dataCache.morelos);
@@ -208,18 +180,15 @@
                 return r;
             }
 
-            // 2. Alcaldía (Core Data)
             const alc = findFeature(c, dataCache.alcaldias);
             r.alcaldia = alc ? (alc.properties.NOMBRE || alc.properties.NOMGEO) : "CDMX";
 
-            // 3. Suelo de Conservación (Core Data)
             const sc = findFeature(c, dataCache.sc);
             if (!sc) { 
                 r.status = 'URBAN_SOIL'; 
                 return r; 
             }
 
-            // 4. Zonificación (Extra Data)
             r.status = 'CONSERVATION_SOIL'; r.isRestricted = true;
             
             if (dataCache.zoning) {
@@ -249,7 +218,6 @@
                     r.zoningKey = "SC"; 
                 }
             } else {
-                // Si la zonificación aún no carga
                 r.zoningName = "Cargando detalles...";
             }
             
@@ -437,64 +405,39 @@
             const toggleLayer = (k) => setVisibleLayers(p => ({...p, [k]: !p[k]}));
             const toggleZoningGroup = () => { const v=!visibleLayers.zoning; const u={zoning:v}; Object.keys(ZONING_CAT_INFO).forEach(k=>u[k]=v); setVisibleLayers(p=>({...p,...u})); };
 
-            // 1. Inicializar Mapa y Capas Base (una sola vez)
             useEffect(() => {
                 if (!mapRef.current || mapInstance.current) return;
                 const map = window.L.map(mapRef.current, { zoomControl: false }).setView(INITIAL_CENTER, INITIAL_ZOOM);
                 window.L.control.zoom({ position: 'topright' }).addTo(map);
                 mapInstance.current = map;
                 layersRef.current.base = window.L.tileLayer(BASE_LAYERS[activeBaseLayer], { maxZoom: 19 }).addTo(map);
+
+                const chk = setInterval(() => {
+                    if (dataCache.cdmx) {
+                        clearInterval(chk);
+                        const { edomex, morelos, sc, zoning, alcaldias } = dataCache;
+                        const add = (n, d, s, t) => { if(!d?.features) return; const l = window.L.geoJSON(d, { style:s, interactive:true, onEachFeature:(f,l)=>{if(t && f.properties?.[t]) l.bindTooltip(f.properties[t], {sticky:true, className:'custom-tooltip'});} }); layersRef.current[n]=l; };
+                        add('edomex', edomex, {color: LAYER_STYLES.edomex.color, weight:1, dashArray:'4,4', fillOpacity:0.1}, 'NOMGEO');
+                        add('morelos', morelos, {color: LAYER_STYLES.morelos.color, weight:1, dashArray:'4,4', fillOpacity:0.1}, 'NOMGEO');
+                        add('sc', sc, {color: LAYER_STYLES.sc.color, weight:1, fillColor: LAYER_STYLES.sc.color, fillOpacity:0.1, interactive:false}, null);
+                        add('zoning', zoning, getZoningStyle, 'PGOEDF');
+                        add('alcaldias', alcaldias, {color: LAYER_STYLES.alcaldias.color, weight:2, dashArray:'8,4', fillOpacity:0}, null);
+                        ['sc','zoning','alcaldias','edomex','morelos'].forEach(k => { if(layersRef.current[k]) layersRef.current[k].addTo(map); });
+                    }
+                }, 500);
                 map.on('click', e => onLocationSelect(e.latlng));
                 return () => { map.remove(); mapInstance.current = null; };
             }, []);
 
-            // 2. Cambiar Estilo Base
-            useEffect(() => { 
-                if(!mapInstance.current || !layersRef.current.base) return; 
-                layersRef.current.base.setUrl(BASE_LAYERS[activeBaseLayer]); 
-            }, [activeBaseLayer]);
+            useEffect(() => { if(!mapInstance.current || !layersRef.current.base) return; layersRef.current.base.setUrl(BASE_LAYERS[activeBaseLayer]); }, [activeBaseLayer]);
 
-            // 3. Cargar Capas CORE (CDMX, Alcaldías, SC) - Se ejecuta al inicio cuando loadCoreData termina
-            useEffect(() => {
-                if (!mapInstance.current || !dataCache.cdmx) return;
-                
-                const add = (n, d, s, t) => { if(!d?.features) return; const l = window.L.geoJSON(d, { style:s, interactive:true, onEachFeature:(f,l)=>{if(t && f.properties?.[t]) l.bindTooltip(f.properties[t], {sticky:true, className:'custom-tooltip'});} }); layersRef.current[n]=l; };
-                
-                // Si la capa no existe en el ref, la creamos
-                if (!layersRef.current.sc) {
-                    add('sc', dataCache.sc, {color: LAYER_STYLES.sc.color, weight:1, fillColor: LAYER_STYLES.sc.color, fillOpacity:0.1, interactive:false}, null);
-                    add('alcaldias', dataCache.alcaldias, {color: LAYER_STYLES.alcaldias.color, weight:2, dashArray:'8,4', fillOpacity:0}, null); // Sin tooltip
-                }
-            }, [dataCache.cdmx]); // Dependencia clave
-
-            // 4. Cargar Capas EXTRA (Zoning, Edomex) - Se ejecuta cuando extraDataLoaded cambia
-            useEffect(() => {
-                if (!mapInstance.current || !extraDataLoaded || !dataCache.zoning) return;
-
-                const add = (n, d, s, t) => { if(!d?.features) return; const l = window.L.geoJSON(d, { style:s, interactive:true, onEachFeature:(f,l)=>{if(t && f.properties?.[t]) l.bindTooltip(f.properties[t], {sticky:true, className:'custom-tooltip'});} }); layersRef.current[n]=l; };
-
-                if (!layersRef.current.zoning) {
-                    add('edomex', dataCache.edomex, {color: LAYER_STYLES.edomex.color, weight:1, dashArray:'4,4', fillOpacity:0.1}, 'NOMGEO');
-                    add('morelos', dataCache.morelos, {color: LAYER_STYLES.morelos.color, weight:1, dashArray:'4,4', fillOpacity:0.1}, 'NOMGEO');
-                    add('zoning', dataCache.zoning, getZoningStyle, 'PGOEDF');
-                }
-            }, [extraDataLoaded]);
-
-            // 5. Control de Visibilidad (Se ejecuta cuando visibleLayers cambia o se cargan nuevas capas)
             useEffect(() => {
                 if(!mapInstance.current) return;
-                
-                // Capas Generales
                 ['sc', 'alcaldias', 'edomex', 'morelos', 'zoning'].forEach(k => {
                     const l = layersRef.current[k]; if(!l) return;
-                    if(visibleLayers[k] && !mapInstance.current.hasLayer(l)) { 
-                        mapInstance.current.addLayer(l); 
-                        if(k==='alcaldias') l.bringToFront(); else l.bringToBack(); 
-                    }
+                    if(visibleLayers[k] && !mapInstance.current.hasLayer(l)) { mapInstance.current.addLayer(l); if(k==='alcaldias') l.bringToFront(); else l.bringToBack(); }
                     else if(!visibleLayers[k] && mapInstance.current.hasLayer(l)) mapInstance.current.removeLayer(l);
                 });
-
-                // Filtrado Zoning
                 if(layersRef.current.zoning && mapInstance.current.hasLayer(layersRef.current.zoning)) {
                     layersRef.current.zoning.eachLayer(l => {
                         const k = (l.feature.properties.CLAVE||'').toString().trim().toUpperCase();
@@ -503,9 +446,8 @@
                         else { l.setStyle({stroke:false, fill:false, interactive:false}); if(l._path) l._path.style.pointerEvents='none'; }
                     });
                 }
-            }, [visibleLayers, extraDataLoaded]); // Importante: re-evaluar cuando llega data extra
+            }, [visibleLayers]);
 
-            // 6. Marker
             useEffect(() => {
                 if(!mapInstance.current || !location) return;
                 if(markerRef.current) markerRef.current.remove();
