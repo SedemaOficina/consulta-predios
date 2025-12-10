@@ -173,7 +173,63 @@ const Icons = {
         </IconBase>
     ),
     XCircle: (p) => (
-        <IconBase {
+        <IconBase {...p}>
+            <circle cx="12" cy="12" r="10" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+        </IconBase>
+    ),
+    ChevronDown: (p) => (
+        <IconBase {...p}>
+            <polyline points="6 9 12 15 18 9" />
+        </IconBase>
+    ),
+    RotateCcw: (p) => (
+        <IconBase {...p}>
+            <polyline points="1 4 1 10 7 10" />
+            <path d="M3.51 15a9 9 0 102.13-9.36L1 10" />
+        </IconBase>
+    ),
+    MapIcon: (p) => (
+        <IconBase {...p}>
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+            <line x1="8" y1="2" x2="8" y2="18" />
+            <line x1="16" y1="6" x2="16" y2="22" />
+        </IconBase>
+    ),
+    Copy: (p) => (
+        <IconBase {...p}>
+            <rect x="9" y="9" width="13" height="13" rx="2" />
+            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+        </IconBase>
+    ),
+    Share: (p) => (
+        <IconBase {...p}>
+            <circle cx="18" cy="5" r="3" />
+            <circle cx="6" cy="12" r="3" />
+            <circle cx="18" cy="19" r="3" />
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+        </IconBase>
+    ),
+    Loader2: (p) => (
+        <IconBase {...p}>
+            <line x1="12" y1="2" x2="12" y2="6" />
+            <line x1="12" y1="18" x2="12" y2="22" />
+            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
+            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
+            <line x1="2" y1="12" x2="6" y2="12" />
+            <line x1="18" y1="12" x2="22" y2="12" />
+        </IconBase>
+    ),
+    X: (p) => (
+        <IconBase {...p}>
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+        </IconBase>
+    )
+};
+
 /* ------------------------------------------------ */
 /* 4. COMPONENTE TOGGLE SWITCH */
 /* ------------------------------------------------ */
@@ -422,7 +478,7 @@ const StatusMessage = ({ analysis }) => {
 };
 
 /* ------------------------------------------------ */
-/* 6.2 Resumen Ejecutivo — con etiqueta orientativa fija */
+/* 6.2 Resumen Ejecutivo */
 /* ------------------------------------------------ */
 
 const LocationSummary = ({ analysis }) => {
@@ -454,7 +510,6 @@ const LocationSummary = ({ analysis }) => {
 
     return (
         <>
-            {/* Etiqueta fija de resultado orientativo */}
             <div className="text-[10px] text-gray-500 mb-2 bg-gray-50 p-1 pl-2 rounded border border-gray-200">
                 Resultado orientativo — No sustituye dictamen oficial.
             </div>
@@ -469,14 +524,12 @@ const LocationSummary = ({ analysis }) => {
                     <p className="text-sm text-gray-600 mb-2">{analysis.zoningName}</p>
                 )}
 
-                {/* CHIP DE ESTADO */}
                 <p className="mb-3">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${chipClasses}`}>
                         {statusLabel}
                     </span>
                 </p>
 
-                {/* Lista de datos */}
                 <ul className="text-xs space-y-1.5 text-gray-700 border-t pt-2">
                     <li className="flex items-center gap-2">
                         <span className="text-gray-400">
@@ -849,7 +902,7 @@ const SearchLogicDesktop = ({ onLocationSelect, onReset }) => {
 };
 
 /* ------------------------------------------------ */
-/* 7.1 Acciones rápidas (Google Maps / Copiar enlace) */
+/* 7.1 Acciones rápidas */
 /* ------------------------------------------------ */
 
 const ActionButtonsDesktop = ({ analysis }) => {
@@ -880,7 +933,7 @@ const ActionButtonsDesktop = ({ analysis }) => {
 };
 
 /* ------------------------------------------------ */
-/* 7.2 Sidebar Desktop (con ícono en encabezado) */
+/* 7.2 Sidebar Desktop */
 /* ------------------------------------------------ */
 
 const SidebarDesktop = ({ analysis, onLocationSelect, onReset }) => (
@@ -996,7 +1049,7 @@ const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => 
 };
 
 /* ------------------------------------------------ */
-/* 8. MAPA: LEAFLET, CAPAS, LEYENDA, LOADER TILES */
+/* 8. MAPA */
 /* ------------------------------------------------ */
 
 const MapViewer = ({
@@ -1026,7 +1079,6 @@ const MapViewer = ({
         setVisibleLayers(prev => ({ ...prev, ...u }));
     };
 
-    // Crear mapa y capas base/estáticas
     useEffect(() => {
         if (!mapRef.current || mapInstance.current) return;
 
@@ -1119,14 +1171,12 @@ const MapViewer = ({
         };
     }, []);
 
-    // Cambio de base layer (Mapa / Satélite)
     useEffect(() => {
         if (!mapInstance.current || !layersRef.current.base) return;
         setTilesLoading(true);
         layersRef.current.base.setUrl(BASE_LAYERS[activeBaseLayer]);
     }, [activeBaseLayer]);
 
-    // Mostrar/Ocultar capas vectoriales
     useEffect(() => {
         if (!mapInstance.current) return;
 
@@ -1172,7 +1222,6 @@ const MapViewer = ({
         }
     }, [visibleLayers, extraDataLoaded]);
 
-    // Marcador de la consulta
     useEffect(() => {
         if (!mapInstance.current || !location) return;
 
@@ -1205,7 +1254,6 @@ const MapViewer = ({
         <div className="relative h-full w-full">
             <div ref={mapRef} className="h-full w-full bg-gray-200" />
 
-            {/* Loader de tiles */}
             {tilesLoading && (
                 <div className="absolute inset-0 flex items-center justify-center z-[1200] bg-black/10 pointer-events-none">
                     <div className="flex flex-col items-center gap-2 bg-white/90 px-4 py-3 rounded-lg shadow">
@@ -1217,7 +1265,6 @@ const MapViewer = ({
                 </div>
             )}
 
-            {/* Leyenda / Capas */}
             {isLegendOpen && (
                 <div className="absolute top-24 right-4 md:bottom-8 md:top-auto md:left-4 md:right-auto bg-white shadow-xl rounded-xl z-[2500] w-64 flex flex-col max-h-[50vh] animate-in overflow-hidden border border-gray-100">
                     <div
@@ -1359,7 +1406,6 @@ const MapViewer = ({
                 </div>
             )}
 
-            {/* Botón de leyenda en escritorio */}
             <div className="hidden md:block absolute bottom-8 left-4 z-[1000]">
                 {!isLegendOpen && (
                     <button
