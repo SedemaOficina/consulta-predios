@@ -1093,28 +1093,7 @@ const MobileSearchBar = ({ onLocationSelect, onReset }) => {
             alert('No se encontraron coincidencias en Mapbox.');
         }
     };
-        // Si hay sugerencias, toma la primera
-        if (suggestions.length > 0) {
-            const s = suggestions[0];
-            onLocationSelect({ lat: s.lat, lng: s.lng });
-            setQuery(s.label);
-            setSuggestions([]);
-            return;
-        }
-
-        // Si no hay sugerencias aún, intenta una búsqueda directa
-        setIsSearching(true);
-        const res = await searchMapboxPlaces(query);
-        setIsSearching(false);
-        if (res.length > 0) {
-            const s = res[0];
-            onLocationSelect({ lat: s.lat, lng: s.lng });
-            setQuery(s.label);
-            setSuggestions([]);
-        } else {
-            alert('No se encontraron coincidencias en Mapbox.');
-        }
-    };
+    
 
     const handleSelectSuggestion = (s) => {
         setQuery(s.label);
@@ -1263,35 +1242,24 @@ const FloatingMapControls = ({ onUserLocation, onToggleLegend }) => {
 };
 
 const SearchLogicDesktop = ({ onLocationSelect, onReset }) => {
-    const [inputStr, setInputStr] = useState('');
-    const [addressStr, setAddressStr] = useState('');
+    const [query, setQuery] = useState('');
     const [suggestions, setSuggestions] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
     const debounceRef = useRef(null);
 
-  const handleManual = (e) => {
-        e.preventDefault();
-        if (!inputStr.trim()) return;
-
-        const coord = parseCoordinateInput(inputStr);
-        if (coord) {
-            onLocationSelect(coord);
-        } else {
-            alert('Formato de coordenadas no reconocido. Ejemplos: "19.417849, -99.143846" o "19°25\'04.3\"N 99°08\'37.9\"W"');
-        }
-    };
-
-    const handleAddressChange = (e) => {
+    // Cambio de texto en el input
+    const handleChange = (e) => {
         const value = e.target.value;
-        setAddressStr(value);
+        setQuery(value);
 
+        // Si es muy corto, limpiamos sugerencias
         if (debounceRef.current) clearTimeout(debounceRef.current);
-
         if (!value.trim() || value.trim().length < 3) {
             setSuggestions([]);
             return;
         }
 
+        // Debounce de 300ms antes de llamar a Mapbox
         debounceRef.current = setTimeout(async () => {
             setIsSearching(true);
             const res = await searchMapboxPlaces(value);
@@ -1300,74 +1268,75 @@ const SearchLogicDesktop = ({ onLocationSelect, onReset }) => {
         }, 300);
     };
 
-    const handleAddressSubmit = async (e) => {
+    // Submit del formulario: coord → sugerencias → búsqueda directa
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!addressStr.trim()) return;
+        const value = query.trim();
+        if (!value) return;
 
-        // Si hay sugerencias, toma la primera
-        if (suggestions.length > 0) {
-            const s = suggestions[0];
-            onLocationSelect({ lat: s.lat, lng: s.lng });
-            setInputStr(`${s.lat.toFixed(5)},${s.lng.toFixed(5)}`);
+        // 1) Intentar interpretar como coordenadas (decimal, DMS, copy/paste Google)
+        const coord = parseCoordinateInput(value);
+        if (coord) {
+            onLocationSelect(coord);
             setSuggestions([]);
             return;
         }
 
-        // Si no hay sugerencias aún, intenta buscar una vez
+        // 2) Si hay sugerencias, toma la primera
+        if (suggestions.length > 0) {
+            const s = suggestions[0];
+            onLocationSelect({ lat: s.lat, lng: s.lng });
+            setQuery(s.fullLabel || s.label);
+            setSuggestions([]);
+            return;
+        }
+
+        // 3) Si no hay sugerencias aún, intenta una búsqueda directa a Mapbox
         setIsSearching(true);
-        const res = await searchMapboxPlaces(addressStr);
+        const res = await searchMapboxPlaces(value);
         setIsSearching(false);
         if (res.length > 0) {
             const s = res[0];
             onLocationSelect({ lat: s.lat, lng: s.lng });
-            setInputStr(`${s.lat.toFixed(5)},${s.lng.toFixed(5)}`);
+            setQuery(s.fullLabel || s.label);
             setSuggestions([]);
         } else {
             alert('No se encontraron coincidencias en Mapbox.');
         }
     };
 
+    // Click en una sugerencia del dropdown
     const handleSelectSuggestion = (s) => {
-        setAddressStr(s.label);
-        setInputStr(`${s.lat.toFixed(5)},${s.lng.toFixed(5)}`);
+        setQuery(s.fullLabel || s.label);
         setSuggestions([]);
         onLocationSelect({ lat: s.lat, lng: s.lng });
     };
 
+    // Reset completo del campo y resultados
     const handleResetAll = () => {
-        setInputStr('');
-        setAddressStr('');
+        setQuery('');
         setSuggestions([]);
         onReset();
     };
 
     return (
         <div className="space-y-2">
-            {/* Campo Lat,Lng manual */}
-            <form onSubmit={handleManual} className="flex relative shadow-sm">
-                <input
-                    type="text"
-                    placeholder="Lat, Lng"
-                    className="w-full pl-3 pr-2 py-2 border rounded-l text-sm focus:outline-none"
-                    value={inputStr}
-                    onChange={e => setInputStr(e.target.value)}
-                />
-                <button className="px-3 bg-[#9d2449] text-white rounded-r font-bold text-sm">
-                    Ir
-                </button>
-            </form>
-
-            {/* Campo de dirección con autocompletado Mapbox */}
+            {/* Campo único: direcciones + coordenadas */}
             <div className="relative shadow-sm">
-                <form onSubmit={handleAddressSubmit} className="flex relative">
+                <form onSubmit={handleSubmit} className="flex relative">
                     <input
                         type="text"
-                        placeholder="Dirección (Mapbox)..."
+                        placeholder="Dirección o coordenadas (Lat/Lng, DMS)..."
                         className="w-full pl-3 pr-8 py-2 border rounded text-sm focus:outline-none"
-                        value={addressStr}
-                        onChange={handleAddressChange}
+                        value={query}
+                        onChange={handleChange}
                     />
-                    <Icons.Search className="absolute right-2 top-2.5 h-4 w-4 text-gray-400" />
+                    <button
+                        type="submit"
+                        className="absolute right-1 top-1.5 p-1.5 text-gray-500 hover:text-[#9d2449]"
+                    >
+                        <Icons.Search className="h-4 w-4" />
+                    </button>
                 </form>
 
                 {/* Dropdown de sugerencias */}
@@ -1385,7 +1354,14 @@ const SearchLogicDesktop = ({ onLocationSelect, onReset }) => {
                                 onClick={() => handleSelectSuggestion(s)}
                                 className="w-full text-left px-3 py-1.5 text-[11px] hover:bg-gray-50 border-t border-gray-50"
                             >
-                                {s.label}
+                                <div className="font-medium text-gray-800">
+                                    {s.label}
+                                </div>
+                                {s.fullLabel && (
+                                    <div className="text-[10px] text-gray-500">
+                                        {s.fullLabel}
+                                    </div>
+                                )}
                             </button>
                         ))}
                     </div>
