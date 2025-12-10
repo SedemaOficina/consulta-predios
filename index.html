@@ -1738,6 +1738,17 @@ mapInstance.current.flyTo([location.lat, location.lng], 15, { duration: 0.8 });
                 </div>
             )}
 
+           {/* Botón de leyenda en escritorio */}
+            {/* Banner de ayuda cuando no hay selección (solo escritorio) */}
+            {!analysisStatus && (
+                <div className="hidden md:flex absolute top-20 right-4 z-[1100]">
+                    <div className="bg-white/95 border border-gray-200 rounded-lg shadow-md px-3 py-2 text-[11px] text-gray-700 max-w-xs">
+                        Haz clic en el mapa para iniciar una consulta de zonificación y actividades en el punto seleccionado.
+                    </div>
+                </div>
+            )}
+
+            {/* Botón de leyenda en escritorio */}
             <div className="hidden md:block absolute bottom-8 left-4 z-[1000]">
                 {!isLegendOpen && (
                     <button
