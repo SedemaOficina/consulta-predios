@@ -527,11 +527,27 @@ const LocationSummary = ({ analysis }) => {
                     <h2 className="text-sm font-bold text-gray-800 leading-snug">
                         {analysis.alcaldia || 'Ciudad de México'}
                     </h2>
-                    {analysis.zoningName && (
-                        <p className="text-[11px] text-gray-600">
-                            {analysis.zoningName}
-                        </p>
-                    )}
+                   {analysis.zoningName && (
+    <div className="flex items-center gap-2 mb-2">
+        <p className="text-sm text-gray-700 font-medium">
+            {analysis.zoningName}
+        </p>
+
+        {/* Badge con el color de la categoría de zonificación */}
+        {analysis.zoningKey && (
+            <span
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm"
+                style={{
+                    backgroundColor: getZoningColor(analysis.zoningKey),
+                    borderColor: getZoningColor(analysis.zoningKey),
+                    color: "#ffffff"
+                }}
+            >
+                {analysis.zoningKey}
+            </span>
+        )}
+    </div>
+)}
                 </div>
 
                 {/* Fila de badges: zonificación y tipo de suelo */}
