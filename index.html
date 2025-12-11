@@ -27,6 +27,11 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<!-- jsPDF + html2canvas para exportar ficha en PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
 </head>
 <body>
 <div id="root"></div>
@@ -862,7 +867,273 @@ const LegalDisclaimer = () => (
     </div>
 );
 
-/* ------------------------------------------------ */
+
+// ------------------------------------------------
+// FICHA PDF (plantilla oculta para exportar)
+// ------------------------------------------------
+const PdfFicha = React.forwardRef(({ analysis }, ref) => {
+    if (!analysis) return null;
+
+    const fecha = analysis.timestamp || new Date().toLocaleString();
+    const folio = `F-${new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 12)}`;
+
+    const statusLabel =
+        analysis.isANP ? 'Área Natural Protegida' :
+        analysis.status === 'CONSERVATION_SOIL' ? 'Suelo de Conservación' :
+        analysis.status === 'URBAN_SOIL' ? 'Suelo Urbano' :
+        analysis.status === 'OUTSIDE_CDMX' ? 'Fuera de la Ciudad de México' :
+        'Información no disponible';
+
+    const groupBySectorGeneral = (activities = []) => {
+        const map = {};
+        activities.forEach(a => {
+            const sector = a.sector || 'Sin sector';
+            const general = a.general || 'Sin clasificación';
+            const key = `${sector}|||${general}`;
+            if (!map[key]) map[key] = 0;
+            map[key] += 1;
+        });
+        return Object.entries(map).map(([k, count]) => {
+            const [sector, general] = k.split('|||');
+            return { sector, general, count };
+        });
+    };
+
+    const resumenProhibidas = groupBySectorGeneral(analysis.prohibitedActivities || []);
+    const resumenPermitidas = groupBySectorGeneral(analysis.allowedActivities || []);
+
+    return (
+        <div
+            ref={ref}
+            style={{
+                width: '794px',    // aprox A4 a ~96dpi
+                padding: '32px',
+                fontFamily: 'Roboto, sans-serif',
+                fontSize: '11px',
+                color: '#111827',
+                backgroundColor: '#ffffff'
+            }}
+        >
+            {/* ENCABEZADO */}
+            <header style={{ display: 'flex', marginBottom: '16px', alignItems: 'center' }}>
+                <div style={{ flex: '0 0 auto', marginRight: '16px' }}>
+                    <img
+                        src="./logo-sedema.png"
+                        alt="SEDEMA"
+                        style={{ height: '48px' }}
+                    />
+                </div>
+                <div style={{ flex: '1 1 auto' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#111827' }}>
+                        VISOR DE CONSULTA CIUDADANA — FICHA DE RESULTADOS
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#4b5563', marginTop: '2px' }}>
+                        Consulta normativa de Suelo Urbano y Suelo de Conservación en la Ciudad de México (PGOEDF 2000)
+                    </div>
+                </div>
+                <div style={{ flex: '0 0 auto', textAlign: 'right', fontSize: '9px', color: '#4b5563' }}>
+                    <div><strong>Fecha de consulta:</strong></div>
+                    <div>{fecha}</div>
+                    <div style={{ marginTop: '4px' }}><strong>Folio orientativo:</strong></div>
+                    <div>{folio}</div>
+                </div>
+            </header>
+
+            <hr style={{ borderColor: '#e5e7eb', marginBottom: '12px' }} />
+
+            {/* 1. DATOS GENERALES */}
+            <section style={{ marginBottom: '12px' }}>
+                <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>
+                    1. Datos generales de la ubicación
+                </h2>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
+                    <tbody>
+                        <tr>
+                            <td style={{ width: '40%', padding: '4px', border: '1px solid #e5e7eb', background: '#f9fafb' }}>
+                                <strong>Alcaldía</strong>
+                            </td>
+                            <td style={{ padding: '4px', border: '1px solid #e5e7eb' }}>
+                                {analysis.alcaldia || 'Ciudad de México'}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style={{ padding: '4px', border: '1px solid #e5e7eb', background: '#f9fafb' }}>
+                                <strong>Tipo de suelo</strong>
+                            </td>
+                            <td style={{ padding: '4px', border: '1px solid #e5e7eb' }}>
+                                {statusLabel}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style={{ padding: '4px', border: '1px solid #e5e7eb', background: '#f9fafb' }}>
+                                <strong>Zonificación PGOEDF</strong>
+                            </td>
+                            <td style={{ padding: '4px', border: '1px solid #e5e7eb' }}>
+                                {analysis.zoningKey && (
+                                    <span style={{ fontWeight: 700, marginRight: '6px' }}>
+                                        [{analysis.zoningKey}]
+                                    </span>
+                                )}
+                                {analysis.zoningName || 'Sin información específica'}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style={{ padding: '4px', border: '1px solid #e5e7eb', background: '#f9fafb' }}>
+                                <strong>Coordenadas (WGS84)</strong>
+                            </td>
+                            <td style={{ padding: '4px', border: '1px solid #e5e7eb' }}>
+                                Lat: {analysis.coordinate.lat.toFixed(6)} &nbsp; | &nbsp;
+                                Lng: {analysis.coordinate.lng.toFixed(6)}
+                            </td>
+                        </tr>
+                        {analysis.outsideContext && (
+                            <tr>
+                                <td style={{ padding: '4px', border: '1px solid #e5e7eb', background: '#f9fafb' }}>
+                                    <strong>Contexto</strong>
+                                </td>
+                                <td style={{ padding: '4px', border: '1px solid #e5e7eb' }}>
+                                    Fuera de CDMX — {analysis.outsideContext}
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </section>
+
+            {/* 2. RESUMEN NORMATIVO */}
+            <section style={{ marginBottom: '12px' }}>
+                <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>
+                    2. Resumen normativo
+                </h2>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
+                    <tbody>
+                        <tr>
+                            <td style={{ width: '40%', padding: '4px', border: '1px solid #e5e7eb', background: '#f9fafb' }}>
+                                ¿Ubicación en Suelo de Conservación?
+                            </td>
+                            <td style={{ padding: '4px', border: '1px solid #e5e7eb' }}>
+                                {analysis.status === 'CONSERVATION_SOIL' ? 'Sí' : 'No'}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style={{ padding: '4px', border: '1px solid #e5e7eb', background: '#f9fafb' }}>
+                                ¿Corresponde a Área Natural Protegida?
+                            </td>
+                            <td style={{ padding: '4px', border: '1px solid #e5e7eb' }}>
+                                {analysis.isANP ? 'Sí' : 'No'}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style={{ padding: '4px', border: '1px solid #e5e7eb', background: '#f9fafb' }}>
+                                Base de referencia
+                            </td>
+                            <td style={{ padding: '4px', border: '1px solid #e5e7eb' }}>
+                                Programa General de Ordenamiento Ecológico del Distrito Federal (PGOEDF 2000) y capas geoespaciales institucionales de SEDEMA.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            {/* 3. ACTIVIDADES PROHIBIDAS */}
+            <section style={{ marginBottom: '10px' }}>
+                <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#b91c1c' }}>
+                    3. Actividades prohibidas (resumen)
+                </h2>
+                {resumenProhibidas.length === 0 ? (
+                    <div style={{ fontSize: '10px', color: '#4b5563' }}>
+                        No se identificaron actividades clasificadas como prohibidas para esta zonificación en el catálogo cargado.
+                    </div>
+                ) : (
+                    <>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9px', marginBottom: '4px' }}>
+                            <thead>
+                                <tr>
+                                    <th style={{ border: '1px solid #e5e7eb', background: '#fee2e2', padding: '4px', textAlign: 'left' }}>Sector</th>
+                                    <th style={{ border: '1px solid #e5e7eb', background: '#fee2e2', padding: '4px', textAlign: 'left' }}>Actividad general</th>
+                                    <th style={{ border: '1px solid #e5e7eb', background: '#fee2e2', padding: '4px', textAlign: 'center', width: '12%' }}>Nº específicas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {resumenProhibidas.slice(0, 8).map((r, i) => (
+                                    <tr key={i}>
+                                        <td style={{ border: '1px solid #e5e7eb', padding: '3px' }}>{r.sector}</td>
+                                        <td style={{ border: '1px solid #e5e7eb', padding: '3px' }}>{r.general}</td>
+                                        <td style={{ border: '1px solid #e5e7eb', padding: '3px', textAlign: 'center' }}>{r.count}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <div style={{ fontSize: '9px', color: '#6b7280' }}>
+                            Nota: Este resumen muestra un concentrado por sector y actividad general. El detalle completo se consulta directamente en el visor.
+                        </div>
+                    </>
+                )}
+            </section>
+
+            {/* 4. ACTIVIDADES PERMITIDAS */}
+            <section style={{ marginBottom: '10px' }}>
+                <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#166534' }}>
+                    4. Actividades permitidas (resumen)
+                </h2>
+                {resumenPermitidas.length === 0 ? (
+                    <div style={{ fontSize: '10px', color: '#4b5563' }}>
+                        No se identificaron actividades clasificadas como permitidas para esta zonificación en el catálogo cargado.
+                    </div>
+                ) : (
+                    <>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9px', marginBottom: '4px' }}>
+                            <thead>
+                                <tr>
+                                    <th style={{ border: '1px solid #e5e7eb', background: '#dcfce7', padding: '4px', textAlign: 'left' }}>Sector</th>
+                                    <th style={{ border: '1px solid #e5e7eb', background: '#dcfce7', padding: '4px', textAlign: 'left' }}>Actividad general</th>
+                                    <th style={{ border: '1px solid #e5e7eb', background: '#dcfce7', padding: '4px', textAlign: 'center', width: '12%' }}>Nº específicas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {resumenPermitidas.slice(0, 8).map((r, i) => (
+                                    <tr key={i}>
+                                        <td style={{ border: '1px solid #e5e7eb', padding: '3px' }}>{r.sector}</td>
+                                        <td style={{ border: '1px solid #e5e7eb', padding: '3px' }}>{r.general}</td>
+                                        <td style={{ border: '1px solid #e5e7eb', padding: '3px', textAlign: 'center' }}>{r.count}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <div style={{ fontSize: '9px', color: '#6b7280' }}>
+                            Nota: Este resumen muestra un concentrado por sector y actividad general. El detalle completo se consulta directamente en el visor.
+                        </div>
+                    </>
+                )}
+            </section>
+
+            {/* 5. ENLACES Y AVISO LEGAL */}
+            <section style={{ marginTop: '8px' }}>
+                <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>
+                    5. Enlaces de referencia
+                </h2>
+                <div style={{ fontSize: '9px', color: '#4b5563', marginBottom: '6px' }}>
+                    <div>
+                        <strong>Visor de Consulta Ciudadana:</strong>{' '}
+                        {window.location.origin}{window.location.pathname}?lat={analysis.coordinate.lat}&lng={analysis.coordinate.lng}&open=1
+                    </div>
+                    <div style={{ marginTop: '2px' }}>
+                        Para mayor detalle normativo, consulte los instrumentos oficiales vigentes (PGOEDF 2000, Programas de Manejo de ANP y normatividad urbana aplicable).
+                    </div>
+                </div>
+
+                <div style={{ fontSize: '8px', color: '#6b7280', borderTop: '1px solid #e5e7eb', paddingTop: '6px', textAlign: 'justify' }}>
+                    <strong>Aviso legal:</strong> La presente ficha tiene carácter orientativo y no sustituye dictámenes técnicos, resoluciones administrativas ni instrumentos jurídicos emitidos por las autoridades competentes. La información se basa en datos geoespaciales y normativos disponibles al momento de la consulta y puede estar sujeta a actualización.
+                </div>
+            </section>
+        </div>
+    );
+});
+
+
+
+
+    
 /* 6.5 CONTENIDO PRINCIPAL DEL PANEL */
 /* ------------------------------------------------ */
 
@@ -870,77 +1141,130 @@ const ResultsContent = ({ analysis }) => {
     const [activeTab, setActiveTab] = useState('prohibidas'); // 'prohibidas' | 'permitidas'
     const [showDetails, setShowDetails] = useState(true);      // para 4.2
 
+    // NUEVO: referencia a la ficha PDF
+    const pdfRef = useRef(null);
+
+    // NUEVO: función para generar y descargar el PDF
+    const handleExportPDF = async () => {
+        if (!analysis || !pdfRef.current) return;
+
+        const element = pdfRef.current;
+        const { jsPDF } = window.jspdf;
+
+        if (typeof html2canvas === 'undefined') {
+            alert('No se encontró html2canvas. Verifica que el script esté cargado.');
+            return;
+        }
+
+        const canvas = await html2canvas(element, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff'
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+        const imgProps = pdf.getImageProperties(imgData);
+        const imgWidth = pdfWidth;
+        const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+
+        const nombreArchivo = `ficha-${(analysis.alcaldia || 'CDMX')
+            .replace(/\s+/g, '_')
+            .toUpperCase()}-${new Date().toISOString().slice(0,10)}.pdf`;
+
+        pdf.save(nombreArchivo);
+    };
+
     if (!analysis)
         return (
-        <div className="bg-white border rounded-xl shadow-sm p-4 text-xs text-gray-700 space-y-3">
-            
-            {/* Título */}
-            <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-[#9d2449] rounded-full" />
-                <h2 className="font-bold text-gray-800 text-sm">
-                    ¿Cómo usar este visor?
-                </h2>
-            </div>
-
-            {/* Pasos principales */}
-            <div className="space-y-2">
-                <div className="flex items-start gap-2">
-                    <Icons.Search className="h-4 w-4 text-[#9d2449] mt-0.5" />
-                    <p className="leading-snug">
-                        Busca una dirección o utiliza <span className="font-semibold">“Mi ubicación”</span>.
-                    </p>
+            <div className="bg-white border rounded-xl shadow-sm p-4 text-xs text-gray-700 space-y-3">
+                {/* Título */}
+                <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-[#9d2449] rounded-full" />
+                    <h2 className="font-bold text-gray-800 text-sm">
+                        ¿Cómo usar este visor?
+                    </h2>
                 </div>
 
-                <div className="flex items-start gap-2">
-                    <Icons.MapPin className="h-4 w-4 text-[#9d2449] mt-0.5" />
-                    <p className="leading-snug">
-                        Haz clic en el mapa para fijar el punto de consulta.
-                    </p>
+                {/* Pasos principales */}
+                <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                        <Icons.Search className="h-4 w-4 text-[#9d2449] mt-0.5" />
+                        <p className="leading-snug">
+                            Busca una dirección o utiliza <span className="font-semibold">“Mi ubicación”</span>.
+                        </p>
+                    </div>
+
+                    <div className="flex items-start gap-2">
+                        <Icons.MapPin className="h-4 w-4 text-[#9d2449] mt-0.5" />
+                        <p className="leading-snug">
+                            Haz clic en el mapa para fijar el punto de consulta.
+                        </p>
+                    </div>
+
+                    <div className="flex items-start gap-2">
+                        <Icons.Layers className="h-4 w-4 text-[#9d2449] mt-0.5" />
+                        <p className="leading-snug">
+                            Revisa la <span className="font-semibold">zonificación</span> y las actividades 
+                            permitidas o restringidas según el área seleccionada.
+                        </p>
+                    </div>
                 </div>
 
-                <div className="flex items-start gap-2">
-                    <Icons.Layers className="h-4 w-4 text-[#9d2449] mt-0.5" />
-                    <p className="leading-snug">
-                        Revisa la <span className="font-semibold">zonificación</span> y las actividades 
-                        permitidas o restringidas según el área seleccionada.
-                    </p>
+                {/* Significado de los colores del punto */}
+                <div className="pt-2 mt-2 border-t border-gray-200">
+                    <p className="font-semibold text-gray-800 mb-2 text-[11px]">Colores del punto</p>
+
+                    <ul className="space-y-1.5">
+                        <li className="flex items-center gap-2">
+                            <span className="inline-block w-3 h-3 rounded-full bg-[#22c55e] border border-gray-300" />
+                            <span className="text-[11px]">
+                                <span className="font-semibold">Verde:</span> Suelo Urbano (competencia SEDUVI).
+                            </span>
+                        </li>
+                        
+                        <li className="flex items-center gap-2">
+                            <span className="inline-block w-3 h-3 rounded-full bg-[#ef4444] border border-gray-300" />
+                            <span className="text-[11px]">
+                                <span className="font-semibold">Rojo:</span> Suelo de Conservación (referencia PGOEDF 2000).
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+
+                {/* Nota */}
+                <div className="bg-gray-50 border rounded-lg p-2 text-[10px] text-gray-500 leading-snug">
+                    Esta herramienta es orientativa y no sustituye un dictamen técnico o resolución jurídica.
                 </div>
             </div>
-
-            {/* Significado de los colores del punto */}
-            <div className="pt-2 mt-2 border-t border-gray-200">
-                <p className="font-semibold text-gray-800 mb-2 text-[11px]">Colores del punto</p>
-
-                <ul className="space-y-1.5">
-                    <li className="flex items-center gap-2">
-                        <span className="inline-block w-3 h-3 rounded-full bg-[#22c55e] border border-gray-300" />
-                        <span className="text-[11px]">
-                            <span className="font-semibold">Verde:</span> Suelo Urbano (competencia SEDUVI).
-                        </span>
-                    </li>
-                    
-                    <li className="flex items-center gap-2">
-                        <span className="inline-block w-3 h-3 rounded-full bg-[#ef4444] border border-gray-300" />
-                        <span className="text-[11px]">
-                            <span className="font-semibold">Rojo:</span> Suelo de Conservación (referencia PGOEDF 2000).
-                        </span>
-                    </li>
-                </ul>
-            </div>
-
-            {/* Nota */}
-            <div className="bg-gray-50 border rounded-lg p-2 text-[10px] text-gray-500 leading-snug">
-                Esta herramienta es orientativa y no sustituye un dictamen técnico o resolución jurídica.
-            </div>
-        </div>
-    );
-
-    
+        );
 
     return (
         <div className="space-y-4 animate-in pb-20">
+            {/* PLANTILLA OCULTa PARA PDF */}
+            <div style={{ position: 'absolute', left: '-99999px', top: 0 }}>
+                <PdfFicha analysis={analysis} ref={pdfRef} />
+            </div>
+
+            {/* RESUMEN + ESTADO */}
             <LocationSummary analysis={analysis} />
             <StatusMessage analysis={analysis} />
+
+            {/* BOTÓN EXPORTAR PDF (ESCRITORIO) */}
+            <div className="flex justify-end mt-1">
+                <button
+                    onClick={handleExportPDF}
+                    className="hidden md:inline-flex items-center gap-1 px-3 py-1.5 text-[11px] rounded-full border border-gray-300 bg-white text-gray-700 hover:border-[#9d2449] hover:text-[#9d2449] shadow-sm"
+                >
+                    <Icons.Copy className="h-3 w-3" />
+                    Exportar ficha en PDF
+                </button>
+            </div>
 
             {analysis.zoningName === 'Cargando detalles...' && (
                 <div className="p-2 bg-yellow-50 text-yellow-800 text-[10px] rounded border border-yellow-200">
@@ -948,13 +1272,12 @@ const ResultsContent = ({ analysis }) => {
                 </div>
             )}
 
-              {/* Encabezado de sección de actividades */}
+            {/* Encabezado de sección de actividades */}
             <div className="flex items-center justify-between mt-2">
                 <div className="text-[11px] font-semibold text-gray-600">
                     Detalle de actividades según zonificación PGOEDF 2000
                 </div>
 
-                {/* Botón modo resumen (4.2) */}
                 <button
                     onClick={() => setShowDetails(v => !v)}
                     className="text-[10px] text-[#9d2449] hover:underline"
@@ -989,7 +1312,6 @@ const ResultsContent = ({ analysis }) => {
                         </button>
                     </div>
 
-                    {/* Contenido según tab */}
                     {activeTab === 'prohibidas' && (
                         <GroupedActivities
                             title="ACTIVIDADES PROHIBIDAS"
