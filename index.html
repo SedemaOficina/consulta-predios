@@ -2556,68 +2556,105 @@ const MapViewer = ({
         base.addTo(map);
         layersRef.current.base = base;
 
-        // Cargar SC y alcaldías cuando ya esté el cache core
-        const check = setInterval(() => {
-            if (!dataCache.cdmx) return;
+           // 1) Inicialización del mapa + creación de capas core (SC + alcaldías)
+    useEffect(() => {
+        if (!mapRef.current || mapInstance.current || !window.L) return;
 
-            clearInterval(check);
-            const { sc, alcaldias } = dataCache;
+        const bounds = window.L.latLngBounds(
+            [18.7, -99.6],
+            [19.9, -98.7]
+        );
 
-            const addLayer = (name, data, style, tooltipField) => {
-                if (!data?.features) return;
-                const layer = window.L.geoJSON(data, {
-                    style,
-                    interactive: true,
-                    onEachFeature: (feature, layerInstance) => {
-                        if (name === 'zoning') {
-                            layerInstance.on('mouseover', () => {
-                                layerInstance.setStyle({ weight: 2.5 });
-                            });
-                            layerInstance.on('mouseout', () => {
-                                layerInstance.setStyle({ weight: 1.4 });
-                            });
-                        }
-                        if (tooltipField && feature.properties?.[tooltipField]) {
-                            layerInstance.bindTooltip(feature.properties[tooltipField], {
-                                sticky: true,
-                                className: 'custom-tooltip'
-                            });
-                        }
+        const map = window.L.map(mapRef.current, {
+            zoomControl: false,
+            minZoom: 9,
+            maxZoom: 18,
+            preferCanvas: true,
+            maxBounds: bounds,
+            maxBoundsViscosity: 0.8
+        }).setView(INITIAL_CENTER, INITIAL_ZOOM);
+
+        window.L.control.zoom({ position: 'topright' }).addTo(map);
+        mapInstance.current = map;
+
+        // Capa base inicial
+        const base = window.L.tileLayer(getBaseLayerUrl('SATELLITE'), {
+            maxZoom: 19,
+            tileSize: 256,
+            zoomOffset: 0
+        });
+
+        base.on('loading', () => setTilesLoading(true));
+        base.on('load', () => setTilesLoading(false));
+        base.addTo(map);
+        layersRef.current.base = base;
+
+        // Core data ya está cargado porque App esperó a loadCoreData()
+        const { sc, alcaldias } = dataCache;
+
+        const addLayer = (name, data, style, tooltipField) => {
+            if (!data?.features || !data.features.length) return;
+            const layer = window.L.geoJSON(data, {
+                style,
+                interactive: true,
+                onEachFeature: (feature, layerInstance) => {
+                    if (name === 'zoning') {
+                        layerInstance.on('mouseover', () => {
+                            layerInstance.setStyle({ weight: 2.5 });
+                        });
+                        layerInstance.on('mouseout', () => {
+                            layerInstance.setStyle({ weight: 1.4 });
+                        });
                     }
-                });
-                layersRef.current[name] = layer;
-            };
+                    if (tooltipField && feature.properties?.[tooltipField]) {
+                        layerInstance.bindTooltip(feature.properties[tooltipField], {
+                            sticky: true,
+                            className: 'custom-tooltip'
+                        });
+                    }
+                }
+            });
+            layersRef.current[name] = layer;
+        };
 
-                       // Creamos las capas SC y Alcaldías, pero NO las agregamos todavía.
-            addLayer(
-                'sc',
-                sc,
-                {
-                    color: LAYER_STYLES.sc.color,
-                    weight: 1.8,
-                    opacity: 0.9,
-                    fillColor: LAYER_STYLES.sc.fill,
-                    fillOpacity: 0.18,
-                    interactive: false
-                },
-                null
-            );
+        // Creamos SC y Alcaldías, pero NO las agregamos aún al mapa
+        addLayer(
+            'sc',
+            sc,
+            {
+                color: LAYER_STYLES.sc.color,
+                weight: 1.8,
+                opacity: 0.9,
+                fillColor: LAYER_STYLES.sc.fill,
+                fillOpacity: 0.18,
+                interactive: false
+            },
+            null
+        );
 
-            addLayer(
-                'alcaldias',
-                dataCache.alcaldias,
-                {
-                    color: LAYER_STYLES.alcaldias.color,
-                    weight: 3,
-                    dashArray: '8,4',
-                    opacity: 0.9,
-                    fillOpacity: 0
-                },
-                null
-            );
-            // A partir de aquí, las agregará o quitará el efecto que escucha visibleLayers.
- 
-        }, 400);
+        addLayer(
+            'alcaldias',
+            alcaldias,
+            {
+                color: LAYER_STYLES.alcaldias.color,
+                weight: 3,
+                dashArray: '8,4',
+                opacity: 0.9,
+                fillOpacity: 0
+            },
+            null
+        );
+
+        // Click en mapa
+        map.on('click', e => onLocationSelect(e.latlng));
+
+        return () => {
+            map.remove();
+            mapInstance.current = null;
+            layersRef.current = {};
+            markerRef.current = null;
+        };
+    }, [onLocationSelect]);
 
         // Click en mapa
         map.on('click', e => onLocationSelect(e.latlng));
