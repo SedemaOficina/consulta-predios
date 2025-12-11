@@ -694,14 +694,21 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
 
     const showZoningBlock = isSC && !isANP; // Sólo SC
 
-    return (
+       return (
         <>
+            {/* Título destacado (sólo móvil) */}
+            <div className="mb-1 text-xs font-bold text-gray-800 md:hidden">
+                Resultados de consulta
+            </div>
+
             {/* Etiqueta fija de resultado orientativo */}
             <div className="text-[10px] text-gray-500 mb-2 bg-gray-50 p-1 pl-2 rounded border border-gray-200">
                 Resultado orientativo — No constituye un documento oficial.
             </div>
 
             <div className="bg-white border rounded-lg shadow-sm p-4 mb-4">
+                ...
+
                 {/* CINTA SUPERIOR */}
                 <div
                     className="h-1 rounded-full mb-3"
@@ -2334,26 +2341,66 @@ const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => 
     };
 
     // Texto de tipo de suelo / mensaje según haya análisis o no
-   const isANP = analysis?.isANP;
-const isSC = analysis?.status === 'CONSERVATION_SOIL';
-const isUrban = analysis?.status === 'URBAN_SOIL';
+    const isANP = analysis?.isANP;
+    const isSC = analysis?.status === 'CONSERVATION_SOIL';
+    const isUrban = analysis?.status === 'URBAN_SOIL';
 
-const statusLabel =
-    !analysis
-        ? 'Busca una dirección o toca el mapa para iniciar la consulta.'
-        : analysis?.status === 'OUTSIDE_CDMX'
-        ? 'El punto se encuentra fuera de la Ciudad de México.'
-        : isANP
-        ? 'Área Natural Protegida — consulte el Programa de Manejo correspondiente.'
-        : analysis?.status === 'NO_DATA'
-        ? 'No se encontró información disponible para esta zona.'
-        : 'Detalle normativo del punto de consulta.';
+    const statusLabel =
+        !analysis
+            ? 'Busca una dirección o toca el mapa para iniciar la consulta.'
+            : analysis?.status === 'OUTSIDE_CDMX'
+            ? 'El punto se encuentra fuera de la Ciudad de México.'
+            : isANP
+            ? 'Área Natural Protegida — consulte el Programa de Manejo correspondiente.'
+            : analysis?.status === 'NO_DATA'
+            ? 'No se encontró información disponible para esta zona.'
+            : 'Detalle normativo del punto de consulta.';
+
+    // Etiqueta y color del badge de tipo de suelo (para el header)
+    const soilLabel =
+        !analysis
+            ? 'Sin selección'
+            : isANP
+            ? 'Área Natural Protegida'
+            : isSC
+            ? 'Suelo de Conservación'
+            : isUrban
+            ? 'Suelo Urbano'
+            : analysis?.status === 'OUTSIDE_CDMX'
+            ? 'Fuera de CDMX'
+            : 'Sin información';
+
+    let soilBadgeStyle = {
+        backgroundColor: '#e5e7eb',
+        borderColor: '#e5e7eb',
+        color: '#374151'
+    };
+
+    if (isSC && !isANP) {
+        soilBadgeStyle = {
+            backgroundColor: LAYER_STYLES.sc.color,
+            borderColor: LAYER_STYLES.sc.color,
+            color: '#ffffff'
+        };
+    } else if (isUrban) {
+        soilBadgeStyle = {
+            backgroundColor: '#3b82f6',
+            borderColor: '#3b82f6',
+            color: '#ffffff'
+        };
+    } else if (isANP) {
+        soilBadgeStyle = {
+            backgroundColor: '#a855f7',
+            borderColor: '#a855f7',
+            color: '#ffffff'
+        };
+    }
 
     const zoningColor = analysis?.zoningKey
         ? getZoningColor(analysis.zoningKey)
         : '#6b7280';
 
-    const headerTitle = analysis?.alcaldia || 'Visor de Consulta Ciudadana';
+    const headerTitle = analysis ? 'Resultados de consulta' : 'Visor de Consulta Ciudadana';
     const headerSubtitle = statusLabel;
 
     return (
@@ -2381,28 +2428,34 @@ const statusLabel =
                 {/* Handle */}
                 <div className="w-10 h-1.5 bg-gray-300 rounded-full mx-auto mb-2" />
 
-                <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-gray-900 text-sm truncate">
-                            {headerTitle}
-                        </h3>
-                        <div className="flex items-center gap-2 mt-0.5">
-                            <p className="text-[11px] text-gray-600 line-clamp-2">
-                                {headerSubtitle}
-                            </p>
-                            {analysis?.zoningKey && (
+                        {analysis ? (
+                            <>
+                                {/* Badge de tipo de suelo en el header */}
                                 <span
-                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm flex-shrink-0"
-                                    style={{
-                                        backgroundColor: zoningColor,
-                                        borderColor: zoningColor,
-                                        color: '#ffffff'
-                                    }}
+                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border"
+                                    style={soilBadgeStyle}
                                 >
-                                    {analysis.zoningKey}
+                                    {soilLabel}
                                 </span>
-                            )}
-                        </div>
+
+                                {/* Texto breve debajo */}
+                                <p className="text-[11px] text-gray-600 mt-0.5">
+                                    Resultado orientativo
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                {/* Estado sin análisis: encabezado genérico */}
+                                <h3 className="font-bold text-gray-900 text-sm truncate">
+                                    Visor de Consulta Ciudadana
+                                </h3>
+                                <p className="text-[11px] text-gray-600 line-clamp-2 mt-0.5">
+                                    {headerSubtitle}
+                                </p>
+                            </>
+                        )}
                     </div>
 
                     {analysis && (
@@ -2413,7 +2466,7 @@ const statusLabel =
                             <Icons.X className="h-4 w-4 text-white" />
                         </button>
                     )}
-                </div>
+                </div>  
             </div>
 
             {/* CONTENIDO: siempre usamos ResultsContent; si analysis = null muestra el mensaje de ayuda */}
