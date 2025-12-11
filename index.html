@@ -878,7 +878,7 @@ const LegalDisclaimer = () => (
 // ------------------------------------------------
 // FICHA PDF (plantilla oculta para exportar)
 // ------------------------------------------------
-const PdfFicha = React.forwardRef(({ analysis }, ref) => {
+const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
     if (!analysis) return null;
 
     const fecha = analysis.timestamp || new Date().toLocaleString();
@@ -982,51 +982,75 @@ const PdfFicha = React.forwardRef(({ analysis }, ref) => {
                             <strong>Mapa de referencia (no a escala)</strong>
                         </div>
 
-                        <div
-                            style={{
-                                flex: '1 1 auto',
-                                border: '1px solid #d1d5db',
-                                borderRadius: '3px',
-                                background:
-                                    'linear-gradient(135deg, #e5e7eb 0%, #f9fafb 40%, #e5e7eb 100%)',
-                                position: 'relative',
-                                overflow: 'hidden'
-                            }}
-                        >
-                            {/* Punto SC/SU centrado */}
-                            <div
-                                style={{
-                                    position: 'absolute',
-                                    left: '50%',
-                                    top: '50%',
-                                    transform: 'translate(-50%, -50%)',
-                                    width: '26px',
-                                    height: '26px',
-                                    borderRadius: '50%',
-                                    background:
-                                        analysis.status === 'CONSERVATION_SOIL'
-                                            ? '#ef4444'
-                                            : analysis.status === 'URBAN_SOIL'
-                                            ? '#3b82f6'
-                                            : '#9ca3af',
-                                    border: '3px solid #ffffff',
-                                    boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '11px',
-                                    fontWeight: 'bold',
-                                    color: '#ffffff',
-                                    textTransform: 'uppercase'
-                                }}
-                            >
-                                {analysis.status === 'CONSERVATION_SOIL'
-                                    ? 'SC'
-                                    : analysis.status === 'URBAN_SOIL'
-                                    ? 'SU'
-                                    : ''}
-                            </div>
-                        </div>
+                       <div
+    style={{
+        flex: '1 1 auto',
+        border: '1px solid #d1d5db',
+        borderRadius: '3px',
+        position: 'relative',
+        overflow: 'hidden',
+        background: '#e5e7eb'
+    }}
+>
+    {mapImage ? (
+        // SI TENEMOS CAPTURA REAL DEL MAPA
+        <img
+            src={mapImage}
+            alt="Mapa de referencia"
+            style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                display: 'block'
+            }}
+        />
+    ) : (
+        // FALLBACK: CÍRCULO SC/SU DIBUJADO
+        <div
+            style={{
+                width: '100%',
+                height: '100%',
+                background:
+                    'linear-gradient(135deg, #e5e7eb 0%, #f9fafb 40%, #e5e7eb 100%)',
+                position: 'relative'
+            }}
+        >
+            <div
+                style={{
+                    position: 'absolute',
+                    left: '50%',
+                    top: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '26px',
+                    height: '26px',
+                    borderRadius: '50%',
+                    background:
+                        analysis.status === 'CONSERVATION_SOIL'
+                            ? '#ef4444'
+                            : analysis.status === 'URBAN_SOIL'
+                            ? '#3b82f6'
+                            : '#9ca3af',
+                    border: '3px solid #ffffff',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    color: '#ffffff',
+                    textTransform: 'uppercase'
+                }}
+            >
+                {analysis.status === 'CONSERVATION_SOIL'
+                    ? 'SC'
+                    : analysis.status === 'URBAN_SOIL'
+                    ? 'SU'
+                    : ''}
+            </div>
+        </div>
+    )}
+</div>
+
 
                         <div style={{ marginTop: '4px', fontSize: '8px', color: '#6b7280' }}>
                             Para la vista interactiva del mapa, use el visor en línea.
@@ -1362,17 +1386,16 @@ const PdfFicha = React.forwardRef(({ analysis }, ref) => {
 /* ------------------------------------------------ */
 
 const ResultsContent = ({ analysis }) => {
-    const [activeTab, setActiveTab] = useState('prohibidas'); // 'prohibidas' | 'permitidas'
-    const [showDetails, setShowDetails] = useState(true);      // para 4.2
+    const [activeTab, setActiveTab] = useState('prohibidas');
+    const [showDetails, setShowDetails] = useState(true);
+    const [mapImage, setMapImage] = useState(null);   // <-- NUEVO
 
-    // NUEVO: referencia a la ficha PDF
     const pdfRef = useRef(null);
 
 // NUEVO: función para generar y descargar el PDF (multi-página)
     const handleExportPDF = async () => {
         if (!analysis || !pdfRef.current) return;
 
-        const element = pdfRef.current;
         const { jsPDF } = window.jspdf;
 
         if (typeof html2canvas === 'undefined') {
@@ -1380,7 +1403,27 @@ const ResultsContent = ({ analysis }) => {
             return;
         }
 
-        // Captura de la ficha completa
+        // 1) CAPTURA DEL MAPA LEAFLET VISIBLE
+        try {
+            const mapElement = document.getElementById('main-map');
+            if (mapElement) {
+                const mapCanvas = await html2canvas(mapElement, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff'
+                });
+                const mapDataUrl = mapCanvas.toDataURL('image/png');
+                setMapImage(mapDataUrl);
+
+                // Dejar que React re-renderice PdfFicha con la imagen
+                await new Promise(resolve => setTimeout(resolve, 50));
+            }
+        } catch (e) {
+            console.warn('No se pudo capturar el mapa para el PDF:', e);
+        }
+
+        // 2) CAPTURA DE LA FICHA COMPLETA (CON MAPA INCRUSTADO)
+        const element = pdfRef.current;
         const canvas = await html2canvas(element, {
             scale: 2,
             useCORS: true,
@@ -1396,7 +1439,7 @@ const ResultsContent = ({ analysis }) => {
         const imgWidth = pdfWidth;
         const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
 
-        // Lógica para cortar en varias páginas si la ficha es más alta que el A4
+        // 3) LÓGICA MULTI-PÁGINA
         let heightLeft = imgHeight;
         let position = 0;
 
@@ -1404,7 +1447,7 @@ const ResultsContent = ({ analysis }) => {
         heightLeft -= pdfHeight;
 
         while (heightLeft > 0) {
-            position = heightLeft - imgHeight; // desplazamos la imagen hacia arriba
+            position = heightLeft - imgHeight;
             pdf.addPage();
             pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
             heightLeft -= pdfHeight;
@@ -1416,7 +1459,6 @@ const ResultsContent = ({ analysis }) => {
 
         pdf.save(nombreArchivo);
     };
-
 // Hacer disponible la exportación desde otros componentes (modo móvil)
     useEffect(() => {
         window.__sedemaExportPDF = handleExportPDF;
@@ -1490,9 +1532,9 @@ const ResultsContent = ({ analysis }) => {
     return (
         <div className="space-y-4 animate-in pb-20">
             {/* PLANTILLA OCULTa PARA PDF */}
-            <div style={{ position: 'absolute', left: '-99999px', top: 0 }}>
-                <PdfFicha analysis={analysis} ref={pdfRef} />
-            </div>
+          <div style={{ position: 'absolute', left: '-99999px', top: 0 }}>
+    <PdfFicha analysis={analysis} mapImage={mapImage} ref={pdfRef} />
+</div>
 
             {/* RESUMEN + ESTADO */}
            <LocationSummary analysis={analysis} onExportPDF={handleExportPDF} />
@@ -2563,7 +2605,11 @@ const MapViewer = ({
 
     return (
         <div className="relative h-full w-full">
-            <div ref={mapRef} className="h-full w-full bg-gray-200" />
+            <div
+    id="main-map"           // <-- NUEVO: id para capturar el mapa
+    ref={mapRef}
+    className="h-full w-full bg-gray-200"
+/>
 
             {tilesLoading && (
                 <div className="absolute inset-0 flex items-center justify-center z-[1200] bg-black/10 pointer-events-none">
