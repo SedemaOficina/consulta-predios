@@ -871,6 +871,9 @@ const LegalDisclaimer = () => (
 // ------------------------------------------------
 // FICHA PDF (plantilla oculta para exportar)
 // ------------------------------------------------
+// ------------------------------------------------
+// FICHA PDF (plantilla oculta para exportar)
+// ------------------------------------------------
 const PdfFicha = React.forwardRef(({ analysis }, ref) => {
     if (!analysis) return null;
 
@@ -884,6 +887,7 @@ const PdfFicha = React.forwardRef(({ analysis }, ref) => {
         analysis.status === 'OUTSIDE_CDMX' ? 'Fuera de la Ciudad de México' :
         'Información no disponible';
 
+    // Agrupa por Sector + Actividad general (para los resúmenes)
     const groupBySectorGeneral = (activities = []) => {
         const map = {};
         activities.forEach(a => {
@@ -902,6 +906,14 @@ const PdfFicha = React.forwardRef(({ analysis }, ref) => {
     const resumenProhibidas = groupBySectorGeneral(analysis.prohibitedActivities || []);
     const resumenPermitidas = groupBySectorGeneral(analysis.allowedActivities || []);
 
+    // Para tabla de detalle (actividades específicas)
+    const detalleProhibidas = (analysis.prohibitedActivities || []).slice(0, 25);
+    const detallePermitidas = (analysis.allowedActivities || []).slice(0, 25);
+
+    // Para la simbología de zonificación reutilizamos ZONING_CAT_INFO
+    const zoningEntries = Object.entries(ZONING_CAT_INFO || {});
+    const zonasParaLeyenda = zoningEntries.slice(0, 8); // límite para no reventar la hoja
+
     return (
         <div
             ref={ref}
@@ -911,7 +923,8 @@ const PdfFicha = React.forwardRef(({ analysis }, ref) => {
                 fontFamily: 'Roboto, sans-serif',
                 fontSize: '11px',
                 color: '#111827',
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                boxSizing: 'border-box'
             }}
         >
             {/* ENCABEZADO */}
@@ -939,10 +952,168 @@ const PdfFicha = React.forwardRef(({ analysis }, ref) => {
                 </div>
             </header>
 
-            <hr style={{ borderColor: '#e5e7eb', marginBottom: '12px' }} />
+            <hr style={{ borderColor: '#e5e7eb', marginBottom: '10px' }} />
+
+            {/* 0. MAPA Y SIMBOLOGÍA */}
+            <section style={{ marginBottom: '10px' }}>
+                <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>
+                    0. Mapa de referencia y simbología
+                </h2>
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    {/* “Cuadro de mapa” (referencia visual) */}
+                    <div
+                        style={{
+                            flex: '0 0 45%',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '4px',
+                            padding: '4px',
+                            minHeight: '90px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between'
+                        }}
+                    >
+                        <div style={{ fontSize: '9px', color: '#4b5563', marginBottom: '4px' }}>
+                            <strong>Mapa de referencia (no a escala)</strong>
+                        </div>
+                        <div
+                            style={{
+                                flex: '1 1 auto',
+                                border: '1px solid #d1d5db',
+                                borderRadius: '3px',
+                                background:
+                                    'linear-gradient(135deg, #e5e7eb 0%, #f9fafb 40%, #e5e7eb 100%)',
+                                position: 'relative',
+                                overflow: 'hidden'
+                            }}
+                        >
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    left: '45%',
+                                    top: '35%',
+                                    width: '22px',
+                                    height: '22px',
+                                    borderRadius: '50%',
+                                    background: '#ef4444',
+                                    border: '3px solid #ffffff',
+                                    boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '10px',
+                                    fontWeight: 'bold',
+                                    color: '#ffffff'
+                                }}
+                            >
+                                {analysis.status === 'CONSERVATION_SOIL'
+                                    ? 'SC'
+                                    : analysis.status === 'URBAN_SOIL'
+                                    ? 'SU'
+                                    : ''}
+                            </div>
+                        </div>
+                        <div style={{ marginTop: '4px', fontSize: '8px', color: '#6b7280' }}>
+                            Para la vista interactiva del mapa, use el visor en línea.
+                        </div>
+                    </div>
+
+                    {/* Leyenda de simbología */}
+                    <div
+                        style={{
+                            flex: '1 1 55%',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '4px',
+                            padding: '4px'
+                        }}
+                    >
+                        <div style={{ fontSize: '9px', fontWeight: 600, marginBottom: '4px' }}>
+                            Simbología de puntos y zonificación
+                        </div>
+
+                        {/* Puntos SC / SU */}
+                        <div style={{ display: 'flex', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', fontSize: '9px', color: '#374151' }}>
+                                <span
+                                    style={{
+                                        display: 'inline-block',
+                                        width: '10px',
+                                        height: '10px',
+                                        borderRadius: '999px',
+                                        background: '#ef4444',
+                                        marginRight: '4px',
+                                        border: '1px solid #ffffff',
+                                        boxShadow: '0 0 2px rgba(0,0,0,0.4)'
+                                    }}
+                                />
+                                Punto rojo “SC”: Suelo de Conservación
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', fontSize: '9px', color: '#374151' }}>
+                                <span
+                                    style={{
+                                        display: 'inline-block',
+                                        width: '10px',
+                                        height: '10px',
+                                        borderRadius: '999px',
+                                        background: '#3b82f6',
+                                        marginRight: '4px',
+                                        border: '1px solid #ffffff',
+                                        boxShadow: '0 0 2px rgba(0,0,0,0.4)'
+                                    }}
+                                />
+                                Punto azul “SU”: Suelo Urbano
+                            </div>
+                        </div>
+
+                        {/* Zonificación PGOEDF (colores) */}
+                        <div style={{ fontSize: '9px', color: '#374151', marginTop: '2px' }}>
+                            <div style={{ marginBottom: '2px' }}>
+                                <strong>Zonificación PGOEDF (colores de referencia)</strong>
+                            </div>
+
+                            <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+                                {zonasParaLeyenda.map(([clave, info], i) => (
+                                    <div
+                                        key={clave}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            fontSize: '8px',
+                                            marginRight: '8px',
+                                            marginBottom: '3px',
+                                            maxWidth: '48%'
+                                        }}
+                                    >
+                                        <span
+                                            style={{
+                                                display: 'inline-block',
+                                                width: '10px',
+                                                height: '10px',
+                                                borderRadius: '2px',
+                                                background: info.color,
+                                                marginRight: '4px',
+                                                border: '1px solid #9ca3af'
+                                            }}
+                                        />
+                                        <span>
+                                            <strong>{clave}</strong>: {info.label}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                            {zoningEntries.length > zonasParaLeyenda.length && (
+                                <div style={{ fontSize: '8px', color: '#6b7280', marginTop: '2px' }}>
+                                    * Se muestran las principales categorías. Ver visor para listado completo.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             {/* 1. DATOS GENERALES */}
-            <section style={{ marginBottom: '12px' }}>
+            <section style={{ marginBottom: '10px' }}>
                 <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>
                     1. Datos generales de la ubicación
                 </h2>
@@ -1001,7 +1172,7 @@ const PdfFicha = React.forwardRef(({ analysis }, ref) => {
             </section>
 
             {/* 2. RESUMEN NORMATIVO */}
-            <section style={{ marginBottom: '12px' }}>
+            <section style={{ marginBottom: '10px' }}>
                 <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>
                     2. Resumen normativo
                 </h2>
@@ -1035,8 +1206,8 @@ const PdfFicha = React.forwardRef(({ analysis }, ref) => {
                 </table>
             </section>
 
-            {/* 3. ACTIVIDADES PROHIBIDAS */}
-            <section style={{ marginBottom: '10px' }}>
+            {/* 3. ACTIVIDADES PROHIBIDAS (RESUMEN) */}
+            <section style={{ marginBottom: '8px' }}>
                 <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#b91c1c' }}>
                     3. Actividades prohibidas (resumen)
                 </h2>
@@ -1064,15 +1235,48 @@ const PdfFicha = React.forwardRef(({ analysis }, ref) => {
                                 ))}
                             </tbody>
                         </table>
-                        <div style={{ fontSize: '9px', color: '#6b7280' }}>
-                            Nota: Este resumen muestra un concentrado por sector y actividad general. El detalle completo se consulta directamente en el visor.
+                    </>
+                )}
+            </section>
+
+            {/* 3.1 DETALLE DE ACTIVIDADES PROHIBIDAS */}
+            <section style={{ marginBottom: '8px' }}>
+                <h3 style={{ fontSize: '10px', fontWeight: 700, marginBottom: '3px', color: '#b91c1c' }}>
+                    3.1 Detalle de actividades prohibidas (extracto)
+                </h3>
+                {detalleProhibidas.length === 0 ? (
+                    <div style={{ fontSize: '9px', color: '#4b5563' }}>
+                        Sin registros de actividades prohibidas para esta zonificación en el catálogo cargado.
+                    </div>
+                ) : (
+                    <>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '8.5px', marginBottom: '3px' }}>
+                            <thead>
+                                <tr>
+                                    <th style={{ border: '1px solid #e5e7eb', background: '#fee2e2', padding: '3px', textAlign: 'left' }}>Sector</th>
+                                    <th style={{ border: '1px solid #e5e7eb', background: '#fee2e2', padding: '3px', textAlign: 'left' }}>Actividad general</th>
+                                    <th style={{ border: '1px solid #e5e7eb', background: '#fee2e2', padding: '3px', textAlign: 'left' }}>Actividad específica</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {detalleProhibidas.map((a, i) => (
+                                    <tr key={i}>
+                                        <td style={{ border: '1px solid #e5e7eb', padding: '2px' }}>{a.sector || '-'}</td>
+                                        <td style={{ border: '1px solid #e5e7eb', padding: '2px' }}>{a.general || '-'}</td>
+                                        <td style={{ border: '1px solid #e5e7eb', padding: '2px' }}>{a.specific || '-'}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <div style={{ fontSize: '8px', color: '#6b7280' }}>
+                            * Se muestran hasta 25 actividades específicas prohibidas. Para el listado completo, consultar el visor.
                         </div>
                     </>
                 )}
             </section>
 
-            {/* 4. ACTIVIDADES PERMITIDAS */}
-            <section style={{ marginBottom: '10px' }}>
+            {/* 4. ACTIVIDADES PERMITIDAS (RESUMEN) */}
+            <section style={{ marginBottom: '8px' }}>
                 <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#166534' }}>
                     4. Actividades permitidas (resumen)
                 </h2>
@@ -1100,15 +1304,48 @@ const PdfFicha = React.forwardRef(({ analysis }, ref) => {
                                 ))}
                             </tbody>
                         </table>
-                        <div style={{ fontSize: '9px', color: '#6b7280' }}>
-                            Nota: Este resumen muestra un concentrado por sector y actividad general. El detalle completo se consulta directamente en el visor.
+                    </>
+                )}
+            </section>
+
+            {/* 4.1 DETALLE DE ACTIVIDADES PERMITIDAS */}
+            <section style={{ marginBottom: '8px' }}>
+                <h3 style={{ fontSize: '10px', fontWeight: 700, marginBottom: '3px', color: '#166534' }}>
+                    4.1 Detalle de actividades permitidas (extracto)
+                </h3>
+                {detallePermitidas.length === 0 ? (
+                    <div style={{ fontSize: '9px', color: '#4b5563' }}>
+                        Sin registros de actividades permitidas para esta zonificación en el catálogo cargado.
+                    </div>
+                ) : (
+                    <>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '8.5px', marginBottom: '3px' }}>
+                            <thead>
+                                <tr>
+                                    <th style={{ border: '1px solid #e5e7eb', background: '#dcfce7', padding: '3px', textAlign: 'left' }}>Sector</th>
+                                    <th style={{ border: '1px solid #e5e7eb', background: '#dcfce7', padding: '3px', textAlign: 'left' }}>Actividad general</th>
+                                    <th style={{ border: '1px solid #e5e7eb', background: '#dcfce7', padding: '3px', textAlign: 'left' }}>Actividad específica</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {detallePermitidas.map((a, i) => (
+                                    <tr key={i}>
+                                        <td style={{ border: '1px solid #e5e7eb', padding: '2px' }}>{a.sector || '-'}</td>
+                                        <td style={{ border: '1px solid #e5e7eb', padding: '2px' }}>{a.general || '-'}</td>
+                                        <td style={{ border: '1px solid #e5e7eb', padding: '2px' }}>{a.specific || '-'}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <div style={{ fontSize: '8px', color: '#6b7280' }}>
+                            * Se muestran hasta 25 actividades específicas permitidas. Para el listado completo, consultar el visor.
                         </div>
                     </>
                 )}
             </section>
 
             {/* 5. ENLACES Y AVISO LEGAL */}
-            <section style={{ marginTop: '8px' }}>
+            <section style={{ marginTop: '6px' }}>
                 <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>
                     5. Enlaces de referencia
                 </h2>
@@ -1129,7 +1366,6 @@ const PdfFicha = React.forwardRef(({ analysis }, ref) => {
         </div>
     );
 });
-
 
 
 
