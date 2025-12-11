@@ -2394,96 +2394,139 @@ const MapViewer = ({
         layersRef.current.base = base;
 
         // Cargar capas vectoriales cuando el cache ya tiene datos
-        const check = setInterval(() => {
-            if (!dataCache.cdmx) return;
+       const check = setInterval(() => {
+    if (!dataCache.cdmx) return;
 
-            clearInterval(check);
-            const { edomex, morelos, sc, zoning, alcaldias } = dataCache;
+    clearInterval(check);
+    const { sc, alcaldias } = dataCache;
 
-            const addLayer = (name, data, style, tooltipField) => {
-                if (!data?.features) return;
-                const layer = window.L.geoJSON(data, {
-                    style,
-                    interactive: true,
-                    onEachFeature: (feature, layerInstance) => {
-                        // Hover marcado solo para zonificación
-                        if (name === 'zoning') {
-                            layerInstance.on('mouseover', () => {
-                                layerInstance.setStyle({ weight: 2.5 });
-                            });
-                            layerInstance.on('mouseout', () => {
-                                layerInstance.setStyle({ weight: 1.4 });
-                            });
-                        }
-                        if (tooltipField && feature.properties?.[tooltipField]) {
-                            layerInstance.bindTooltip(feature.properties[tooltipField], {
-                                sticky: true,
-                                className: 'custom-tooltip'
-                            });
-                        }
-                    }
-                });
-                layersRef.current[name] = layer;
-            };
+    const addLayer = (name, data, style, tooltipField) => {
+        if (!data?.features) return;
+        const layer = window.L.geoJSON(data, {
+            style,
+            interactive: true,
+            onEachFeature: (feature, layerInstance) => {
+                if (name === 'zoning') {
+                    layerInstance.on('mouseover', () => {
+                        layerInstance.setStyle({ weight: 2.5 });
+                    });
+                    layerInstance.on('mouseout', () => {
+                        layerInstance.setStyle({ weight: 1.4 });
+                    });
+                }
+                if (tooltipField && feature.properties?.[tooltipField]) {
+                    layerInstance.bindTooltip(feature.properties[tooltipField], {
+                        sticky: true,
+                        className: 'custom-tooltip'
+                    });
+                }
+            }
+        });
+        layersRef.current[name] = layer;
+    };
 
-            addLayer(
-                'edomex',
-                edomex,
-                {
-                    color: LAYER_STYLES.edomex.color,
-                    weight: 1,
-                    dashArray: '4,4',
-                    opacity: 0.7,
-                    fillOpacity: 0.05
-                },
-                'NOMGEO'
-            );
+    // SOLO SC y alcaldías en esta fase
+    addLayer(
+        'sc',
+        sc,
+        {
+            color: LAYER_STYLES.sc.color,
+            weight: 1.8,
+            opacity: 0.9,
+            fillColor: LAYER_STYLES.sc.fill,
+            fillOpacity: 0.18,
+            interactive: false
+        },
+        null
+    );
 
-            addLayer(
-                'morelos',
-                morelos,
-                {
-                    color: LAYER_STYLES.morelos.color,
-                    weight: 1,
-                    dashArray: '4,4',
-                    opacity: 0.7,
-                    fillOpacity: 0.05
-                },
-                'NOMGEO'
-            );
+    addLayer(
+        'alcaldias',
+        dataCache.alcaldias,
+        {
+            color: LAYER_STYLES.alcaldias.color,
+            weight: 3,
+            dashArray: '8,4',
+            opacity: 0.9,
+            fillOpacity: 0
+        },
+        null
+    );
 
-          addLayer(
-    'sc',
-    sc,
-    {
-        color: LAYER_STYLES.sc.color,   // borde guinda
-        weight: 1.8,
-        opacity: 0.9,
-        fillColor: LAYER_STYLES.sc.fill, // relleno guinda
-        fillOpacity: 0.18,               // un poco más visible
-        interactive: false
-    },
-    null
-);
-            addLayer('zoning', zoning, getZoningStyle, 'PGOEDF');
+    ['sc', 'alcaldias'].forEach(k => {
+        if (layersRef.current[k]) layersRef.current[k].addTo(map);
+    });
+}, 400);
 
-            addLayer(
-                'alcaldias',
-                alcaldias,
-                {
-                    color: LAYER_STYLES.alcaldias.color,
-                    weight: 3,
-                    dashArray: '8,4',
-                    opacity: 0.9,
-                    fillOpacity: 0
-                },
-                null
-            );
+// Cuando ya se cargaron las capas extra (zoning, Edomex, Morelos)
+useEffect(() => {
+    if (!mapInstance.current || !extraDataLoaded || !window.L) return;
 
-            ['sc', 'zoning', 'alcaldias', 'edomex', 'morelos'].forEach(k => {
-                if (layersRef.current[k]) layersRef.current[k].addTo(map);
-            });
-        }, 400);
+    const { edomex, morelos, zoning } = dataCache;
+    const map = mapInstance.current;
+
+    const addLayer = (name, data, style, tooltipField) => {
+        if (!data?.features) return;
+        const layer = window.L.geoJSON(data, {
+            style,
+            interactive: true,
+            onEachFeature: (feature, layerInstance) => {
+                if (name === 'zoning') {
+                    layerInstance.on('mouseover', () => {
+                        layerInstance.setStyle({ weight: 2.5 });
+                    });
+                    layerInstance.on('mouseout', () => {
+                        layerInstance.setStyle({ weight: 1.4 });
+                    });
+                }
+                if (tooltipField && feature.properties?.[tooltipField]) {
+                    layerInstance.bindTooltip(feature.properties[tooltipField], {
+                        sticky: true,
+                        className: 'custom-tooltip'
+                    });
+                }
+            }
+        });
+        layersRef.current[name] = layer;
+        layer.addTo(map);
+    };
+
+    // Solo crea si todavía no existen
+    if (!layersRef.current.edomex) {
+        addLayer(
+            'edomex',
+            edomex,
+            {
+                color: LAYER_STYLES.edomex.color,
+                weight: 1,
+                dashArray: '4,4',
+                opacity: 0.7,
+                fillOpacity: 0.05
+            },
+            'NOMGEO'
+        );
+    }
+
+    if (!layersRef.current.morelos) {
+        addLayer(
+            'morelos',
+            morelos,
+            {
+                color: LAYER_STYLES.morelos.color,
+                weight: 1,
+                dashArray: '4,4',
+                opacity: 0.7,
+                fillOpacity: 0.05
+            },
+            'NOMGEO'
+        );
+    }
+
+    if (!layersRef.current.zoning && zoning?.features?.length) {
+        addLayer('zoning', zoning, getZoningStyle, 'PGOEDF');
+    }
+}, [extraDataLoaded]);
+        
 
         // Click en mapa
         map.on('click', e => onLocationSelect(e.latlng));
@@ -2507,7 +2550,11 @@ const MapViewer = ({
     // Mostrar / ocultar capas vectoriales
     useEffect(() => {
         if (!mapInstance.current) return;
-
+ // Exponer una función global simple para ajustar tamaño
+    window.__sedemaInvalidateMapSize = () => {
+        mapInstance.current.invalidateSize();
+    };
+}, []);
         ['sc', 'alcaldias', 'edomex', 'morelos', 'zoning'].forEach(k => {
             const layer = layersRef.current[k];
             if (!layer) return;
@@ -2897,13 +2944,22 @@ const App = () => {
 </header>
 
            <div className="flex-1 relative flex overflow-hidden">
-                <SidebarDesktop
-                    analysis={analysis}
-                    onLocationSelect={handleSelect}
-                    onReset={handleReset}
-                    isOpen={isSidebarOpen}
-                    onToggle={() => setIsSidebarOpen(o => !o)}
-                />
+               <SidebarDesktop
+    analysis={analysis}
+    onLocationSelect={handleSelect}
+    onReset={handleReset}
+    isOpen={isSidebarOpen}
+    onToggle={() => {
+        setIsSidebarOpen(o => !o);
+        // pequeño timeout para que el DOM termine de cambiar
+        setTimeout(() => {
+            if (window.__sedemaInvalidateMapSize) {
+                window.__sedemaInvalidateMapSize();
+            }
+        }, 150);
+    }}
+/>
+
                 <div className="flex-1 relative w-full h-full">
 
                     
