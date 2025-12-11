@@ -926,6 +926,7 @@ const LegalDisclaimer = () => (
 // FICHA PDF (plantilla oculta para exportar)
 // ------------------------------------------------
 // ------------------------------------------------
+// ------------------------------------------------
 // FICHA PDF (plantilla oculta para exportar)
 // ------------------------------------------------
 const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
@@ -934,39 +935,57 @@ const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
     const fecha = analysis.timestamp || new Date().toLocaleString();
     const folio = `F-${new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 12)}`;
 
+    const isUrban = analysis.status === 'URBAN_SOIL';
+    const isSC = analysis.status === 'CONSERVATION_SOIL';
+    const isANP = analysis.isANP;
+
     const statusLabel =
-        analysis.isANP ? 'Área Natural Protegida' :
-        analysis.status === 'CONSERVATION_SOIL' ? 'Suelo de Conservación' :
-        analysis.status === 'URBAN_SOIL' ? 'Suelo Urbano' :
+        isANP ? 'Área Natural Protegida' :
+        isSC ? 'Suelo de Conservación' :
+        isUrban ? 'Suelo Urbano' :
         analysis.status === 'OUTSIDE_CDMX' ? 'Fuera de la Ciudad de México' :
         'Información no disponible';
 
-    // Agrupa por Sector + Actividad general (para los resúmenes)
-    const groupBySectorGeneral = (activities = []) => {
-        const map = {};
-        activities.forEach(a => {
-            const sector = a.sector || 'Sin sector';
-            const general = a.general || 'Sin clasificación';
-            const key = `${sector}|||${general}`;
-            if (!map[key]) map[key] = 0;
-            map[key] += 1;
-        });
-        return Object.entries(map).map(([k, count]) => {
-            const [sector, general] = k.split('|||');
-            return { sector, general, count };
-        });
-    };
+    // Dirección: si no hay dato, usamos un mensaje neutro
+    const direccion =
+        analysis.address ||
+        analysis.placeName ||
+        analysis.label ||
+        'Sin dirección disponible (consulta por coordenadas).';
 
-    const resumenProhibidas = groupBySectorGeneral(analysis.prohibitedActivities || []);
-    const resumenPermitidas = groupBySectorGeneral(analysis.allowedActivities || []);
+    const coordText = `${analysis.coordinate.lat.toFixed(5)}, ${analysis.coordinate.lng.toFixed(5)}`;
 
-    // Para tabla de detalle (actividades específicas)
+    // Agrupa por Sector + Actividad general (SOLO para detalle, no se usará resumen)
     const detalleProhibidas = (analysis.prohibitedActivities || []).slice(0, 25);
     const detallePermitidas = (analysis.allowedActivities || []).slice(0, 25);
 
     // Para la simbología de zonificación reutilizamos ZONING_CAT_INFO
-    const zoningEntries = Object.entries(ZONING_CAT_INFO || {});
-    const zonasParaLeyenda = zoningEntries.slice(0, 8); // límite para no reventar la hoja
+    const zonasParaLeyenda = Object.entries(ZONING_CAT_INFO || {}).slice(0, 8);
+
+    // Estilo del badge de tipo de suelo
+    let soilBadgeBg = '#e5e7eb';
+    let soilBadgeColor = '#374151';
+
+    if (isSC && !isANP) {
+        soilBadgeBg = LAYER_STYLES.sc.color;
+        soilBadgeColor = '#ffffff';
+    } else if (isUrban) {
+        soilBadgeBg = '#3b82f6';
+        soilBadgeColor = '#ffffff';
+    } else if (isANP) {
+        soilBadgeBg = '#a855f7';
+        soilBadgeColor = '#ffffff';
+    }
+
+    const zoningColor = analysis.zoningKey
+        ? getZoningColor(analysis.zoningKey)
+        : '#6b7280';
+
+    // Cinta superior
+    let bandColor = '#e5e7eb';
+    if (isANP) bandColor = '#e9d5ff';
+    else if (isSC) bandColor = '#fecdd3';
+    else if (isUrban) bandColor = '#bfdbfe';
 
     return (
         <div
@@ -1006,16 +1025,26 @@ const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
                 </div>
             </header>
 
+            {/* CINTA TIPO DE SUELO */}
+            <div
+                style={{
+                    height: '4px',
+                    borderRadius: '999px',
+                    marginBottom: '10px',
+                    backgroundColor: bandColor
+                }}
+            />
+
             <hr style={{ borderColor: '#e5e7eb', marginBottom: '10px' }} />
 
-                      {/* 0. MAPA Y SIMBOLOGÍA */}
+            {/* 0. MAPA DE REFERENCIA + SIMBOLOGÍA */}
             <section style={{ marginBottom: '10px' }}>
                 <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>
                     0. Mapa de referencia y simbología
                 </h2>
 
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    {/* MAPA DE REFERENCIA: ~2/3 DE LA HOJA */}
+                    {/* MAPA DE REFERENCIA */}
                     <div
                         style={{
                             flex: '0 0 65%',
@@ -1023,6 +1052,7 @@ const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
                             borderRadius: '4px',
                             padding: '6px',
                             minHeight: '180px',
+                            maxHeight: '220px',
                             display: 'flex',
                             flexDirection: 'column',
                             boxSizing: 'border-box'
@@ -1032,82 +1062,75 @@ const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
                             <strong>Mapa de referencia (no a escala)</strong>
                         </div>
 
-                       <div
-    style={{
-        flex: '1 1 auto',
-        border: '1px solid #d1d5db',
-        borderRadius: '3px',
-        position: 'relative',
-        overflow: 'hidden',
-        background: '#e5e7eb'
-    }}
->
-    {mapImage ? (
-        // SI TENEMOS CAPTURA REAL DEL MAPA
-        <img
-            src={mapImage}
-            alt="Mapa de referencia"
-            style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                display: 'block'
-            }}
-        />
-    ) : (
-        // FALLBACK: CÍRCULO SC/SU DIBUJADO
-        <div
-            style={{
-                width: '100%',
-                height: '100%',
-                background:
-                    'linear-gradient(135deg, #e5e7eb 0%, #f9fafb 40%, #e5e7eb 100%)',
-                position: 'relative'
-            }}
-        >
-            <div
-                style={{
-                    position: 'absolute',
-                    left: '50%',
-                    top: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: '26px',
-                    height: '26px',
-                    borderRadius: '50%',
-                    background:
-                        analysis.status === 'CONSERVATION_SOIL'
-                            ? '#ef4444'
-                            : analysis.status === 'URBAN_SOIL'
-                            ? '#3b82f6'
-                            : '#9ca3af',
-                    border: '3px solid #ffffff',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '11px',
-                    fontWeight: 'bold',
-                    color: '#ffffff',
-                    textTransform: 'uppercase'
-                }}
-            >
-                {analysis.status === 'CONSERVATION_SOIL'
-                    ? 'SC'
-                    : analysis.status === 'URBAN_SOIL'
-                    ? 'SU'
-                    : ''}
-            </div>
-        </div>
-    )}
-</div>
-
+                        <div
+                            style={{
+                                flex: '1 1 auto',
+                                border: '1px solid #d1d5db',
+                                borderRadius: '3px',
+                                position: 'relative',
+                                overflow: 'hidden',
+                                background: '#e5e7eb'
+                            }}
+                        >
+                            {mapImage ? (
+                                <img
+                                    src={mapImage}
+                                    alt="Mapa de referencia"
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover',
+                                        display: 'block'
+                                    }}
+                                />
+                            ) : (
+                                <div
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        background:
+                                            'linear-gradient(135deg, #e5e7eb 0%, #f9fafb 40%, #e5e7eb 100%)',
+                                        position: 'relative'
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            position: 'absolute',
+                                            left: '50%',
+                                            top: '50%',
+                                            transform: 'translate(-50%, -50%)',
+                                            width: '26px',
+                                            height: '26px',
+                                            borderRadius: '50%',
+                                            background:
+                                                isSC
+                                                    ? LAYER_STYLES.sc.color
+                                                    : isUrban
+                                                    ? '#3b82f6'
+                                                    : '#9ca3af',
+                                            border: '3px solid #ffffff',
+                                            boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '11px',
+                                            fontWeight: 'bold',
+                                            color: '#ffffff',
+                                            textTransform: 'uppercase'
+                                        }}
+                                    >
+                                        {isSC ? 'SC' : isUrban ? 'SU' : ''}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
                         <div style={{ marginTop: '4px', fontSize: '8px', color: '#6b7280' }}>
                             Para la vista interactiva del mapa, use el visor en línea.
                         </div>
                     </div>
 
-                    {/* SIMBOLOGÍA: ~1/3 DE LA HOJA */}
+                    {/* SIMBOLOGÍA */}
                     <div
                         style={{
                             flex: '1 1 35%',
@@ -1125,9 +1148,9 @@ const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
                         <div
                             style={{
                                 display: 'flex',
-                                gap: '8px',
-                                marginBottom: '4px',
-                                flexWrap: 'wrap'
+                                flexDirection: 'column',
+                                gap: '4px',
+                                marginBottom: '4px'
                             }}
                         >
                             <div
@@ -1144,13 +1167,13 @@ const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
                                         width: '10px',
                                         height: '10px',
                                         borderRadius: '999px',
-                                        background: '#ef4444',
+                                        background: LAYER_STYLES.sc.color,
                                         marginRight: '4px',
                                         border: '1px solid #ffffff',
                                         boxShadow: '0 0 2px rgba(0,0,0,0.4)'
                                     }}
                                 />
-                                Punto rojo “SC”: Suelo de Conservación
+                                Punto “SC”: Suelo de Conservación
                             </div>
                             <div
                                 style={{
@@ -1172,7 +1195,7 @@ const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
                                         boxShadow: '0 0 2px rgba(0,0,0,0.4)'
                                     }}
                                 />
-                                Punto azul “SU”: Suelo Urbano
+                                Punto “SU”: Suelo Urbano
                             </div>
                         </div>
 
@@ -1183,36 +1206,34 @@ const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
                             </div>
 
                             <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-                                {Object.entries(ZONING_CAT_INFO || {})
-                                    .slice(0, 8)
-                                    .map(([clave, info]) => (
-                                        <div
-                                            key={clave}
+                                {zonasParaLeyenda.map(([clave, info]) => (
+                                    <div
+                                        key={clave}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            fontSize: '8px',
+                                            marginRight: '8px',
+                                            marginBottom: '3px',
+                                            maxWidth: '100%'
+                                        }}
+                                    >
+                                        <span
                                             style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                fontSize: '8px',
-                                                marginRight: '8px',
-                                                marginBottom: '3px',
-                                                maxWidth: '100%'
+                                                display: 'inline-block',
+                                                width: '10px',
+                                                height: '10px',
+                                                borderRadius: '2px',
+                                                background: info.color,
+                                                marginRight: '4px',
+                                                border: '1px solid #9ca3af'
                                             }}
-                                        >
-                                            <span
-                                                style={{
-                                                    display: 'inline-block',
-                                                    width: '10px',
-                                                    height: '10px',
-                                                    borderRadius: '2px',
-                                                    background: info.color,
-                                                    marginRight: '4px',
-                                                    border: '1px solid #9ca3af'
-                                                }}
-                                            />
-                                            <span>
-                                                <strong>{clave}</strong>: {info.label}
-                                            </span>
-                                        </div>
-                                    ))}
+                                        />
+                                        <span>
+                                            <strong>{clave}</strong>: {info.label}
+                                        </span>
+                                    </div>
+                                ))}
                             </div>
 
                             {Object.entries(ZONING_CAT_INFO || {}).length > 8 && (
@@ -1230,32 +1251,152 @@ const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
                         </div>
                     </div>
                 </div>
+
+                {/* BLOQUE DIRECCIÓN + COORDENADAS (INFO ESENCIAL) */}
+                <div
+                    style={{
+                        marginTop: '8px',
+                        padding: '8px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid #e5e7eb',
+                        background:
+                            'linear-gradient(135deg, rgba(157,36,73,0.04), rgba(59,130,246,0.04))'
+                    }}
+                >
+                    <div
+                        style={{
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            marginBottom: '4px',
+                            color: '#111827',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.04em'
+                        }}
+                    >
+                        Información esencial de la consulta
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                        <div style={{ flex: '1 1 55%', minWidth: '240px' }}>
+                            <div style={{ fontSize: '9px', fontWeight: 600, color: '#4b5563' }}>
+                                Dirección
+                            </div>
+                            <div style={{ fontSize: '10px', color: '#111827' }}>
+                                {direccion}
+                            </div>
+                        </div>
+
+                        <div style={{ flex: '0 0 180px' }}>
+                            <div style={{ fontSize: '9px', fontWeight: 600, color: '#4b5563' }}>
+                                Coordenadas (Lat, Lng)
+                            </div>
+                            <div
+                                style={{
+                                    fontFamily: 'monospace',
+                                    fontSize: '10px',
+                                    color: '#111827',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    border: '1px solid #d1d5db',
+                                    backgroundColor: '#f9fafb',
+                                    display: 'inline-block'
+                                }}
+                            >
+                                {coordText}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </section>
 
-
-            {/* 2. RESUMEN NORMATIVO */}
+            {/* 1. IDENTIFICACIÓN NORMATIVA BÁSICA */}
             <section style={{ marginBottom: '10px' }}>
                 <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>
-                    2. Resumen normativo
+                    1. Identificación normativa básica
                 </h2>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
                     <tbody>
                         <tr>
-                            <td style={{ width: '40%', padding: '4px', border: '1px solid #e5e7eb', background: '#f9fafb' }}>
-                                ¿Ubicación en Suelo de Conservación?
+                            <td style={{ width: '35%', padding: '4px', border: '1px solid #e5e7eb', background: '#f9fafb' }}>
+                                Alcaldía
                             </td>
                             <td style={{ padding: '4px', border: '1px solid #e5e7eb' }}>
-                                {analysis.status === 'CONSERVATION_SOIL' ? 'Sí' : 'No'}
+                                {analysis.alcaldia || 'Ciudad de México'}
                             </td>
                         </tr>
                         <tr>
                             <td style={{ padding: '4px', border: '1px solid #e5e7eb', background: '#f9fafb' }}>
-                                ¿Corresponde a Área Natural Protegida?
+                                Tipo de suelo
                             </td>
                             <td style={{ padding: '4px', border: '1px solid #e5e7eb' }}>
-                                {analysis.isANP ? 'Sí' : 'No'}
+                                <span
+                                    style={{
+                                        display: 'inline-block',
+                                        padding: '2px 8px',
+                                        borderRadius: '999px',
+                                        fontSize: '9px',
+                                        fontWeight: 700,
+                                        border: `1px solid ${soilBadgeBg}`,
+                                        backgroundColor: soilBadgeBg,
+                                        color: soilBadgeColor
+                                    }}
+                                >
+                                    {statusLabel}
+                                </span>
                             </td>
                         </tr>
+                        {!isUrban && (
+                            <tr>
+                                <td style={{ padding: '4px', border: '1px solid #e5e7eb', background: '#f9fafb' }}>
+                                    Zonificación PGOEDF
+                                </td>
+                                <td style={{ padding: '4px', border: '1px solid #e5e7eb' }}>
+                                    {analysis.zoningName ? (
+                                        <span
+                                            style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '6px'
+                                            }}
+                                        >
+                                            <span
+                                                style={{
+                                                    padding: '2px 8px',
+                                                    borderRadius: '999px',
+                                                    fontSize: '9px',
+                                                    fontWeight: 600,
+                                                    backgroundColor: zoningColor,
+                                                    color: '#ffffff',
+                                                    maxWidth: '260px',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis'
+                                                }}
+                                            >
+                                                {analysis.zoningName}
+                                            </span>
+                                            {analysis.zoningKey && (
+                                                <span
+                                                    style={{
+                                                        padding: '2px 8px',
+                                                        borderRadius: '999px',
+                                                        fontSize: '9px',
+                                                        fontWeight: 700,
+                                                        border: `1px solid ${zoningColor}`,
+                                                        backgroundColor: zoningColor,
+                                                        color: '#ffffff'
+                                                    }}
+                                                >
+                                                    {analysis.zoningKey}
+                                                </span>
+                                            )}
+                                        </span>
+                                    ) : (
+                                        'Sin información'
+                                    )}
+                                </td>
+                            </tr>
+                        )}
                         <tr>
                             <td style={{ padding: '4px', border: '1px solid #e5e7eb', background: '#f9fafb' }}>
                                 Base de referencia
@@ -1268,145 +1409,96 @@ const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
                 </table>
             </section>
 
-            {/* 3. ACTIVIDADES PROHIBIDAS (RESUMEN) */}
-            <section style={{ marginBottom: '8px' }}>
-                <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#b91c1c' }}>
-                    3. Actividades prohibidas (resumen)
-                </h2>
-                {resumenProhibidas.length === 0 ? (
-                    <div style={{ fontSize: '10px', color: '#4b5563' }}>
-                        No se identificaron actividades clasificadas como prohibidas para esta zonificación en el catálogo cargado.
-                    </div>
-                ) : (
-                    <>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9px', marginBottom: '4px' }}>
-                            <thead>
-                                <tr>
-                                    <th style={{ border: '1px solid #e5e7eb', background: '#fee2e2', padding: '4px', textAlign: 'left' }}>Sector</th>
-                                    <th style={{ border: '1px solid #e5e7eb', background: '#fee2e2', padding: '4px', textAlign: 'left' }}>Actividad general</th>
-                                    <th style={{ border: '1px solid #e5e7eb', background: '#fee2e2', padding: '4px', textAlign: 'center', width: '12%' }}>Nº específicas</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {resumenProhibidas.slice(0, 8).map((r, i) => (
-                                    <tr key={i}>
-                                        <td style={{ border: '1px solid #e5e7eb', padding: '3px' }}>{r.sector}</td>
-                                        <td style={{ border: '1px solid #e5e7eb', padding: '3px' }}>{r.general}</td>
-                                        <td style={{ border: '1px solid #e5e7eb', padding: '3px', textAlign: 'center' }}>{r.count}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </>
-                )}
-            </section>
+            {/* 2. NOTA PARA SUELO URBANO */}
+            {isUrban && (
+                <section style={{ marginBottom: '10px' }}>
+                    <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>
+                        2. Referencia para Suelo Urbano
+                    </h2>
+                    <p style={{ fontSize: '10px', color: '#374151', textAlign: 'justify' }}>
+                        La ubicación consultada se encuentra en Suelo Urbano. La regulación específica del uso del suelo corresponde a los Programas de Desarrollo Urbano aplicables, emitidos por la autoridad competente en materia de desarrollo urbano (SEDUVI). Esta ficha es de carácter orientativo y no sustituye los instrumentos oficiales.
+                    </p>
+                </section>
+            )}
 
-            {/* 3.1 DETALLE DE ACTIVIDADES PROHIBIDAS */}
-            <section style={{ marginBottom: '8px' }}>
-                <h3 style={{ fontSize: '10px', fontWeight: 700, marginBottom: '3px', color: '#b91c1c' }}>
-                    3.1 Detalle de actividades prohibidas (extracto)
-                </h3>
-                {detalleProhibidas.length === 0 ? (
-                    <div style={{ fontSize: '9px', color: '#4b5563' }}>
-                        Sin registros de actividades prohibidas para esta zonificación en el catálogo cargado.
-                    </div>
-                ) : (
-                    <>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '8.5px', marginBottom: '3px' }}>
-                            <thead>
-                                <tr>
-                                    <th style={{ border: '1px solid #e5e7eb', background: '#fee2e2', padding: '3px', textAlign: 'left' }}>Sector</th>
-                                    <th style={{ border: '1px solid #e5e7eb', background: '#fee2e2', padding: '3px', textAlign: 'left' }}>Actividad general</th>
-                                    <th style={{ border: '1px solid #e5e7eb', background: '#fee2e2', padding: '3px', textAlign: 'left' }}>Actividad específica</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {detalleProhibidas.map((a, i) => (
-                                    <tr key={i}>
-                                        <td style={{ border: '1px solid #e5e7eb', padding: '2px' }}>{a.sector || '-'}</td>
-                                        <td style={{ border: '1px solid #e5e7eb', padding: '2px' }}>{a.general || '-'}</td>
-                                        <td style={{ border: '1px solid #e5e7eb', padding: '2px' }}>{a.specific || '-'}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        <div style={{ fontSize: '8px', color: '#6b7280' }}>
-                            * Se muestran hasta 25 actividades específicas prohibidas. Para el listado completo, consultar el visor.
-                        </div>
-                    </>
-                )}
-            </section>
+            {/* 3 y 4. ACTIVIDADES SOLO PARA SUELO DE CONSERVACIÓN (DETALLE / EXTRACTO) */}
+            {isSC && !isANP && (
+                <>
+                    {/* 3. DETALLE DE ACTIVIDADES PROHIBIDAS (EXTRACTO) */}
+                    <section style={{ marginBottom: '8px' }}>
+                        <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#b91c1c' }}>
+                            3. Actividades prohibidas (extracto)
+                        </h2>
+                        {detalleProhibidas.length === 0 ? (
+                            <div style={{ fontSize: '9px', color: '#4b5563' }}>
+                                No se identificaron actividades clasificadas como prohibidas para esta zonificación en el catálogo cargado.
+                            </div>
+                        ) : (
+                            <>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '8.5px', marginBottom: '3px' }}>
+                                    <thead>
+                                        <tr>
+                                            <th style={{ border: '1px solid #e5e7eb', background: '#fee2e2', padding: '3px', textAlign: 'left' }}>Sector</th>
+                                            <th style={{ border: '1px solid #e5e7eb', background: '#fee2e2', padding: '3px', textAlign: 'left' }}>Actividad general</th>
+                                            <th style={{ border: '1px solid #e5e7eb', background: '#fee2e2', padding: '3px', textAlign: 'left' }}>Actividad específica</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {detalleProhibidas.map((a, i) => (
+                                            <tr key={i}>
+                                                <td style={{ border: '1px solid #e5e7eb', padding: '2px' }}>{a.sector || '-'}</td>
+                                                <td style={{ border: '1px solid #e5e7eb', padding: '2px' }}>{a.general || '-'}</td>
+                                                <td style={{ border: '1px solid #e5e7eb', padding: '2px' }}>{a.specific || '-'}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                <div style={{ fontSize: '8px', color: '#6b7280' }}>
+                                    * Se muestran hasta 25 actividades específicas prohibidas. Para el listado completo, consultar el visor.
+                                </div>
+                            </>
+                        )}
+                    </section>
 
-            {/* 4. ACTIVIDADES PERMITIDAS (RESUMEN) */}
-            <section style={{ marginBottom: '8px' }}>
-                <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#166534' }}>
-                    4. Actividades permitidas (resumen)
-                </h2>
-                {resumenPermitidas.length === 0 ? (
-                    <div style={{ fontSize: '10px', color: '#4b5563' }}>
-                        No se identificaron actividades clasificadas como permitidas para esta zonificación en el catálogo cargado.
-                    </div>
-                ) : (
-                    <>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9px', marginBottom: '4px' }}>
-                            <thead>
-                                <tr>
-                                    <th style={{ border: '1px solid #e5e7eb', background: '#dcfce7', padding: '4px', textAlign: 'left' }}>Sector</th>
-                                    <th style={{ border: '1px solid #e5e7eb', background: '#dcfce7', padding: '4px', textAlign: 'left' }}>Actividad general</th>
-                                    <th style={{ border: '1px solid #e5e7eb', background: '#dcfce7', padding: '4px', textAlign: 'center', width: '12%' }}>Nº específicas</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {resumenPermitidas.slice(0, 8).map((r, i) => (
-                                    <tr key={i}>
-                                        <td style={{ border: '1px solid #e5e7eb', padding: '3px' }}>{r.sector}</td>
-                                        <td style={{ border: '1px solid #e5e7eb', padding: '3px' }}>{r.general}</td>
-                                        <td style={{ border: '1px solid #e5e7eb', padding: '3px', textAlign: 'center' }}>{r.count}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </>
-                )}
-            </section>
+                    {/* 4. DETALLE DE ACTIVIDADES PERMITIDAS (EXTRACTO) */}
+                    <section style={{ marginBottom: '8px' }}>
+                        <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#166534' }}>
+                            4. Actividades permitidas (extracto)
+                        </h2>
+                        {detallePermitidas.length === 0 ? (
+                            <div style={{ fontSize: '9px', color: '#4b5563' }}>
+                                No se identificaron actividades clasificadas como permitidas para esta zonificación en el catálogo cargado.
+                            </div>
+                        ) : (
+                            <>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '8.5px', marginBottom: '3px' }}>
+                                    <thead>
+                                        <tr>
+                                            <th style={{ border: '1px solid #e5e7eb', background: '#dcfce7', padding: '3px', textAlign: 'left' }}>Sector</th>
+                                            <th style={{ border: '1px solid #e5e7eb', background: '#dcfce7', padding: '3px', textAlign: 'left' }}>Actividad general</th>
+                                            <th style={{ border: '1px solid #e5e7eb', background: '#dcfce7', padding: '3px', textAlign: 'left' }}>Actividad específica</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {detallePermitidas.map((a, i) => (
+                                            <tr key={i}>
+                                                <td style={{ border: '1px solid #e5e7eb', padding: '2px' }}>{a.sector || '-'}</td>
+                                                <td style={{ border: '1px solid #e5e7eb', padding: '2px' }}>{a.general || '-'}</td>
+                                                <td style={{ border: '1px solid #e5e7eb', padding: '2px' }}>{a.specific || '-'}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                <div style={{ fontSize: '8px', color: '#6b7280' }}>
+                                    * Se muestran hasta 25 actividades específicas permitidas. Para el listado completo, consultar el visor.
+                                </div>
+                            </>
+                        )}
+                    </section>
+                </>
+            )}
 
-            {/* 4.1 DETALLE DE ACTIVIDADES PERMITIDAS */}
-            <section style={{ marginBottom: '8px' }}>
-                <h3 style={{ fontSize: '10px', fontWeight: 700, marginBottom: '3px', color: '#166534' }}>
-                    4.1 Detalle de actividades permitidas (extracto)
-                </h3>
-                {detallePermitidas.length === 0 ? (
-                    <div style={{ fontSize: '9px', color: '#4b5563' }}>
-                        Sin registros de actividades permitidas para esta zonificación en el catálogo cargado.
-                    </div>
-                ) : (
-                    <>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '8.5px', marginBottom: '3px' }}>
-                            <thead>
-                                <tr>
-                                    <th style={{ border: '1px solid #e5e7eb', background: '#dcfce7', padding: '3px', textAlign: 'left' }}>Sector</th>
-                                    <th style={{ border: '1px solid #e5e7eb', background: '#dcfce7', padding: '3px', textAlign: 'left' }}>Actividad general</th>
-                                    <th style={{ border: '1px solid #e5e7eb', background: '#dcfce7', padding: '3px', textAlign: 'left' }}>Actividad específica</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {detallePermitidas.map((a, i) => (
-                                    <tr key={i}>
-                                        <td style={{ border: '1px solid #e5e7eb', padding: '2px' }}>{a.sector || '-'}</td>
-                                        <td style={{ border: '1px solid #e5e7eb', padding: '2px' }}>{a.general || '-'}</td>
-                                        <td style={{ border: '1px solid #e5e7eb', padding: '2px' }}>{a.specific || '-'}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        <div style={{ fontSize: '8px', color: '#6b7280' }}>
-                            * Se muestran hasta 25 actividades específicas permitidas. Para el listado completo, consultar el visor.
-                        </div>
-                    </>
-                )}
-            </section>
-
-            {/* 5. ENLACES Y AVISO LEGAL */}
+            {/* 5. ENLACES Y AVISO LEGAL (COMÚN) */}
             <section style={{ marginTop: '6px' }}>
                 <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}>
                     5. Enlaces de referencia
@@ -1489,20 +1581,36 @@ const ResultsContent = ({ analysis }) => {
         const imgWidth = pdfWidth;
         const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
 
-        // 3) LÓGICA MULTI-PÁGINA
+        // 3) LÓGICA MULTI-PÁGINA + NUMERACIÓN
+        const totalPages = Math.ceil(imgHeight / pdfHeight);
         let heightLeft = imgHeight;
         let position = 0;
+        let pageNumber = 1;
 
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        const addPageWithNumber = () => {
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            pdf.setFontSize(8);
+            pdf.setTextColor(120, 120, 120);
+            pdf.text(
+                `Página ${pageNumber} de ${totalPages}`,
+                pdfWidth / 2,
+                pdfHeight - 5,
+                { align: 'center' }
+            );
+        };
+
+        // Primera página
+        addPageWithNumber();
         heightLeft -= pdfHeight;
 
+        // Páginas siguientes (si las hay)
         while (heightLeft > 0) {
             position = heightLeft - imgHeight;
             pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            pageNumber += 1;
+            addPageWithNumber();
             heightLeft -= pdfHeight;
         }
-
         const nombreArchivo = `ficha-${(analysis.alcaldia || 'CDMX')
             .replace(/\s+/g, '_')
             .toUpperCase()}-${new Date().toISOString().slice(0, 10)}.pdf`;
