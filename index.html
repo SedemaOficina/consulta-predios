@@ -603,18 +603,13 @@ const analyzeLocation = async (c) => {
 const StatusMessage = ({ analysis }) => {
     const { status, outsideContext, isANP } = analysis;
 
+    // Sólo mostramos mensajes especiales en estos casos
+
     if (status === 'OUTSIDE_CDMX')
         return (
             <div className="p-3 bg-gray-100 text-gray-700 text-xs border-l-4 border-gray-400 rounded-r">
                 <strong>Atención:</strong> El punto está fuera de la Ciudad de México
                 {outsideContext ? ` (${outsideContext})` : ''}.
-            </div>
-        );
-
-    if (status === 'URBAN_SOIL')
-        return (
-            <div className="p-3 bg-blue-50 text-blue-800 text-xs border-l-4 border-blue-500 rounded-r">
-                <strong>Suelo Urbano:</strong> La regulación corresponde al Programa Delegacional o Programa Parcial (SEDUVI).
             </div>
         );
 
@@ -625,13 +620,6 @@ const StatusMessage = ({ analysis }) => {
             </div>
         );
 
-    if (status === 'CONSERVATION_SOIL')
-        return (
-            <div className="p-3 bg-green-50 text-green-800 text-xs border-l-4 border-green-600 rounded-r">
-                <strong>Suelo de Conservación:</strong> Referencia normativa del PGOEDF 2000.
-            </div>
-        );
-
     if (status === 'NO_DATA')
         return (
             <div className="p-3 bg-yellow-50 text-yellow-800 text-xs border-l-4 border-yellow-400 rounded-r">
@@ -639,6 +627,7 @@ const StatusMessage = ({ analysis }) => {
             </div>
         );
 
+    // Para Suelo Urbano y Suelo de Conservación ya NO mostramos recuadro
     return null;
 };
 
@@ -653,14 +642,14 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
     const isSC = analysis.status === 'CONSERVATION_SOIL';
     const isANP = analysis.isANP;
 
-    const statusLabel =
+    const statusLabelBadge =
         isANP ? 'Área Natural Protegida' :
         isSC ? 'Suelo de Conservación' :
         isUrban ? 'Suelo Urbano' :
         analysis.status === 'OUTSIDE_CDMX' ? 'Fuera de CDMX' :
         'Sin información';
 
-    // Color para badge de tipo de suelo
+    // Color del badge de tipo de suelo
     let soilBadgeStyle = {
         backgroundColor: '#e5e7eb',
         borderColor: '#e5e7eb',
@@ -668,14 +657,12 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
     };
 
     if (isSC && !isANP) {
-        // Guinda, mismo color que la capa SC
         soilBadgeStyle = {
             backgroundColor: LAYER_STYLES.sc.color,
             borderColor: LAYER_STYLES.sc.color,
             color: '#ffffff'
         };
     } else if (isUrban) {
-        // Azul para Suelo Urbano (coherente con el punto SU)
         soilBadgeStyle = {
             backgroundColor: '#3b82f6',
             borderColor: '#3b82f6',
@@ -689,7 +676,7 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
         };
     }
 
-    // Color cinta superior
+    // Cinta superior
     let bandColor = '#e5e7eb';
     if (isANP) bandColor = '#e9d5ff';
     else if (isSC) bandColor = '#fecdd3';
@@ -705,7 +692,7 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const showZoningBlock = !isUrban; // Para Suelo Urbano no mostramos zonificación
+    const showZoningBlock = isSC && !isANP; // Sólo SC
 
     return (
         <>
@@ -715,13 +702,13 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
             </div>
 
             <div className="bg-white border rounded-lg shadow-sm p-4 mb-4">
-                {/* CINTILLO DE TIPO DE SUELO */}
+                {/* CINTA SUPERIOR */}
                 <div
                     className="h-1 rounded-full mb-3"
                     style={{ backgroundColor: bandColor }}
                 />
 
-                {/* BLOQUE: ALCALDÍA */}
+                {/* ALCALDÍA */}
                 <div className="mb-2">
                     <p className="text-[11px] font-semibold text-gray-600">
                         Alcaldía:
@@ -731,7 +718,17 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
                     </h2>
                 </div>
 
-                {/* BLOQUE: ZONIFICACIÓN PGOEDF (solo SC / ANP / otros, no urbano) */}
+                {/* TIPO DE SUELO (badge) */}
+                <div className="mb-3">
+                    <span
+                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border"
+                        style={soilBadgeStyle}
+                    >
+                        {statusLabelBadge}
+                    </span>
+                </div>
+
+                {/* ZONIFICACIÓN PGOEDF: SOLO SUELO DE CONSERVACIÓN */}
                 {showZoningBlock && (
                     <div className="mb-3">
                         <p className="text-[11px] font-semibold text-gray-600">
@@ -739,19 +736,11 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
                         </p>
 
                         {analysis.zoningName ? (
-                            <div className="flex items-center justify-between gap-2 mt-1">
-                                {/* Badge principal con nombre completo y color de capa */}
-                                <span
-                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold text-white max-w-[75%] truncate"
-                                    style={{ backgroundColor: zoningColor, borderColor: zoningColor }}
-                                >
-                                    {analysis.zoningName}
-                                </span>
-
-                                {/* Badge pequeño con siglas */}
+                            <div className="flex flex-wrap items-center gap-2 mt-1">
+                                {/* Badge sigla */}
                                 {analysis.zoningKey && (
                                     <span
-                                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold border shadow-sm flex-shrink-0"
+                                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm"
                                         style={{
                                             backgroundColor: zoningColor,
                                             borderColor: zoningColor,
@@ -761,6 +750,13 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
                                         {analysis.zoningKey}
                                     </span>
                                 )}
+                                {/* Badge nombre completo */}
+                                <span
+                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold text-white max-w-[70%] truncate"
+                                    style={{ backgroundColor: zoningColor, borderColor: zoningColor }}
+                                >
+                                    {analysis.zoningName}
+                                </span>
                             </div>
                         ) : (
                             <span className="text-xs text-gray-500">
@@ -770,24 +766,21 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
                     </div>
                 )}
 
-                {/* BLOQUE: TIPO DE SUELO */}
-                <div className="mb-3">
-                    <span
-                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border"
-                        style={soilBadgeStyle}
-                    >
-                        {statusLabel}
-                    </span>
+                {/* LEYENDA NORMATIVA SEGÚN TIPO DE SUELO */}
+                <div className="mb-3 text-[11px] text-gray-700">
+                    {isSC && !isANP && (
+                        <>
+                            Programa General de Ordenamiento Ecológico del Distrito Federal (PGOEDF 2000).
+                        </>
+                    )}
+                    {isUrban && (
+                        <>
+                            Consulte los Programas de Desarrollo Urbano aplicables.
+                        </>
+                    )}
                 </div>
 
-                {/* Para Suelo Urbano: mensaje sobre Programas de Desarrollo Urbano */}
-                {isUrban && (
-                    <div className="mb-3 text-[11px] text-gray-700">
-                        Consulte los Programas de Desarrollo Urbano aplicables.
-                    </div>
-                )}
-
-                {/* COORDENADAS + COPIAR (siempre con línea divisoria) */}
+                {/* COORDENADAS + COPIAR */}
                 <ul className="text-xs space-y-1.5 text-gray-700 border-t pt-2">
                     <li className="flex items-center gap-2">
                         <span className="text-gray-400">
@@ -2341,20 +2334,20 @@ const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => 
     };
 
     // Texto de tipo de suelo / mensaje según haya análisis o no
-    const isANP = analysis?.isANP;
-    const isSC = analysis?.status === 'CONSERVATION_SOIL';
-    const isUrban = analysis?.status === 'URBAN_SOIL';
+   onst isANP = analysis?.isANP;
+const isSC = analysis?.status === 'CONSERVATION_SOIL';
+const isUrban = analysis?.status === 'URBAN_SOIL';
 
-    const statusLabel =
-        !analysis
-            ? 'Busca una dirección o toca el mapa para iniciar la consulta.'
-            : isANP
-            ? 'Área Natural Protegida'
-            : isSC
-            ? 'Suelo de Conservación — Referencia normativa PGOEDF 2000'
-            : isUrban
-            ? 'Suelo Urbano — Regulación a cargo de SEDUVI'
-            : 'Información no disponible';
+const statusLabel =
+    !analysis
+        ? 'Busca una dirección o toca el mapa para iniciar la consulta.'
+        : analysis?.status === 'OUTSIDE_CDMX'
+        ? 'El punto se encuentra fuera de la Ciudad de México.'
+        : isANP
+        ? 'Área Natural Protegida — consulte el Programa de Manejo correspondiente.'
+        : analysis?.status === 'NO_DATA'
+        ? 'No se encontró información disponible para esta zona.'
+        : 'Detalle normativo del punto de consulta.';
 
     const zoningColor = analysis?.zoningKey
         ? getZoningColor(analysis.zoningKey)
