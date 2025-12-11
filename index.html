@@ -61,10 +61,14 @@ const ZONING_CAT_INFO = {
 };
     
 const LAYER_STYLES = {
-    sc: { color: '#FFFFFF', label: 'Suelo de Conservación' },          // borde blanco sobre satélite
+    sc: { 
+        color: '#9d2449',        // borde guinda
+        fill: '#9d2449',         // color de relleno guinda
+        label: 'Suelo de Conservación'
+    },
     alcaldias: { color: '#FFFFFF', border: '#555', label: 'Límite Alcaldías' },
-    edomex: { color: '#FFD86B', label: 'Estado de México' },           // amarillo tenue
-    morelos: { color: '#B8A1FF', label: 'Estado de Morelos' }          // lila tenue
+    edomex: { color: '#FFD86B', label: 'Estado de México' },
+    morelos: { color: '#B8A1FF', label: 'Estado de Morelos' }
 };
     
 const DATA_FILES = {
@@ -2448,19 +2452,14 @@ const MapViewer = ({
                 'NOMGEO'
             );
 
-            addLayer(
-                'sc',
-                sc,
-                {
-                    color: LAYER_STYLES.sc.color,
-                    weight: 1.8,
-                    opacity: 0.8,
-                    fillColor: LAYER_STYLES.sc.color,
-                    fillOpacity: 0.10,
-                    interactive: false
-                },
-                null
-            );
+           add('sc', sc, {
+    color: LAYER_STYLES.sc.color,   // borde guinda
+    weight: 1.8,
+    opacity: 0.9,
+    fillColor: LAYER_STYLES.sc.fill, // relleno guinda
+    fillOpacity: 0.18,               // un poco más visible
+    interactive: false
+}, null);
 
             addLayer('zoning', zoning, getZoningStyle, 'PGOEDF');
 
@@ -2492,7 +2491,7 @@ const MapViewer = ({
             markerRef.current = null;
             clearInterval(check);
         };
-    }, [onLocationSelect]);
+ }, []);  // sin dependencias
 
     // Cambio de mapa base (callejero / satélite)
     useEffect(() => {
