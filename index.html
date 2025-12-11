@@ -392,7 +392,20 @@ const Icons = {
             <line x1="6" y1="6" x2="18" y2="18" />
         </IconBase>
     )
+
+      Pdf: (p) => (
+        <IconBase {...p}>
+            {/* Documento con esquina doblada */}
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            {/* Tres líneas simulando texto */}
+            <line x1="9" y1="12" x2="15" y2="12" />
+            <line x1="9" y1="15" x2="15" y2="15" />
+            <line x1="9" y1="18" x2="13" y2="18" />
+        </IconBase>
+    )
 };
+
 
 /* ------------------------------------------------ */
 /* 4. COMPONENTE TOGGLE SWITCH */
@@ -645,7 +658,7 @@ const StatusMessage = ({ analysis }) => {
 /* 6.2 Resumen Ejecutivo */
 /* ------------------------------------------------ */
 
-const LocationSummary = ({ analysis }) => {
+const LocationSummary = ({ analysis, onExportPDF }) => {
     const [copied, setCopied] = useState(false);
 
     const statusLabel =
@@ -762,9 +775,14 @@ const LocationSummary = ({ analysis }) => {
                     </li>
                 </ul>
 
-                {/* ACCIONES RÁPIDAS (SOLO ESCRITORIO) */}
+                  {/* ACCIONES RÁPIDAS (SOLO ESCRITORIO) */}
                 <div className="mt-3 hidden md:block">
-                    {analysis && <ActionButtonsDesktop analysis={analysis} />}
+                    {analysis && (
+                        <ActionButtonsDesktop
+                            analysis={analysis}
+                            onExportPDF={onExportPDF}
+                        />
+                    )}
                 </div>
             </div>
         </>
@@ -1416,6 +1434,12 @@ const ResultsContent = ({ analysis }) => {
         pdf.save(nombreArchivo);
     };
 
+// Hacer disponible la exportación desde otros componentes (modo móvil)
+    useEffect(() => {
+        window.__sedemaExportPDF = handleExportPDF;
+    }, [analysis]);
+
+    
     if (!analysis)
         return (
             <div className="bg-white border rounded-xl shadow-sm p-4 text-xs text-gray-700 space-y-3">
@@ -1488,21 +1512,10 @@ const ResultsContent = ({ analysis }) => {
             </div>
 
             {/* RESUMEN + ESTADO */}
-            <LocationSummary analysis={analysis} />
+           <LocationSummary analysis={analysis} onExportPDF={handleExportPDF} />
             <StatusMessage analysis={analysis} />
 
-            {/* BOTÓN EXPORTAR PDF (ESCRITORIO) */}
-            <div className="flex justify-end mt-1">
-                <button
-                    onClick={handleExportPDF}
-                    className="hidden md:inline-flex items-center gap-1 px-3 py-1.5 text-[11px] rounded-full border border-gray-300 bg-white text-gray-700 hover:border-[#9d2449] hover:text-[#9d2449] shadow-sm"
-                >
-                    <Icons.Copy className="h-3 w-3" />
-                    Exportar ficha en PDF
-                </button>
-            </div>
-
-            {analysis.zoningName === 'Cargando detalles...' && (
+        {analysis.zoningName === 'Cargando detalles...' && (
                 <div className="p-2 bg-yellow-50 text-yellow-800 text-[10px] rounded border border-yellow-200">
                     Cargando detalles de zonificación y actividades. La ficha se actualizará automáticamente.
                 </div>
@@ -1960,18 +1973,18 @@ const SearchLogicDesktop = ({ onLocationSelect, onReset }) => {
         </div>
     );
 };
-/* ------------------------------------------------ */
 /* 7.1 Acciones rápidas */
 /* ------------------------------------------------ */
 
-const ActionButtonsDesktop = ({ analysis }) => {
+const ActionButtonsDesktop = ({ analysis, onExportPDF }) => {
     const handleCopyLink = () => {
         const url = `${window.location.origin}${window.location.pathname}?lat=${analysis.coordinate.lat}&lng=${analysis.coordinate.lng}&open=1`;
         navigator.clipboard.writeText(url);
     };
 
     return (
-        <div className="grid grid-cols-2 gap-2 w-full">
+        <div className="grid grid-cols-3 gap-2 w-full">
+            {/* Google Maps */}
             <a
                 href={`https://www.google.com/maps/search/?api=1&query=${analysis.coordinate.lat},${analysis.coordinate.lng}`}
                 target="_blank"
@@ -1980,12 +1993,23 @@ const ActionButtonsDesktop = ({ analysis }) => {
                 <Icons.MapIcon className="h-5 w-5 mb-1" />
                 <span className="text-[9px] font-bold">Google Maps</span>
             </a>
+
+            {/* Copiar enlace */}
             <button
                 onClick={handleCopyLink}
                 className="flex flex-col items-center justify-center p-2 bg-white border rounded hover:border-[#9d2449] text-gray-600 hover:text-[#9d2449]"
             >
                 <Icons.Share className="h-5 w-5 mb-1" />
                 <span className="text-[9px] font-bold">Copiar enlace</span>
+            </button>
+
+            {/* Exportar PDF */}
+            <button
+                onClick={onExportPDF}
+                className="flex flex-col items-center justify-center p-2 bg-white border rounded hover:border-[#9d2449] text-gray-600 hover:text-[#9d2449]"
+            >
+                <Icons.Pdf className="h-5 w-5 mb-1" />
+                <span className="text-[9px] font-bold">Exportar PDF</span>
             </button>
         </div>
     );
@@ -2200,8 +2224,9 @@ const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => 
                 </div>
             )}
 
-            {/* Acciones rápidas (se mantienen igual) */}
+                      {/* Acciones rápidas (Google Maps, Compartir, PDF) */}
             <div className="flex-shrink-0 p-3 bg-white border-t border-gray-200 safe-area-bottom flex gap-3 overflow-x-auto">
+                {/* Google Maps */}
                 <a
                     href={`https://www.google.com/maps/search/?api=1&query=${analysis.coordinate.lat},${analysis.coordinate.lng}`}
                     target="_blank"
@@ -2209,6 +2234,8 @@ const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => 
                 >
                     <Icons.MapIcon className="h-4 w-4" /> Google Maps
                 </a>
+
+                {/* Compartir enlace */}
                 <button
                     onClick={async () => {
                         const url = `${window.location.origin}${window.location.pathname}?lat=${analysis.coordinate.lat}&lng=${analysis.coordinate.lng}&open=1`;
@@ -2230,7 +2257,22 @@ const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => 
                 >
                     <Icons.Share className="h-4 w-4" /> Compartir
                 </button>
+
+                {/* Exportar PDF */}
+                <button
+                    onClick={() => {
+                        if (window.__sedemaExportPDF) {
+                            window.__sedemaExportPDF();
+                        } else {
+                            alert('No se pudo generar el PDF. Intenta recargar la página.');
+                        }
+                    }}
+                    className="flex-1 min-w-[110px] flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-300 py-2.5 px-4 rounded-full text-xs font-bold shadow-sm hover:bg-gray-50"
+                >
+                    <Icons.Pdf className="h-4 w-4" /> Exportar PDF
+                </button>
             </div>
+
         </div>
     );
 };
