@@ -2452,15 +2452,19 @@ const MapViewer = ({
                 'NOMGEO'
             );
 
-           add('sc', sc, {
-    color: LAYER_STYLES.sc.color,   // borde guinda
-    weight: 1.8,
-    opacity: 0.9,
-    fillColor: LAYER_STYLES.sc.fill, // relleno guinda
-    fillOpacity: 0.18,               // un poco más visible
-    interactive: false
-}, null);
-
+          addLayer(
+    'sc',
+    sc,
+    {
+        color: LAYER_STYLES.sc.color,   // borde guinda
+        weight: 1.8,
+        opacity: 0.9,
+        fillColor: LAYER_STYLES.sc.fill, // relleno guinda
+        fillOpacity: 0.18,               // un poco más visible
+        interactive: false
+    },
+    null
+);
             addLayer('zoning', zoning, getZoningStyle, 'PGOEDF');
 
             addLayer(
