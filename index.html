@@ -2327,6 +2327,7 @@ const ToggleSwitch = ({ checked, onChange }) => (
     </div>
 );
     
+
 /* ------------------------------------------------ */
 /* 8. MAPA */
 /* ------------------------------------------------ */
@@ -2359,14 +2360,13 @@ const MapViewer = ({
         setVisibleLayers(prev => ({ ...prev, ...update }));
     };
 
-    // Inicialización del mapa y capas de fondo
+    // 1) Inicialización del mapa + SC + alcaldías
     useEffect(() => {
-        // Si Leaflet todavía no está cargado, no intentes crear el mapa
         if (!mapRef.current || mapInstance.current || !window.L) return;
 
         const bounds = window.L.latLngBounds(
-            [18.7, -99.6],  // sudoeste aprox
-            [19.9, -98.7]   // noreste aprox
+            [18.7, -99.6],
+            [19.9, -98.7]
         );
 
         const map = window.L.map(mapRef.current, {
@@ -2381,7 +2381,7 @@ const MapViewer = ({
         window.L.control.zoom({ position: 'topright' }).addTo(map);
         mapInstance.current = map;
 
-        // Capa base
+        // Capa base inicial
         const base = window.L.tileLayer(getBaseLayerUrl('SATELLITE'), {
             maxZoom: 19,
             tileSize: 256,
@@ -2393,140 +2393,69 @@ const MapViewer = ({
         base.addTo(map);
         layersRef.current.base = base;
 
-        // Cargar capas vectoriales cuando el cache ya tiene datos
-       const check = setInterval(() => {
-    if (!dataCache.cdmx) return;
+        // Cargar SC y alcaldías cuando ya esté el cache core
+        const check = setInterval(() => {
+            if (!dataCache.cdmx) return;
 
-    clearInterval(check);
-    const { sc, alcaldias } = dataCache;
+            clearInterval(check);
+            const { sc, alcaldias } = dataCache;
 
-    const addLayer = (name, data, style, tooltipField) => {
-        if (!data?.features) return;
-        const layer = window.L.geoJSON(data, {
-            style,
-            interactive: true,
-            onEachFeature: (feature, layerInstance) => {
-                if (name === 'zoning') {
-                    layerInstance.on('mouseover', () => {
-                        layerInstance.setStyle({ weight: 2.5 });
-                    });
-                    layerInstance.on('mouseout', () => {
-                        layerInstance.setStyle({ weight: 1.4 });
-                    });
-                }
-                if (tooltipField && feature.properties?.[tooltipField]) {
-                    layerInstance.bindTooltip(feature.properties[tooltipField], {
-                        sticky: true,
-                        className: 'custom-tooltip'
-                    });
-                }
-            }
-        });
-        layersRef.current[name] = layer;
-    };
+            const addLayer = (name, data, style, tooltipField) => {
+                if (!data?.features) return;
+                const layer = window.L.geoJSON(data, {
+                    style,
+                    interactive: true,
+                    onEachFeature: (feature, layerInstance) => {
+                        if (name === 'zoning') {
+                            layerInstance.on('mouseover', () => {
+                                layerInstance.setStyle({ weight: 2.5 });
+                            });
+                            layerInstance.on('mouseout', () => {
+                                layerInstance.setStyle({ weight: 1.4 });
+                            });
+                        }
+                        if (tooltipField && feature.properties?.[tooltipField]) {
+                            layerInstance.bindTooltip(feature.properties[tooltipField], {
+                                sticky: true,
+                                className: 'custom-tooltip'
+                            });
+                        }
+                    }
+                });
+                layersRef.current[name] = layer;
+            };
 
-    // SOLO SC y alcaldías en esta fase
-    addLayer(
-        'sc',
-        sc,
-        {
-            color: LAYER_STYLES.sc.color,
-            weight: 1.8,
-            opacity: 0.9,
-            fillColor: LAYER_STYLES.sc.fill,
-            fillOpacity: 0.18,
-            interactive: false
-        },
-        null
-    );
+            addLayer(
+                'sc',
+                sc,
+                {
+                    color: LAYER_STYLES.sc.color,
+                    weight: 1.8,
+                    opacity: 0.9,
+                    fillColor: LAYER_STYLES.sc.fill,
+                    fillOpacity: 0.18,
+                    interactive: false
+                },
+                null
+            );
 
-    addLayer(
-        'alcaldias',
-        dataCache.alcaldias,
-        {
-            color: LAYER_STYLES.alcaldias.color,
-            weight: 3,
-            dashArray: '8,4',
-            opacity: 0.9,
-            fillOpacity: 0
-        },
-        null
-    );
+            addLayer(
+                'alcaldias',
+                dataCache.alcaldias,
+                {
+                    color: LAYER_STYLES.alcaldias.color,
+                    weight: 3,
+                    dashArray: '8,4',
+                    opacity: 0.9,
+                    fillOpacity: 0
+                },
+                null
+            );
 
-    ['sc', 'alcaldias'].forEach(k => {
-        if (layersRef.current[k]) layersRef.current[k].addTo(map);
-    });
-}, 400);
-
-// Cuando ya se cargaron las capas extra (zoning, Edomex, Morelos)
-useEffect(() => {
-    if (!mapInstance.current || !extraDataLoaded || !window.L) return;
-
-    const { edomex, morelos, zoning } = dataCache;
-    const map = mapInstance.current;
-
-    const addLayer = (name, data, style, tooltipField) => {
-        if (!data?.features) return;
-        const layer = window.L.geoJSON(data, {
-            style,
-            interactive: true,
-            onEachFeature: (feature, layerInstance) => {
-                if (name === 'zoning') {
-                    layerInstance.on('mouseover', () => {
-                        layerInstance.setStyle({ weight: 2.5 });
-                    });
-                    layerInstance.on('mouseout', () => {
-                        layerInstance.setStyle({ weight: 1.4 });
-                    });
-                }
-                if (tooltipField && feature.properties?.[tooltipField]) {
-                    layerInstance.bindTooltip(feature.properties[tooltipField], {
-                        sticky: true,
-                        className: 'custom-tooltip'
-                    });
-                }
-            }
-        });
-        layersRef.current[name] = layer;
-        layer.addTo(map);
-    };
-
-    // Solo crea si todavía no existen
-    if (!layersRef.current.edomex) {
-        addLayer(
-            'edomex',
-            edomex,
-            {
-                color: LAYER_STYLES.edomex.color,
-                weight: 1,
-                dashArray: '4,4',
-                opacity: 0.7,
-                fillOpacity: 0.05
-            },
-            'NOMGEO'
-        );
-    }
-
-    if (!layersRef.current.morelos) {
-        addLayer(
-            'morelos',
-            morelos,
-            {
-                color: LAYER_STYLES.morelos.color,
-                weight: 1,
-                dashArray: '4,4',
-                opacity: 0.7,
-                fillOpacity: 0.05
-            },
-            'NOMGEO'
-        );
-    }
-
-    if (!layersRef.current.zoning && zoning?.features?.length) {
-        addLayer('zoning', zoning, getZoningStyle, 'PGOEDF');
-    }
-}, [extraDataLoaded]);
-        
+            ['sc', 'alcaldias'].forEach(k => {
+                if (layersRef.current[k]) layersRef.current[k].addTo(map);
+            });
+        }, 400);
 
         // Click en mapa
         map.on('click', e => onLocationSelect(e.latlng));
@@ -2538,23 +2467,95 @@ useEffect(() => {
             markerRef.current = null;
             clearInterval(check);
         };
- }, []);  // sin dependencias
+    }, [onLocationSelect]);
 
-    // Cambio de mapa base (callejero / satélite)
+    // 2) Capas extra: zoning, Edomex, Morelos
+    useEffect(() => {
+        if (!mapInstance.current || !extraDataLoaded || !window.L) return;
+
+        const { edomex, morelos, zoning } = dataCache;
+        const map = mapInstance.current;
+
+        const addLayer = (name, data, style, tooltipField) => {
+            if (!data?.features) return;
+            const layer = window.L.geoJSON(data, {
+                style,
+                interactive: true,
+                onEachFeature: (feature, layerInstance) => {
+                    if (name === 'zoning') {
+                        layerInstance.on('mouseover', () => {
+                            layerInstance.setStyle({ weight: 2.5 });
+                        });
+                        layerInstance.on('mouseout', () => {
+                            layerInstance.setStyle({ weight: 1.4 });
+                        });
+                    }
+                    if (tooltipField && feature.properties?.[tooltipField]) {
+                        layerInstance.bindTooltip(feature.properties[tooltipField], {
+                            sticky: true,
+                            className: 'custom-tooltip'
+                        });
+                    }
+                }
+            });
+            layersRef.current[name] = layer;
+            layer.addTo(map);
+        };
+
+        if (!layersRef.current.edomex) {
+            addLayer(
+                'edomex',
+                edomex,
+                {
+                    color: LAYER_STYLES.edomex.color,
+                    weight: 1,
+                    dashArray: '4,4',
+                    opacity: 0.7,
+                    fillOpacity: 0.05
+                },
+                'NOMGEO'
+            );
+        }
+
+        if (!layersRef.current.morelos) {
+            addLayer(
+                'morelos',
+                morelos,
+                {
+                    color: LAYER_STYLES.morelos.color,
+                    weight: 1,
+                    dashArray: '4,4',
+                    opacity: 0.7,
+                    fillOpacity: 0.05
+                },
+                'NOMGEO'
+            );
+        }
+
+        if (!layersRef.current.zoning && zoning?.features?.length) {
+            addLayer('zoning', zoning, getZoningStyle, 'PGOEDF');
+        }
+    }, [extraDataLoaded]);
+
+    // 3) Exponer invalidateSize para el sidebar
+    useEffect(() => {
+        if (!mapInstance.current) return;
+        window.__sedemaInvalidateMapSize = () => {
+            mapInstance.current.invalidateSize();
+        };
+    }, []);
+
+    // 4) Cambio de mapa base (streets / satellite)
     useEffect(() => {
         if (!mapInstance.current || !layersRef.current.base) return;
         setTilesLoading(true);
         layersRef.current.base.setUrl(getBaseLayerUrl(activeBaseLayer));
     }, [activeBaseLayer]);
 
-    // Mostrar / ocultar capas vectoriales
+    // 5) Mostrar / ocultar capas + filtro por categoría
     useEffect(() => {
         if (!mapInstance.current) return;
- // Exponer una función global simple para ajustar tamaño
-    window.__sedemaInvalidateMapSize = () => {
-        mapInstance.current.invalidateSize();
-    };
-}, []);
+
         ['sc', 'alcaldias', 'edomex', 'morelos', 'zoning'].forEach(k => {
             const layer = layersRef.current[k];
             if (!layer) return;
@@ -2568,7 +2569,6 @@ useEffect(() => {
             }
         });
 
-        // Filtrado por categoría de zonificación
         if (layersRef.current.zoning && mapInstance.current.hasLayer(layersRef.current.zoning)) {
             layersRef.current.zoning.eachLayer(layer => {
                 const key = (layer.feature.properties.CLAVE || '').toString().trim().toUpperCase();
@@ -2598,13 +2598,11 @@ useEffect(() => {
         }
     }, [visibleLayers, extraDataLoaded]);
 
-    // Marcador de la consulta
+    // 6) Marcador de la consulta
     useEffect(() => {
         if (!mapInstance.current || !location || !window.L) return;
 
-        if (markerRef.current) {
-            markerRef.current.remove();
-        }
+        if (markerRef.current) markerRef.current.remove();
 
         const label =
             analysisStatus === 'CONSERVATION_SOIL'
@@ -2646,7 +2644,9 @@ useEffect(() => {
             iconAnchor: [16, 16]
         });
 
-        markerRef.current = window.L.marker([location.lat, location.lng], { icon }).addTo(mapInstance.current);
+        markerRef.current = window.L
+            .marker([location.lat, location.lng], { icon })
+            .addTo(mapInstance.current);
 
         const currentZoom = mapInstance.current.getZoom();
         const targetZoom = Math.max(currentZoom, FOCUS_ZOOM);
@@ -2656,10 +2656,10 @@ useEffect(() => {
     return (
         <div className="relative h-full w-full">
             <div
-    id="main-map"           // <-- NUEVO: id para capturar el mapa
-    ref={mapRef}
-    className="h-full w-full bg-gray-200"
-/>
+                id="main-map"
+                ref={mapRef}
+                className="h-full w-full bg-gray-200"
+            />
 
             {tilesLoading && (
                 <div className="absolute inset-0 flex items-center justify-center z-[1200] bg-black/10 pointer-events-none">
@@ -2845,7 +2845,6 @@ useEffect(() => {
         </div>
     );
 };
-
     
 /* ------------------------------------------------ */
 /* 9. APLICACIÓN PRINCIPAL */
