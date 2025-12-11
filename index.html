@@ -2523,91 +2523,84 @@ const MapViewer = ({
         setVisibleLayers(prev => ({ ...prev, ...update }));
     };
 
-    /* 1) Inicialización del mapa + capas core (SC y Alcaldías) */
-    useEffect(() => {
-        if (!mapRef.current || mapInstance.current || !window.L) return;
+   useEffect(() => {
+    if (!mapRef.current || mapInstance.current || !window.L) return;
 
-        const bounds = window.L.latLngBounds(
-            [18.7, -99.6],
-            [19.9, -98.7]
-        );
+    const bounds = window.L.latLngBounds(
+        [18.7, -99.6],
+        [19.9, -98.7]
+    );
 
-        const map = window.L.map(mapRef.current, {
-            zoomControl: false,
-            minZoom: 9,
-            maxZoom: 18,
-            preferCanvas: true,
-            maxBounds: bounds,
-            maxBoundsViscosity: 0.9
-        }).setView(INITIAL_CENTER, INITIAL_ZOOM);
+    const map = window.L.map(mapRef.current, {
+        zoomControl: false,
+        minZoom: 9,
+        maxZoom: 18,
+        preferCanvas: true,
+        maxBounds: bounds,
+        maxBoundsViscosity: 0.9
+    }).setView(INITIAL_CENTER, INITIAL_ZOOM);
 
-        window.L.control.zoom({ position: 'topright' }).addTo(map);
-        mapInstance.current = map;
+    window.L.control.zoom({ position: 'topright' }).addTo(map);
+    mapInstance.current = map;
 
-        // Base layer inicial (usa el estado actual)
-        const base = window.L.tileLayer(getBaseLayerUrl(activeBaseLayer || 'SATELLITE'), {
-            maxZoom: 19,
-            tileSize: 256,
-            zoomOffset: 0
-        });
-        base.on('loading', () => setTilesLoading(true));
-        base.on('load', () => setTilesLoading(false));
-        base.addTo(map);
-        layersRef.current.base = base;
+    // Base layer inicial
+    const base = window.L.tileLayer(getBaseLayerUrl(activeBaseLayer || 'SATELLITE'), {
+        maxZoom: 19,
+        tileSize: 256,
+        zoomOffset: 0
+    });
+    base.on('loading', () => setTilesLoading(true));
+    base.on('load', () => setTilesLoading(false));
+    base.addTo(map);
+    layersRef.current.base = base;
 
-        // Core data desde cache
-        const { sc, alcaldias } = dataCache;
+    // Core data desde cache
+    const { sc, alcaldias } = dataCache;
 
-        const addCoreLayer = (name, data, style, tooltipField) => {
-            if (!data?.features?.length) return;
-
-            const layer = window.L.geoJSON(data, {
-                style,
-                interactive: true,
-                onEachFeature: (feature, layerInstance) => {
-                    if (tooltipField && feature.properties?.[tooltipField]) {
-                        layerInstance.bindTooltip(feature.properties[tooltipField], {
-                            sticky: true,
-                            className: 'custom-tooltip'
-                        });
-                    }
+    const addCoreLayer = (name, data, style, tooltipField) => {
+        if (!data?.features?.length) return;
+        const layer = window.L.geoJSON(data, {
+            style,
+            interactive: true,
+            onEachFeature: (feature, layerInstance) => {
+                if (tooltipField && feature.properties?.[tooltipField]) {
+                    layerInstance.bindTooltip(feature.properties[tooltipField], {
+                        sticky: true,
+                        className: 'custom-tooltip'
+                    });
                 }
-            });
+            }
+        });
+        layersRef.current[name] = layer;
+        map.addLayer(layer);
+    };
 
-            layersRef.current[name] = layer;
-            // SIEMPRE las agregamos al mapa al inicio
-            map.addLayer(layer);
-        };
+    addCoreLayer('sc', sc, {
+        color: LAYER_STYLES.sc.color,
+        weight: 1.8,
+        opacity: 0.9,
+        fillColor: LAYER_STYLES.sc.fill,
+        fillOpacity: 0.18,
+        interactive: false
+    }, null);
 
-        addCoreLayer('sc', sc, {
-            color: LAYER_STYLES.sc.color,
-            weight: 1.8,
-            opacity: 0.9,
-            fillColor: LAYER_STYLES.sc.fill,
-            fillOpacity: 0.18,
-            interactive: false
-        }, null);
+    addCoreLayer('alcaldias', alcaldias, {
+        color: LAYER_STYLES.alcaldias.color,
+        weight: 3,
+        dashArray: '8,4',
+        opacity: 0.9,
+        fillOpacity: 0
+    }, null);
 
-        addCoreLayer('alcaldias', alcaldias, {
-            color: LAYER_STYLES.alcaldias.color,
-            weight: 3,
-            dashArray: '8,4',
-            opacity: 0.9,
-            fillOpacity: 0
-        }, null);
+    map.on('click', e => onLocationSelect(e.latlng));
 
-        map.on('click', e => onLocationSelect(e.latlng));
-
-        return () => {
-            map.remove();
-            mapInstance.current = null;
-            layersRef.current = {};
-            markerRef.current = null;
-        };
-        // activeBaseLayer solo al crear; luego se actualiza en otro efecto
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [onLocationSelect]);
-
+    return () => {
+        map.remove();
+        mapInstance.current = null;
+        layersRef.current = {};
+        markerRef.current = null;
+    };
+}, []);  // 👈 SIN DEPENDENCIAS
     /* 2) Capas extra: EdoMex, Morelos, Zonificación */
     useEffect(() => {
         if (!mapInstance.current || !extraDataLoaded || !window.L) return;
