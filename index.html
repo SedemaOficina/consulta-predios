@@ -289,7 +289,26 @@ const parseCoordinateInput = (value) => {
 /* ------------------------------------------------ */
 /* 3. ICONOS (SVG) – CORREGIDOS */
 /* ------------------------------------------------ */
-
+/* ------------------------------------------------ */
+/* COMPONENTE BASE PARA ICONOS (FALTABA ESTO) */
+/* ------------------------------------------------ */
+const IconBase = ({ children, className, ...props }) => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+        {...props}
+    >
+        {children}
+    </svg>
+);
 const Icons = {
     Search: (p) => (
         <IconBase {...p}>
@@ -2237,6 +2256,28 @@ const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => 
         </div>
     );
 };
+
+/* ------------------------------------------------ */
+/* COMPONENTE TOGGLE SWITCH (FALTABA ESTO) */
+/* ------------------------------------------------ */
+const ToggleSwitch = ({ checked, onChange }) => (
+    <div
+        onClick={(e) => {
+            e.stopPropagation();
+            onChange && onChange(!checked);
+        }}
+        className={`w-8 h-5 flex items-center rounded-full p-1 duration-300 cursor-pointer ${
+            checked ? 'bg-[#9d2449]' : 'bg-gray-300'
+        }`}
+    >
+        <div
+            className={`bg-white w-3 h-3 rounded-full shadow-md transform duration-300 ${
+                checked ? 'translate-x-3' : ''
+            }`}
+        />
+    </div>
+);
+    
 /* ------------------------------------------------ */
 /* 8. MAPA */
 /* ------------------------------------------------ */
