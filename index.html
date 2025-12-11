@@ -696,18 +696,12 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
 
        return (
         <>
-            {/* Título destacado (sólo móvil) */}
-            <div className="mb-1 text-xs font-bold text-gray-800 md:hidden">
-                Resultados de consulta
-            </div>
-
             {/* Etiqueta fija de resultado orientativo */}
             <div className="text-[10px] text-gray-500 mb-2 bg-gray-50 p-1 pl-2 rounded border border-gray-200">
                 Resultado orientativo — No constituye un documento oficial.
             </div>
 
             <div className="bg-white border rounded-lg shadow-sm p-4 mb-4">
-                ...
 
                 {/* CINTA SUPERIOR */}
                 <div
@@ -715,25 +709,16 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
                     style={{ backgroundColor: bandColor }}
                 />
 
-                {/* ALCALDÍA */}
-                <div className="mb-2">
-                    <p className="text-[11px] font-semibold text-gray-600">
+               {/* ALCALDÍA EN UNA SOLA LÍNEA */}
+                <div className="mb-2 text-sm leading-snug">
+                    <span className="text-[11px] font-semibold text-gray-600">
                         Alcaldía:
-                    </p>
-                    <h2 className="text-sm font-bold text-gray-900 leading-snug">
+                    </span>
+                    <span className="font-bold text-gray-900 ml-1">
                         {analysis.alcaldia || 'Ciudad de México'}
-                    </h2>
-                </div>
-
-                {/* TIPO DE SUELO (badge) */}
-                <div className="mb-3">
-                    <span
-                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border"
-                        style={soilBadgeStyle}
-                    >
-                        {statusLabelBadge}
                     </span>
                 </div>
+            
 
                 {/* ZONIFICACIÓN PGOEDF: SOLO SUELO DE CONSERVACIÓN */}
                 {showZoningBlock && (
@@ -2428,26 +2413,16 @@ const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => 
                 {/* Handle */}
                 <div className="w-10 h-1.5 bg-gray-300 rounded-full mx-auto mb-2" />
 
-              <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                         {analysis ? (
-                            <>
-                                {/* Badge de tipo de suelo en el header */}
-                                <span
-                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border"
-                                    style={soilBadgeStyle}
-                                >
-                                    {soilLabel}
-                                </span>
-
-                                {/* Texto breve debajo */}
-                                <p className="text-[11px] text-gray-600 mt-0.5">
-                                    Resultado orientativo
-                                </p>
-                            </>
+                            // MODO CON RESULTADOS: solo título guinda
+                            <h3 className="font-bold text-sm text-[#9d2449]">
+                                Resultado de consulta
+                            </h3>
                         ) : (
+                            // MODO SIN RESULTADOS: mensaje general
                             <>
-                                {/* Estado sin análisis: encabezado genérico */}
                                 <h3 className="font-bold text-gray-900 text-sm truncate">
                                     Visor de Consulta Ciudadana
                                 </h3>
@@ -2466,7 +2441,7 @@ const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => 
                             <Icons.X className="h-4 w-4 text-white" />
                         </button>
                     )}
-                </div>  
+                </div>
             </div>
 
             {/* CONTENIDO: siempre usamos ResultsContent; si analysis = null muestra el mensaje de ayuda */}
