@@ -292,6 +292,11 @@ const parseCoordinateInput = (value) => {
 /* ------------------------------------------------ */
 /* COMPONENTE BASE PARA ICONOS (FALTABA ESTO) */
 /* ------------------------------------------------ */
+/* ------------------------------------------------ */
+/* 3. ICONOS (SVG) – CORREGIDOS */
+/* ------------------------------------------------ */
+
+/* 1. PRIMERO defines el componente base */
 const IconBase = ({ children, className, ...props }) => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -309,6 +314,8 @@ const IconBase = ({ children, className, ...props }) => (
         {children}
     </svg>
 );
+
+/* 2. LUEGO defines el objeto Icons (UNA SOLA VEZ) */
 const Icons = {
     Search: (p) => (
         <IconBase {...p}>
@@ -396,18 +403,17 @@ const Icons = {
             <line x1="6" y1="6" x2="18" y2="18" />
         </IconBase>
     ),
-    Pdf: (p) => (
+   Pdf: (p) => (
         <IconBase {...p}>
-            {/* Documento con esquina doblada */}
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-            {/* Tres líneas simulando texto */}
-            <line x1="9" y1="12" x2="15" y2="12" />
-            <line x1="9" y1="15" x2="15" y2="15" />
-            <line x1="9" y1="18" x2="13" y2="18" />
+             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+             <polyline points="14 2 14 8 20 8" />
+             <line x1="9" y1="12" x2="15" y2="12" />
+             <line x1="9" y1="15" x2="15" y2="15" />
+             <line x1="9" y1="18" x2="13" y2="18" />
         </IconBase>
     )
 };
+
 
 /* ------------------------------------------------ */
 /* 5. LÓGICA GEOESPACIAL */
