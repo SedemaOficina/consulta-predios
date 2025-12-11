@@ -390,30 +390,6 @@ const Icons = {
     )
 };
 
-
-
-/* ------------------------------------------------ */
-/* 4. COMPONENTE TOGGLE SWITCH */
-/* ------------------------------------------------ */
-
-const ToggleSwitch = ({ checked, onChange }) => (
-    <button
-        onClick={(e) => {
-            e.stopPropagation();
-            onChange();
-        }}
-        className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors duration-200 focus:outline-none ${
-            checked ? 'bg-[#9d2449]' : 'bg-gray-300'
-        }`}
-    >
-        <span
-            className={`inline-block h-3 w-3 transform rounded-full bg-white transition duration-200 ${
-                checked ? 'translate-x-3.5' : 'translate-x-0.5'
-            }`}
-        />
-    </button>
-);
-
 /* ------------------------------------------------ */
 /* 5. LÓGICA GEOESPACIAL */
 /* ------------------------------------------------ */
