@@ -39,14 +39,6 @@
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
 
-/* ------------------------------------------------ */
-/* 1. CONFIGURACIÓN GENERAL */
-/* ------------------------------------------------ */
-
-const BASE_LAYERS = {
-    STREETS: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    SATELLITE: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-};
 
 const ZONING_CAT_INFO = {
     AEE: { color: '#FF5F5F', label: 'Agroecológico Especial (AEE)' },        // rojo coral claro
@@ -83,15 +75,20 @@ const DATA_FILES = {
 };
 
     const MAPBOX_TOKEN = 'pk.eyJ1Ijoiam9yZ2VsaWJlcjI4IiwiYSI6ImNtajA0eHR2eTA0b2gzZnB0NnU2a2xwY2oifQ.2BDJUISBBvrm1wM8RwXusg';
-// Helper para elegir URL de tiles según base layer
+// Helper para elegir URL de tiles según base layer (SOLO MAPBOX)
 const getBaseLayerUrl = (name) => {
+    // Mapa claro
+    if (name === 'STREETS') {
+        return `https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/256/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`;
+    }
+
+    // Satélite con calles
     if (name === 'SATELLITE') {
-        // Satélite + calles + labels (Mapbox satellite-streets)
         return `https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/256/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`;
     }
 
-    // Para STREETS y cualquier otro, usa las constantes existentes
-    return BASE_LAYERS[name];
+    // Default de seguridad
+    return `https://api.mapbox.com/styles/v1/mapbox/light-v11/tiles/256/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`;
 };
 const INITIAL_CENTER = [19.3200, -99.1500];
 const INITIAL_ZOOM = 10;
@@ -2558,30 +2555,30 @@ const MapViewer = ({
 
         // Core data
         const { sc, alcaldias } = dataCache;
+const addLayer = (name, data, style, tooltipField) => {
+    if (!data?.features?.length) return;
 
-        const addLayer = (name, data, style, tooltipField) => {
-            if (!data?.features?.length) return;
-            const layer = window.L.geoJSON(data, {
-                style,
-                interactive: true,
-                onEachFeature: (feature, layerInstance) => {
-                    if (name === 'zoning') {
-                        layerInstance.on('mouseover', () => {
-                            layerInstance.setStyle({ weight: 2.5 });
-                        });
-                        layerInstance.on('mouseout', () => {
-                            layerInstance.setStyle({ weight: 1.4 });
-                        });
-                    }
-                    if (tooltipField && feature.properties?.[tooltipField]) {
-                        layerInstance.bindTooltip(feature.properties[tooltipField], {
-                            sticky: true,
-                            className: 'custom-tooltip'
-                        });
-                    }
-                }
-            });
-            layersRef.current[name] = layer;
+    const layer = window.L.geoJSON(data, {
+        style,
+        interactive: true,
+        onEachFeature: (feature, layerInstance) => {
+            if (name === 'zoning') {
+                layerInstance.on('mouseover', () => {
+                    layerInstance.setStyle({ weight: 2.5 });
+                });
+                layerInstance.on('mouseout', () => {
+                    layerInstance.setStyle({ weight: 1.4 });
+                });
+            }
+            if (tooltipField && feature.properties?.[tooltipField]) {
+                layerInstance.bindTooltip(feature.properties[tooltipField], {
+                    sticky: true,
+                    className: 'custom-tooltip'
+                });
+            }
+        }
+    });
+                   layersRef.current[name] = layer;
         };
 
         addLayer('sc', sc, {
@@ -2617,28 +2614,30 @@ const MapViewer = ({
 
         const { edomex, morelos, zoning } = dataCache;
 
-        const addLayer = (name, data, style, tooltipField) => {
-            if (!data?.features?.length) return;
-            const layer = window.L.geoJSON(data, {
-                style,
-                interactive: true,
-                onEachFeature: (feature, layerInstance) => {
-                    if (name === 'zoning') {
-                        layerInstance.on('mouseover', () => {
-                            layerInstance.setStyle({ weight: 2.5 });
-                        });
-                        layerInstance.on('mouseout', () => {
-                            layerInstance.setStyle({ weight: 1.4 });
-                        });
-                    }
-                    if (tooltipField && feature.properties?.[tooltipField]) {
-                        layerInstance.bindTooltip(feature.properties[tooltipField], {
-                            sticky: true,
-                            className: 'custom-tooltip'
-                        });
-                    }
-                }
-            });
+       const addLayer = (name, data, style, tooltipField) => {
+    if (!data?.features?.length) return;
+
+    const layer = window.L.geoJSON(data, {
+        style,
+        interactive: true,
+        onEachFeature: (feature, layerInstance) => {
+            if (name === 'zoning') {
+                layerInstance.on('mouseover', () => {
+                    layerInstance.setStyle({ weight: 2.5 });
+                });
+                layerInstance.on('mouseout', () => {
+                    layerInstance.setStyle({ weight: 1.4 });
+                });
+            }
+            if (tooltipField && feature.properties?.[tooltipField]) {
+                layerInstance.bindTooltip(feature.properties[tooltipField], {
+                    sticky: true,
+                    className: 'custom-tooltip'
+                });
+            }
+        }
+    });
+
             layersRef.current[name] = layer;
         };
 
