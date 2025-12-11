@@ -2687,19 +2687,25 @@ const MapViewer = ({
     useEffect(() => {
         if (!mapInstance.current) return;
 
-        ['sc', 'alcaldias', 'edomex', 'morelos', 'zoning'].forEach(k => {
-            const layer = layersRef.current[k];
-            if (!layer) return;
+       ['sc', 'alcaldias', 'edomex', 'morelos', 'zoning'].forEach(k => {
+    const layer = layersRef.current[k];
+    if (!layer) return;
 
-            if (visibleLayers[k] && !mapInstance.current.hasLayer(layer)) {
-                mapInstance.current.addLayer(layer);
-                if (k === 'alcaldias') layer.bringToFront();
-                else layer.bringToBack();
-            } else if (!visibleLayers[k] && mapInstance.current.hasLayer(layer)) {
-                mapInstance.current.removeLayer(layer);
-            }
-        });
+    if (visibleLayers[k] && !mapInstance.current.hasLayer(layer)) {
+        mapInstance.current.addLayer(layer);
 
+        // Orden de dibujo:
+        // - ZONIFICACIÓN y ALCALDÍAS siempre adelante
+        // - SC, EdoMex, Morelos al fondo
+        if (k === 'zoning' || k === 'alcaldias') {
+            layer.bringToFront();
+        } else {
+            layer.bringToBack();
+        }
+    } else if (!visibleLayers[k] && mapInstance.current.hasLayer(layer)) {
+        mapInstance.current.removeLayer(layer);
+    }
+});
         // Filtros por categoría dentro de la zonificación
         if (layersRef.current.zoning && mapInstance.current.hasLayer(layersRef.current.zoning)) {
             layersRef.current.zoning.eachLayer(layer => {
