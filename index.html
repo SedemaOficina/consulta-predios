@@ -2498,13 +2498,14 @@ const MapViewer = ({
     setVisibleLayers,
     isLegendOpen,
     setIsLegendOpen,
-    extraDataLoaded
+    extraDataLoaded,
+    activeBaseLayer,
+    setActiveBaseLayer
 }) => {
     const mapRef = useRef(null);
     const mapInstance = useRef(null);
     const layersRef = useRef({});
     const markerRef = useRef(null);
-    const [activeBaseLayer, setActiveBaseLayer] = useState('SATELLITE');
     const [tilesLoading, setTilesLoading] = useState(true);
 
     const toggleLayer = (key, nextValue) => {
@@ -2608,13 +2609,7 @@ const addLayer = (name, data, style, tooltipField) => {
         };
     }, [onLocationSelect]);
 
-    // 2) Capas extra: zoning, Edomex, Morelos
-    useEffect(() => {
-        if (!mapInstance.current || !extraDataLoaded || !window.L) return;
-
-        const { edomex, morelos, zoning } = dataCache;
-
-       const addLayer = (name, data, style, tooltipField) => {
+   const addLayer = (name, data, style, tooltipField) => {
     if (!data?.features?.length) return;
 
     const layer = window.L.geoJSON(data, {
@@ -2638,8 +2633,12 @@ const addLayer = (name, data, style, tooltipField) => {
         }
     });
 
-            layersRef.current[name] = layer;
-        };
+    // Guardamos referencia para switches
+    layersRef.current[name] = layer;
+
+    // Agregamos SIEMPRE la capa al mapa al crearla
+    mapInstance.current.addLayer(layer);
+};
 
         if (!layersRef.current.edomex) {
             addLayer('edomex', edomex, {
@@ -2995,7 +2994,7 @@ const App = () => {
     });
     const [isLegendOpen, setIsLegendOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
+const [activeBaseLayer, setActiveBaseLayer] = useState('SATELLITE');
     useEffect(() => {
         loadCoreData().then(() => {
             setLoading(false);
@@ -3096,16 +3095,18 @@ const App = () => {
                         onUserLocation={handleUserLocation}
                         onToggleLegend={() => setIsLegendOpen(!isLegendOpen)}
                     />
-                    <MapViewer
-                        location={location}
-                        onLocationSelect={handleSelect}
-                        analysisStatus={analysis?.status}
-                        visibleLayers={visibleLayers}
-                        setVisibleLayers={setVisibleLayers}
-                        isLegendOpen={isLegendOpen}
-                        setIsLegendOpen={setIsLegendOpen}
-                        extraDataLoaded={extraDataLoaded}
-                    />
+                   <MapViewer
+    location={location}
+    onLocationSelect={handleSelect}
+    analysisStatus={analysis?.status}
+    visibleLayers={visibleLayers}
+    setVisibleLayers={setVisibleLayers}
+    isLegendOpen={isLegendOpen}
+    setIsLegendOpen={setIsLegendOpen}
+    extraDataLoaded={extraDataLoaded}
+    activeBaseLayer={activeBaseLayer}
+    setActiveBaseLayer={setActiveBaseLayer}
+/>
                     <BottomSheetMobile
                         analysis={analysis}
                         onLocationSelect={handleSelect}
