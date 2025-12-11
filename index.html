@@ -822,7 +822,7 @@ const GroupedActivities = ({ title, activities, icon, headerClass, bgClass }) =>
     });
 
     return (
-        <details className={`group rounded-lg border border-gray-200 overflow-hidden mb-3 shadow-sm ${bgClass}`}>
+        <details open className={`group rounded-lg border border-gray-200 overflow-hidden mb-3 shadow-sm ${bgClass}`}>
             <summary className={`flex items-center justify-between px-3 py-2 cursor-pointer ${headerClass}`}>
                 <div className="flex items-center gap-2 font-bold text-xs">
                     {icon}
@@ -1410,7 +1410,7 @@ const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
                     {/* 3. DETALLE DE ACTIVIDADES PROHIBIDAS (EXTRACTO) */}
                     <section style={{ marginBottom: '8px' }}>
                         <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#b91c1c' }}>
-                            3. Actividades prohibidas (extracto)
+                            3. Actividades prohibidas
                         </h2>
                         {detalleProhibidas.length === 0 ? (
                             <div style={{ fontSize: '9px', color: '#4b5563' }}>
@@ -1446,7 +1446,7 @@ const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
                     {/* 4. DETALLE DE ACTIVIDADES PERMITIDAS (EXTRACTO) */}
                     <section style={{ marginBottom: '8px' }}>
                         <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#166534' }}>
-                            4. Actividades permitidas (extracto)
+                            4. Actividades permitidas
                         </h2>
                         {detallePermitidas.length === 0 ? (
                             <div style={{ fontSize: '9px', color: '#4b5563' }}>
