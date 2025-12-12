@@ -592,12 +592,14 @@ const analyzeLocation = async (c) => {
                 r.prohibitedActivities = pro;
             }
         }
-    } else {
-        r.zoningName = "Sin zonificación específica";
-        r.zoningKey = "SC";
-    }
+   } else {
+    r.zoningName = "Sin zonificación específica";
+    r.zoningKey = "SC";
+    r.noActivitiesCatalog = true; // <- evita tabs 0/0 cuando no hay zonificación
+}
 } else {
     r.zoningName = "Cargando detalles...";
+    r.noActivitiesCatalog = true;
 }
 
     return r;
