@@ -2952,21 +2952,22 @@ const App = () => {
   const [extraDataLoaded, setExtraDataLoaded] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [location, setLocation] = useState(null);
-  // 🔹 Capas del mapa (Leaflet)
-const [visibleMapLayers, setVisibleMapLayers] = useState({
-  sc: true,
-  zoning: true,
-  alcaldias: true,
-  edomex: true,
-  morelos: true
-});
 
-// 🔹 Categorías internas de zonificación (PGOEDF)
-const [visibleZoningCats, setVisibleZoningCats] = useState(() => {
-  const d = {};
-  Object.keys(ZONING_CAT_INFO).forEach(k => (d[k] = true));
-  return d;
-});
+  // 🔹 Capas del mapa (Leaflet)
+  const [visibleMapLayers, setVisibleMapLayers] = useState({
+    sc: true,
+    zoning: true,
+    alcaldias: true,
+    edomex: true,
+    morelos: true
+  });
+
+  // 🔹 Categorías internas de zonificación (PGOEDF)
+  const [visibleZoningCats, setVisibleZoningCats] = useState(() => {
+    const d = {};
+    Object.keys(ZONING_CAT_INFO).forEach(k => (d[k] = true));
+    return d;
+  });
 
   const [isLegendOpen, setIsLegendOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -3010,104 +3011,129 @@ const [visibleZoningCats, setVisibleZoningCats] = useState(() => {
       const lng = parseFloat(params.get("lng"));
       const hasCoords = !isNaN(lat) && !isNaN(lng);
 
+      // ✅ Modal en DESKTOP y MÓVIL (solo si NO viene consulta por URL)
+      if (!hasCoords) {
+        setIsHelpOpen(true);
+      }
+
+      // ✅ Si viene consulta por URL, ejecutar directo
+      if (hasCoords) {
+        handleSelect({ lat, lng });
+      }
+
+      loadExtraData().then(() => setExtraDataLoaded(true));
+    });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center text-[#9d2449]">
+        <Icons.Loader2 className="animate-spin h-10 w-10" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full relative overflow-hidden bg-gray-100">
+
       {/* MODAL DE AYUDA (MÓVIL + DESKTOP) */}
-{isHelpOpen && (
-  <div
-    className="fixed inset-0 bg-black/50 z-[6000] flex items-center justify-center p-4"
-    onClick={() => setIsHelpOpen(false)}
-  >
-    <div
-      className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="px-6 pt-6 pb-6 text-gray-700">
+      {isHelpOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-[6000] flex items-center justify-center p-4"
+          onClick={() => setIsHelpOpen(false)}
+        >
+          <div
+            className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 pt-6 pb-6 text-gray-700">
 
-        {/* NIVEL 1 */}
-        <div className="text-center mb-2">
-          <div className="text-[#9d2449] text-[13px] font-extrabold tracking-widest uppercase">
-            Evita fraudes
-          </div>
-        </div>
+              {/* NIVEL 1 */}
+              <div className="text-center mb-2">
+                <div className="text-[#9d2449] text-[13px] font-extrabold tracking-widest uppercase">
+                  Evita fraudes
+                </div>
+              </div>
 
-        {/* NIVEL 2 */}
-        <h2 className="text-center text-[15px] font-semibold text-gray-900 leading-snug mb-4">
-          Verifica si un predio está en Suelo de Conservación o en un Área Natural Protegida
-        </h2>
+              {/* NIVEL 2 */}
+              <h2 className="text-center text-[15px] font-semibold text-gray-900 leading-snug mb-4">
+                Verifica si un predio está en Suelo de Conservación o en un Área Natural Protegida
+              </h2>
 
-        {/* NIVEL 3 */}
-        <div className="text-[13px] font-bold text-gray-800 mb-3">
-          ¿Cómo usar esta herramienta?
-        </div>
+              {/* NIVEL 3 */}
+              <div className="text-[13px] font-bold text-gray-800 mb-3">
+                ¿Cómo usar esta herramienta?
+              </div>
 
-        {/* PASOS */}
-        <div className="space-y-3 text-[13px]">
-          <div className="flex items-start gap-3">
-            <Icons.Search className="h-5 w-5 text-[#9d2449]" strokeWidth="2.8" />
-            <div>
-              <strong>Buscar por texto:</strong> escribe una dirección o pega coordenadas (en cualquier formato).
-            </div>
-          </div>
+              {/* PASOS */}
+              <div className="space-y-3 text-[13px]">
+                <div className="flex items-start gap-3">
+                  <Icons.Search className="h-5 w-5 text-[#9d2449]" strokeWidth="2.8" />
+                  <div>
+                    <strong>Buscar por texto:</strong> escribe una dirección o pega coordenadas (en cualquier formato).
+                  </div>
+                </div>
 
-          <div className="flex items-start gap-3">
-            <Icons.MapPin className="h-5 w-5 text-[#9d2449]" strokeWidth="2.8" />
-            <div>
-              <strong>Seleccionar en el mapa:</strong> toca el mapa para fijar el punto.
-            </div>
-          </div>
+                <div className="flex items-start gap-3">
+                  <Icons.MapPin className="h-5 w-5 text-[#9d2449]" strokeWidth="2.8" />
+                  <div>
+                    <strong>Seleccionar en el mapa:</strong> toca el mapa para fijar el punto.
+                  </div>
+                </div>
 
-          <div className="flex items-start gap-3">
-            <Icons.Navigation className="h-5 w-5 text-[#9d2449]" strokeWidth="2.8" />
-            <div>
-              <strong>Mi ubicación:</strong> usa el botón de ubicación si estás en el sitio.
-            </div>
-          </div>
-        </div>
+                <div className="flex items-start gap-3">
+                  <Icons.Navigation className="h-5 w-5 text-[#9d2449]" strokeWidth="2.8" />
+                  <div>
+                    <strong>Mi ubicación:</strong> usa el botón de ubicación si estás en el sitio.
+                  </div>
+                </div>
+              </div>
 
-        {/* RESULTADO INMEDIATO */}
-        <div className="mt-4">
-          <div className="font-bold text-[13px] text-gray-900 mb-1">
-            Resultado inmediato
-          </div>
+              {/* RESULTADO INMEDIATO */}
+              <div className="mt-4">
+                <div className="font-bold text-[13px] text-gray-900 mb-1">
+                  Resultado inmediato
+                </div>
 
-          <div className="text-[13px] text-gray-700 flex items-center gap-4">
-            <span className="flex items-center gap-1.5">
-              <Icons.MapPin className="h-4 w-4 text-[#3b82f6]" />
-              <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]" />
-                SU (Urbano)
-              </span>
-            </span>
+                <div className="text-[13px] text-gray-700 flex items-center gap-4">
+                  <span className="flex items-center gap-1.5">
+                    <Icons.MapPin className="h-4 w-4 text-[#3b82f6]" />
+                    <span className="flex items-center gap-1">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]" />
+                      SU (Urbano)
+                    </span>
+                  </span>
 
-            <span className="flex items-center gap-1.5">
-              <Icons.MapPin className="h-4 w-4 text-[#9d2449]" />
-              <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#9d2449]" />
-                SC (Conservación)
-              </span>
-            </span>
-          </div>
-        </div>
+                  <span className="flex items-center gap-1.5">
+                    <Icons.MapPin className="h-4 w-4 text-[#9d2449]" />
+                    <span className="flex items-center gap-1">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#9d2449]" />
+                      SC (Conservación)
+                    </span>
+                  </span>
+                </div>
+              </div>
 
-        {/* COMPARTIR */}
-        <div className="mt-5 text-center text-[13px] flex justify-center gap-2 items-center">
-          <Icons.Share className="h-5 w-5 text-[#9d2449]" strokeWidth="2.8" />
-          <span>
-            <strong>Comparte evidencia:</strong> descarga la ficha PDF o comparte el enlace.
-          </span>
-        </div>
+              {/* COMPARTIR */}
+              <div className="mt-5 text-center text-[13px] flex justify-center gap-2 items-center">
+                <Icons.Share className="h-5 w-5 text-[#9d2449]" strokeWidth="2.8" />
+                <span>
+                  <strong>Comparte evidencia:</strong> descarga la ficha PDF o comparte el enlace.
+                </span>
+              </div>
 
-        {/* NOTA */}
-        <div className="mt-5 text-[11px] text-gray-500 bg-gray-50 border border-gray-200 rounded-lg p-2 text-center">
-          Resultado orientativo — No constituye un documento oficial.
-        </div>
+              {/* NOTA */}
+              <div className="mt-5 text-[11px] text-gray-500 bg-gray-50 border border-gray-200 rounded-lg p-2 text-center">
+                Resultado orientativo — No constituye un documento oficial.
+              </div>
 
-        {/* BOTÓN */}
-      <button
-  onClick={() => setIsHelpOpen(false)}
-  className="mt-4 w-full bg-[#9d2449] text-white py-2.5 rounded-xl text-[13px] font-extrabold active:scale-95 transition"
->
-  Entendido
-</button>
+              {/* BOTÓN */}
+              <button
+                onClick={() => setIsHelpOpen(false)}
+                className="mt-4 w-full bg-[#9d2449] text-white py-2.5 rounded-xl text-[13px] font-extrabold active:scale-95 transition"
+              >
+                Entendido
+              </button>
 
             </div>
           </div>
@@ -3138,7 +3164,6 @@ const [visibleZoningCats, setVisibleZoningCats] = useState(() => {
             <div>{CONTACT_INFO.hours}</div>
           </div>
 
-          {/* ✅ En desktop el ? abre ESTE MISMO MODAL */}
           <button
             onClick={() => setIsHelpOpen(true)}
             className="w-7 h-7 flex items-center justify-center rounded-full bg-white/10 border border-white/40 text-white text-xs font-bold hover:bg-white/20 active:scale-95 transition"
@@ -3184,13 +3209,13 @@ const [visibleZoningCats, setVisibleZoningCats] = useState(() => {
           />
 
           <MapViewer
-  location={location}
-  onLocationSelect={handleSelect}
-  analysisStatus={analysis?.status}
-  visibleMapLayers={visibleMapLayers}
-  setVisibleMapLayers={setVisibleMapLayers}
-  visibleZoningCats={visibleZoningCats}
-  setVisibleZoningCats={setVisibleZoningCats}
+            location={location}
+            onLocationSelect={handleSelect}
+            analysisStatus={analysis?.status}
+            visibleMapLayers={visibleMapLayers}
+            setVisibleMapLayers={setVisibleMapLayers}
+            visibleZoningCats={visibleZoningCats}
+            setVisibleZoningCats={setVisibleZoningCats}
             isLegendOpen={isLegendOpen}
             setIsLegendOpen={setIsLegendOpen}
             extraDataLoaded={extraDataLoaded}
@@ -3212,7 +3237,6 @@ const [visibleZoningCats, setVisibleZoningCats] = useState(() => {
     </div>
   );
 };
-
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
 
