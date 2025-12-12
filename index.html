@@ -1586,32 +1586,7 @@ const ResultsContent = ({ analysis }) => {
       );
     };
 
-    addPageWithNumber();
-    heightLeft -= pdfHeight;
-
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pageNumber += 1;
-      addPageWithNumber();
-      heightLeft -= pdfHeight;
-    }
-
-    const nombreArchivo = `ficha-${(analysis.alcaldia || 'CDMX')
-      .replace(/\s+/g, '_')
-      .toUpperCase()}-${new Date().toISOString().slice(0, 10)}.pdf`;
-
-    pdf.save(nombreArchivo);
-  };
-
-  useEffect(() => {
-    window.__sedemaExportPDF = handleExportPDF;
-    return () => { delete window.__sedemaExportPDF; };
-  }, [analysis]);
-
-  // ✅ Cuando NO hay análisis: ya no mostramos tarjeta (para que el modal sea lo único)
-  if (!analysis) return null;
-
+   
   return (
     <div className="space-y-4 animate-in pb-2">
       {/* PLANTILLA OCULTA PARA PDF */}
