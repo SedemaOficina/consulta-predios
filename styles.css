@@ -34,9 +34,7 @@ body {
     .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
     
     /* Ajustes para el mapa en pantalla completa */
-    #map-wrapper { height: 100vh !important; }
-}
-
+  #main-map { height: 100vh !important; }
 
 /* Transición suave reutilizable */
 .transition-soft {
