@@ -1707,28 +1707,47 @@ const ResultsContent = ({ analysis }) => {
                 {showDetails && (
                     <div className="mt-2">
                         {/* Tabs de actividades */}
-                      <div className="inline-flex rounded-full border border-gray-300 bg-gray-50 p-1 mb-3 text-sm font-semibold">
-    <button
-        onClick={() => setActiveTab('prohibidas')}
-        className={`px-4 py-1.5 rounded-full text-[13px] font-bold ${
-            activeTab === 'prohibidas'
-                ? 'bg-red-50 text-red-800 border border-red-300'
-                : 'text-gray-600'
-        }`}
-    >
-        Prohibidas ({analysis.prohibitedActivities?.length || 0})
-    </button>
+                     <div className="relative w-full border-b border-gray-200 mb-4">
+    <div className="flex justify-start space-x-6 px-1">
+        
+        {/* TAB PROHIBIDAS */}
+        <button
+            onClick={() => setActiveTab('prohibidas')}
+            className={`pb-2 text-[14px] font-semibold transition ${
+                activeTab === 'prohibidas'
+                    ? 'text-[#9d2449]'
+                    : 'text-gray-500'
+            }`}
+        >
+            Prohibidas ({analysis.prohibitedActivities?.length || 0})
+        </button>
 
-    <button
-        onClick={() => setActiveTab('permitidas')}
-        className={`px-4 py-1.5 rounded-full text-[13px] font-bold ${
-            activeTab === 'permitidas'
-                ? 'bg-green-50 text-green-800 border border-green-300'
-                : 'text-gray-600'
-        }`}
-    >
-        Permitidas ({analysis.allowedActivities?.length || 0})
-    </button>
+        {/* TAB PERMITIDAS */}
+        <button
+            onClick={() => setActiveTab('permitidas')}
+            className={`pb-2 text-[14px] font-semibold transition ${
+                activeTab === 'permitidas'
+                    ? 'text-[#027a35]'
+                    : 'text-gray-500'
+            }`}
+        >
+            Permitidas ({analysis.allowedActivities?.length || 0})
+        </button>
+    </div>
+
+    {/* Línea animada */}
+    <div className="absolute bottom-0 left-0 h-[3px] w-full pointer-events-none">
+        <div
+            className="h-full bg-[#9d2449] transition-all duration-300"
+            style={{
+                width: '150px',
+                transform:
+                    activeTab === 'prohibidas'
+                        ? 'translateX(0px)'
+                        : 'translateX(165px)' // ajusta si cambian tus labels
+            }}
+        ></div>
+    </div>
 </div>
 
                         {activeTab === 'prohibidas' && (
