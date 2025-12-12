@@ -3100,42 +3100,9 @@ const App = () => {
     });
     const [isLegendOpen, setIsLegendOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-const [activeBaseLayer, setActiveBaseLayer] = useState('SATELLITE');
+    const [activeBaseLayer, setActiveBaseLayer] = useState('SATELLITE');
     const [isHelpOpen, setIsHelpOpen] = useState(false);
-    useEffect(() => {
-        loadCoreData().then(() => {
-            setLoading(false);
-// Abrir ayuda automáticamente en móvil al cargar
-if (window.innerWidth < 768) {
-    setIsHelpOpen(true);
-}
-            const params = new URLSearchParams(window.location.search);
-            const lat = parseFloat(params.get('lat'));
-            const lng = parseFloat(params.get('lng'));
 
-           useEffect(() => {
-    loadCoreData().then(() => {
-        setLoading(false);
-
-        const params = new URLSearchParams(window.location.search);
-        const lat = parseFloat(params.get('lat'));
-        const lng = parseFloat(params.get('lng'));
-
-        const hasCoords = !isNaN(lat) && !isNaN(lng);
-
-        // Modal de ayuda SOLO en móvil y SOLO si NO hay coords en la URL
-        if (window.innerWidth < 768 && !hasCoords) {
-            setIsHelpOpen(true);
-        }
-
-        // Si hay coords en la URL, ejecutar consulta directa
-        if (hasCoords) {
-            handleSelect({ lat, lng });
-        }
-
-        loadExtraData().then(() => setExtraDataLoaded(true));
-    });
-}, []);
     const handleSelect = async (c) => {
         setLocation(c);
         const res = await analyzeLocation(c);
@@ -3148,24 +3115,44 @@ if (window.innerWidth < 768) {
     };
 
     const handleUserLocation = () => {
-    navigator.geolocation.getCurrentPosition(
-        p => {
-            const coord = { lat: p.coords.latitude, lng: p.coords.longitude };
-            handleSelect(coord);
+        navigator.geolocation.getCurrentPosition(
+            p => {
+                const coord = { lat: p.coords.latitude, lng: p.coords.longitude };
+                handleSelect(coord);
 
-            // Desktop
-            if (window.__sedemaSetSearchInput) {
-                window.__sedemaSetSearchInput(`${coord.lat.toFixed(6)}, ${coord.lng.toFixed(6)}`);
+                if (window.__sedemaSetSearchInput) {
+                    window.__sedemaSetSearchInput(`${coord.lat.toFixed(6)}, ${coord.lng.toFixed(6)}`);
+                }
+                if (window.__sedemaSetSearchInputMobile) {
+                    window.__sedemaSetSearchInputMobile(`${coord.lat.toFixed(6)}, ${coord.lng.toFixed(6)}`);
+                }
+            },
+            () => alert("No se pudo obtener tu ubicación. Revisa permisos del navegador.")
+        );
+    };
+
+    useEffect(() => {
+        loadCoreData().then(() => {
+            setLoading(false);
+
+            const params = new URLSearchParams(window.location.search);
+            const lat = parseFloat(params.get('lat'));
+            const lng = parseFloat(params.get('lng'));
+
+            const hasCoords = !isNaN(lat) && !isNaN(lng);
+
+            // Modal solo en móvil y solo si NO viene consulta por URL
+            if (window.innerWidth < 768 && !hasCoords) {
+                setIsHelpOpen(true);
             }
 
-            // Móvil
-            if (window.__sedemaSetSearchInputMobile) {
-                window.__sedemaSetSearchInputMobile(`${coord.lat.toFixed(6)}, ${coord.lng.toFixed(6)}`);
+            if (hasCoords) {
+                handleSelect({ lat, lng });
             }
-        },
-        () => alert("No se pudo obtener tu ubicación. Revisa permisos del navegador.")
-    );
-};
+
+            loadExtraData().then(() => setExtraDataLoaded(true));
+        });
+    }, []);
 
     if (loading) {
         return (
@@ -3178,120 +3165,120 @@ if (window.innerWidth < 768) {
     return (
         <div className="flex flex-col h-full relative overflow-hidden bg-gray-100">
             {/* MODAL DE AYUDA MÓVIL */}
-        {isHelpOpen && (
-            <div className="fixed inset-0 bg-black/40 z-[5000] flex items-center justify-center md:hidden">
-                <div className="bg-white w-[85%] max-w-sm p-5 rounded-xl shadow-xl text-gray-700">
-                    <h2 className="text-sm font-bold text-gray-900 mb-2">
-                        ¿Cómo funciona este visor?
-                    </h2>
+            {isHelpOpen && (
+                <div className="fixed inset-0 bg-black/40 z-[5000] flex items-center justify-center md:hidden">
+                    <div className="bg-white w-[85%] max-w-sm p-5 rounded-xl shadow-xl text-gray-700">
+                        <h2 className="text-sm font-bold text-gray-900 mb-2">
+                            ¿Cómo funciona este visor?
+                        </h2>
 
-                    <ul className="text-[12px] space-y-1.5 mb-4">
-                        <li>• Busca una <strong>dirección</strong> o pega <strong>coordenadas</strong>.</li>
-                        <li>• Toca el <strong>mapa</strong> para seleccionar el punto.</li>
-                        <li>• Identifica si es <strong>SU</strong> (Urbano) o <strong>SC</strong> (Conservación).</li>
-                        <li>• Consulta la <strong>zonificación PGOEDF</strong>.</li>
-                        <li>• Revisa actividades <strong>permitidas / prohibidas</strong>.</li>
-                        <li>• Exporta la <strong>ficha PDF</strong> o comparte el enlace.</li>
-                    </ul>
+                        <ul className="text-[12px] space-y-1.5 mb-4">
+                            <li>• Busca una <strong>dirección</strong> o pega <strong>coordenadas</strong>.</li>
+                            <li>• Toca el <strong>mapa</strong> para seleccionar el punto.</li>
+                            <li>• Identifica si es <strong>SU</strong> (Urbano) o <strong>SC</strong> (Conservación).</li>
+                            <li>• Consulta la <strong>zonificación PGOEDF</strong>.</li>
+                            <li>• Revisa actividades <strong>permitidas / prohibidas</strong>.</li>
+                            <li>• Exporta la <strong>ficha PDF</strong> o comparte el enlace.</li>
+                        </ul>
 
+                        <button
+                            onClick={() => setIsHelpOpen(false)}
+                            className="w-full bg-[#9d2449] text-white py-2 rounded-lg text-xs font-bold active:scale-95"
+                        >
+                            Entendido
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Header escritorio */}
+            <header className="hidden md:flex h-16 bg-[#9d2449] items-center px-4 justify-between shrink-0 z-[4000] shadow-md relative">
+                <div className="flex items-center gap-3">
+                    <img
+                        src="./logo-sedema.png"
+                        alt="SEDEMA"
+                        className="h-10 bg-white p-1 rounded"
+                    />
+                    <div className="flex flex-col">
+                        <span className="text-white text-xs font-semibold">
+                            Visor de Consulta Ciudadana
+                        </span>
+                        <span className="text-white text-[10px] opacity-90">
+                            Consulta normativa de Suelo Urbano y Suelo de Conservación en la Ciudad de México
+                        </span>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="text-white text-[10px] text-right">
+                        <div className="font-bold">{CONTACT_INFO.phone}</div>
+                        <div>{CONTACT_INFO.hours}</div>
+                    </div>
                     <button
-                        onClick={() => setIsHelpOpen(false)}
-                        className="w-full bg-[#9d2449] text-white py-2 rounded-lg text-xs font-bold active:scale-95"
+                        onClick={() => alert('Para usar el visor: 1) Busca una dirección o usa "Mi ubicación". 2) Haz clic en el mapa. 3) Revisa la zonificación y las actividades permitidas o restringidas.')}
+                        className="w-7 h-7 flex items-center justify-center rounded-full bg-white/10 border border-white/40 text-white text-xs font-bold hover:bg-white/20 active:scale-95 transition"
+                        title="Ayuda rápida"
                     >
-                        Entendido
+                        ?
                     </button>
                 </div>
-            </div>
-        )}
-           <header className="hidden md:flex h-16 bg-[#9d2449] items-center px-4 justify-between shrink-0 z-[4000] shadow-md relative">
-    <div className="flex items-center gap-3">
-        <img
-            src="./logo-sedema.png"
-            alt="SEDEMA"
-            className="h-10 bg-white p-1 rounded"
-        />
-        <div className="flex flex-col">
-            <span className="text-white text-xs font-semibold">
-                Visor de Consulta Ciudadana
-            </span>
-            <span className="text-white text-[10px] opacity-90">
-                Consulta normativa de Suelo Urbano y Suelo de Conservación en la Ciudad de México
-            </span>
-        </div>
-    </div>
-    <div className="flex items-center gap-3">
-        <div className="text-white text-[10px] text-right">
-            <div className="font-bold">{CONTACT_INFO.phone}</div>
-            <div>{CONTACT_INFO.hours}</div>
-        </div>
-        <button
-            onClick={() => alert('Para usar el visor: 1) Busca una dirección o usa "Mi ubicación". 2) Haz clic en el mapa. 3) Revisa la zonificación y las actividades permitidas o restringidas.')}
-            className="w-7 h-7 flex items-center justify-center rounded-full bg-white/10 border border-white/40 text-white text-xs font-bold hover:bg-white/20 active:scale-95 transition"
-            title="Ayuda rápida"
-        >
-            ?
-        </button>
-    </div>
-</header>
+            </header>
 
-           <div className="flex-1 relative flex overflow-hidden">
-               <SidebarDesktop
-    analysis={analysis}
-    onLocationSelect={handleSelect}
-    onReset={handleReset}
-    isOpen={isSidebarOpen}
-    onToggle={() => {
-        setIsSidebarOpen(o => !o);
-        // pequeño timeout para que el DOM termine de cambiar
-        setTimeout(() => {
-            if (window.__sedemaInvalidateMapSize) {
-                window.__sedemaInvalidateMapSize();
-            }
-        }, 150);
-    }}
-/>
+            <div className="flex-1 relative flex overflow-hidden">
+                <SidebarDesktop
+                    analysis={analysis}
+                    onLocationSelect={handleSelect}
+                    onReset={handleReset}
+                    isOpen={isSidebarOpen}
+                    onToggle={() => {
+                        setIsSidebarOpen(o => !o);
+                        setTimeout(() => {
+                            if (window.__sedemaInvalidateMapSize) {
+                                window.__sedemaInvalidateMapSize();
+                            }
+                        }, 150);
+                    }}
+                />
 
                 <div className="flex-1 relative w-full h-full">
-                    
                     <MobileSearchBar onLocationSelect={handleSelect} onReset={handleReset} />
+
                     {/* BOTÓN DE AYUDA (MÓVIL) */}
-    <div className="md:hidden absolute top-20 right-4 z-[2100] pointer-events-auto">
-        <button
-            onClick={() => setIsHelpOpen(true)}
-            className="
-                w-10 h-10 flex items-center justify-center 
-                rounded-full bg-white shadow-md border 
-                border-gray-200 text-[#9d2449]
-                active:scale-95 transition
-            "
-        >
-            ?
-        </button>
-    </div>
+                    <div className="md:hidden absolute top-20 right-4 z-[2100] pointer-events-auto">
+                        <button
+                            onClick={() => setIsHelpOpen(true)}
+                            className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-md border border-gray-200 text-[#9d2449] active:scale-95 transition"
+                        >
+                            ?
+                        </button>
+                    </div>
+
                     <FloatingMapControls
                         onUserLocation={handleUserLocation}
                         onToggleLegend={() => setIsLegendOpen(!isLegendOpen)}
                     />
-                   <MapViewer
-    location={location}
-    onLocationSelect={handleSelect}
-    analysisStatus={analysis?.status}
-    visibleLayers={visibleLayers}
-    setVisibleLayers={setVisibleLayers}
-    isLegendOpen={isLegendOpen}
-    setIsLegendOpen={setIsLegendOpen}
-    extraDataLoaded={extraDataLoaded}
-    activeBaseLayer={activeBaseLayer}
-    setActiveBaseLayer={setActiveBaseLayer}
-/>
-                   {analysis && (
-  <BottomSheetMobile
-    analysis={analysis}
-    onLocationSelect={handleSelect}
-    onReset={handleReset}
-    onClose={handleReset}
-  />
-)}
+
+                    <MapViewer
+                        location={location}
+                        onLocationSelect={handleSelect}
+                        analysisStatus={analysis?.status}
+                        visibleLayers={visibleLayers}
+                        setVisibleLayers={setVisibleLayers}
+                        isLegendOpen={isLegendOpen}
+                        setIsLegendOpen={setIsLegendOpen}
+                        extraDataLoaded={extraDataLoaded}
+                        activeBaseLayer={activeBaseLayer}
+                        setActiveBaseLayer={setActiveBaseLayer}
+                    />
+
+                    {/* ✅ BottomSheet SOLO cuando hay análisis */}
+                    {analysis && (
+                        <BottomSheetMobile
+                            analysis={analysis}
+                            onLocationSelect={handleSelect}
+                            onReset={handleReset}
+                            onClose={handleReset}
+                        />
+                    )}
                 </div>
             </div>
         </div>
