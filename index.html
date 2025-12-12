@@ -551,39 +551,40 @@ const analyzeLocation = async (c) => {
 
     if (dataCache.zoning) {
         const z = findFeature(c, dataCache.zoning);
-        if (z) {
-            r.zoningKey = (z.properties.CLAVE || '').toString().trim().toUpperCase();
-            r.zoningName = z.properties.PGOEDF || z.properties.UGA || r.zoningKey;
+        else if (dataCache.rules) {
+    const all = [];
+    const pro = [];
 
-            if (r.zoningKey === 'ANP') {
-                r.isANP = true;
-            } else if (dataCache.rules) {
-                const all = [];
-                const pro = [];
+    // 1) Detectar PDU / Poblados Rurales por nombre (robusto)
+    const zn = (r.zoningName || '').toString().toUpperCase();
+    r.isPDU = zn.includes('PDU') || zn.includes('POBLAD'); // "POBLADOS RURALES", etc.
 
-                dataCache.rules.forEach(row => {
-                    if (row[r.zoningKey] === undefined) {
-                        console.warn("No existe columna para la zonificación:", r.zoningKey);
-                        return;
-                    }
+    // 2) Detectar si el CSV NO trae columna para esa clave (evita 0/0)
+    const hasColumn =
+        dataCache.rules.length > 0 &&
+        Object.prototype.hasOwnProperty.call(dataCache.rules[0], r.zoningKey);
 
-                    const val = (row[r.zoningKey] || '').trim().toUpperCase();
-                    if (!val) return;
+    if (!hasColumn) {
+        r.noActivitiesCatalog = true; // <- bandera para ocultar UI
+    } else {
+        dataCache.rules.forEach(row => {
+            const val = (row[r.zoningKey] || '').trim().toUpperCase();
+            if (!val) return;
 
-                    const act = {
-                        sector: (row['Sector'] || row['ector'] || '').trim(),
-                        general: (row['Actividad general'] || row['Act_general'] || '').trim(),
-                        specific: (row['Actividad específica'] || row['Actividad especifica'] || '').trim()
-                    };
+            const act = {
+                sector: (row['Sector'] || row['ector'] || '').trim(),
+                general: (row['Actividad general'] || row['Act_general'] || '').trim(),
+                specific: (row['Actividad específica'] || row['Actividad especifica'] || '').trim()
+            };
 
-                    if (val === 'A') all.push(act);
-                    else if (val === 'P') pro.push(act);
-                });
+            if (val === 'A') all.push(act);
+            else if (val === 'P') pro.push(act);
+        });
 
-                r.allowedActivities = all;
-                r.prohibitedActivities = pro;
-            }
-        } else {
+        r.allowedActivities = all;
+        r.prohibitedActivities = pro;
+    }
+} else {
             r.zoningName = "Sin zonificación específica";
             r.zoningKey = "SC";
         }
@@ -1687,42 +1688,38 @@ const ResultsContent = ({ analysis }) => {
                 </div>
             )}
 
+            {analysis.status === 'CONSERVATION_SOIL' &&
+ !analysis.isANP &&
+ (analysis.isPDU || analysis.noActivitiesCatalog) && (
+    <div className="p-2 bg-blue-50 text-blue-800 text-[10px] rounded border border-blue-200">
+        Esta ubicación se rige por un Programa de Desarrollo Urbano (PDU).  
+        La sección de actividades del Programa General de Ordenamiento Ecológico del Distrito Federal (PGOEDF 2000) no aplica en este caso.
+    </div>
+)}
+
                   {/* ACTIVIDADES: solo para Suelo de Conservación (no ANP) */}
-        {analysis.status === 'CONSERVATION_SOIL' && !analysis.isANP && (
-            <>
-                {/* Encabezado de sección de actividades */}
-                <div className="flex items-center justify-between mt-2">
-                    <div className="text-[11px] font-semibold text-gray-600">
-                        Detalle de actividades según zonificación PGOEDF 2000
-                    </div>
+        {analysis.status === 'CONSERVATION_SOIL' &&
+ !analysis.isANP &&
+ !analysis.isPDU &&
+ !analysis.noActivitiesCatalog && (
+    <>
+        {/* Encabezado de sección de actividades */}
+        <div className="flex items-center justify-between mt-2">
+            <div className="text-[11px] font-semibold text-gray-600">
+                Detalle de actividades según zonificación PGOEDF 2000
+            </div>
 
-                    <button
-                        onClick={() => setShowDetails(v => !v)}
-                        className="text-[10px] text-[#9d2449] hover:underline"
-                    >
-                        {showDetails ? 'Ocultar detalle' : 'Ver detalle'}
-                    </button>
-                </div>
+            <button
+                onClick={() => setShowDetails(v => !v)}
+                className="text-[10px] text-[#9d2449] hover:underline"
+            >
+                {showDetails ? 'Ocultar detalle' : 'Ver detalle'}
+            </button>
+        </div>
 
-                {showDetails && (
-                    <div className="mt-2">
-                        {/* Tabs de actividades */}
-                     <div className="relative w-full border-b border-gray-200 mb-4">
-    <div className="flex justify-start space-x-6 px-1">
-        
-        {/* TAB PROHIBIDAS */}
-        <button
-            onClick={() => setActiveTab('prohibidas')}
-            className={`pb-2 text-[14px] font-semibold transition ${
-                activeTab === 'prohibidas'
-                    ? 'text-[#9d2449]'
-                    : 'text-gray-500'
-            }`}
-        >
-            Prohibidas ({analysis.prohibitedActivities?.length || 0})
-        </button>
-
-        {/* TAB PERMITIDAS */}
+        {showDetails && (
+            <div className="mt-2">
+                {/* Tabs Prohibidas / Permitidas */}
         <button
             onClick={() => setActiveTab('permitidas')}
             className={`pb-2 text-[14px] font-semibold transition ${
