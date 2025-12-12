@@ -2698,7 +2698,7 @@ useEffect(() => {
                 }
             });
         }
-    }, [visibleLayers, extraDataLoaded]);
+ }, [visibleMapLayers, visibleZoningCats, extraDataLoaded]);
 
     /* 6) Marcador de la consulta */
     useEffect(() => {
@@ -2846,7 +2846,7 @@ useEffect(() => {
                                     </span>
                                 </div>
                                 <ToggleSwitch
-                                    checked={visibleLayers[k]}
+                                    checked={visibleZoningCats[k]}
                                     onChange={() => toggleLayer(k)}
                                 />
                             </div>
@@ -2889,7 +2889,7 @@ useEffect(() => {
                                     )}
                                 </span>
                                 <ToggleSwitch
-                                    checked={visibleLayers.zoning}
+                                    checked={visibleMapLayers.zoning}
                                     onChange={toggleZoningGroup}
                                 />
                             </summary>
@@ -2910,7 +2910,7 @@ useEffect(() => {
                                             </span>
                                         </div>
                                         <ToggleSwitch
-                                            checked={visibleLayers[k]}
+                                            checked={visibleMapLayers.sc}
                                             onChange={() => toggleLayer(k)}
                                         />
                                     </div>
