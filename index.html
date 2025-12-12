@@ -1616,227 +1616,8 @@ const ResultsContent = ({ analysis }) => {
         window.__sedemaExportPDF = handleExportPDF;
     }, [analysis]);
 
-    
-    if (!analysis)
-        return (
-            <div className="bg-white w-[88%] max-w-sm p-6 rounded-2xl shadow-2xl text-gray-700">
-  {/* Logo centrado */}
-  <div className="flex flex-col items-center text-center">
-    <img
-      src="./logo-sedema.png"
-      alt="SEDEMA"
-      className="h-12 w-auto mb-3"
-    />
-
-    <h2 className="text-[15px] font-extrabold text-gray-900 leading-snug">
-      Evita fraudes: verifica si un predio está en Suelo de Conservación o Área Protegida
-    </h2>
-
-    <p className="text-[12px] text-gray-600 mt-1">
-      Visor de Consulta Ciudadana — SEDEMA
-    </p>
-  </div>
-
-  {/* Cómo usar */}
-  <div className="mt-5">
-    <p className="text-[12px] font-bold text-gray-800 mb-2">
-      ¿Cómo usar esta herramienta?
-    </p>
-
-    <div className="space-y-3 text-[12px]">
-      <div className="flex items-start gap-3">
-        <Icons.Search className="h-5 w-5 text-[#9d2449] mt-0.5" strokeWidth="2.8" />
-        <div className="leading-snug">
-          <span className="font-semibold text-gray-900">Busca por texto:</span> escribe una dirección o pega coordenadas (cualquier formato).
-        </div>
-      </div>
-
-      <div className="flex items-start gap-3">
-        <Icons.MapPin className="h-5 w-5 text-[#9d2449] mt-0.5" strokeWidth="2.8" />
-        <div className="leading-snug">
-          <span className="font-semibold text-gray-900">Selecciona en el mapa:</span> toca el mapa para fijar el punto.
-        </div>
-      </div>
-
-      <div className="flex items-start gap-3">
-        <Icons.Navigation className="h-5 w-5 text-[#9d2449] mt-0.5" strokeWidth="2.8" />
-        <div className="leading-snug">
-          <span className="font-semibold text-gray-900">Mi ubicación:</span> usa el botón de ubicación si estás en el sitio.
-        </div>
-      </div>
-
-      <div className="flex items-start gap-3">
-        <Icons.Layers className="h-5 w-5 text-[#9d2449] mt-0.5" strokeWidth="2.8" />
-        <div className="leading-snug">
-          <span className="font-semibold text-gray-900">Resultado inmediato:</span> te indica si es{" "}
-          <span className="inline-flex items-center gap-1 font-semibold">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#3b82f6]" /> SU
-          </span>{" "}
-          (Urbano) o{" "}
-          <span className="inline-flex items-center gap-1 font-semibold">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#9d2449]" /> SC
-          </span>{" "}
-          (Conservación).
-        </div>
-      </div>
-
-      <div className="flex items-start gap-3">
-        <Icons.Pdf className="h-5 w-5 text-[#9d2449] mt-0.5" strokeWidth="2.8" />
-        <div className="leading-snug">
-          <span className="font-semibold text-gray-900">Comparte evidencia:</span> descarga la ficha PDF o comparte el enlace.
-        </div>
-      </div>
-    </div>
-
-    {/* Nota */}
-    <div className="mt-4 text-[11px] text-gray-500 bg-gray-50 border border-gray-200 rounded-lg p-2 leading-snug">
-      Resultado orientativo — No constituye un documento oficial.
-    </div>
-
-    {/* Botón */}
-    <button
-      onClick={() => setIsHelpOpen(false)}
-      className="mt-4 w-full bg-[#9d2449] text-white py-2.5 rounded-xl text-[12px] font-extrabold active:scale-95 transition"
-    >
-      Entendido
-    </button>
-  </div>
-</div>;
-
-    return (
-        <div className="space-y-4 animate-in pb-20">
-            {/* PLANTILLA OCULTa PARA PDF */}
-          <div style={{ position: 'absolute', left: '-99999px', top: 0 }}>
-    <PdfFicha analysis={analysis} mapImage={mapImage} ref={pdfRef} />
-</div>
-
-            {/* RESUMEN + ESTADO */}
-           <LocationSummary analysis={analysis} onExportPDF={handleExportPDF} />
-            <StatusMessage analysis={analysis} />
-
-        {analysis.zoningName === 'Cargando detalles...' && (
-                <div className="p-2 bg-yellow-50 text-yellow-800 text-[10px] rounded border border-yellow-200">
-                    Cargando detalles de zonificación y actividades. La ficha se actualizará automáticamente.
-                </div>
-            )}
-
-            {analysis.status === 'CONSERVATION_SOIL' &&
- !analysis.isANP &&
- (analysis.isPDU || analysis.noActivitiesCatalog) && (
-    <div className="p-2 bg-blue-50 text-blue-800 text-[10px] rounded border border-blue-200">
-        Esta ubicación se rige por un Programa de Desarrollo Urbano (PDU).  
-        La sección de actividades del Programa General de Ordenamiento Ecológico del Distrito Federal (PGOEDF 2000) no aplica en este caso.
-    </div>
-)}
-
-                  {/* ACTIVIDADES: solo para Suelo de Conservación (no ANP) */}
-        {analysis.status === 'CONSERVATION_SOIL' &&
- !analysis.isANP &&
- !analysis.isPDU &&
- !analysis.noActivitiesCatalog && (
-    <>
-        {/* Encabezado de sección de actividades */}
-        <div className="flex items-center justify-between mt-2">
-            <div className="text-[11px] font-semibold text-gray-600">
-                Detalle de actividades según zonificación PGOEDF 2000
-            </div>
-
-            <button
-                onClick={() => setShowDetails(v => !v)}
-                className="text-[10px] text-[#9d2449] hover:underline"
-            >
-                {showDetails ? 'Ocultar detalle' : 'Ver detalle'}
-            </button>
-        </div>
-
-    {showDetails && (
-  <div className="mt-2">
-    {/* Tabs de actividades */}
-    <div className="relative w-full border-b border-gray-200 mb-4">
-      <div className="flex justify-start space-x-6 px-1">
-        {/* TAB PROHIBIDAS */}
-        <button
-          onClick={() => setActiveTab('prohibidas')}
-          className={`pb-2 text-[14px] font-semibold transition ${
-            activeTab === 'prohibidas' ? 'text-[#9d2449]' : 'text-gray-500'
-          }`}
-        >
-          Prohibidas ({analysis.prohibitedActivities?.length || 0})
-        </button>
-
-        {/* TAB PERMITIDAS */}
-        <button
-          onClick={() => setActiveTab('permitidas')}
-          className={`pb-2 text-[14px] font-semibold transition ${
-            activeTab === 'permitidas' ? 'text-[#027a35]' : 'text-gray-500'
-          }`}
-        >
-          Permitidas ({analysis.allowedActivities?.length || 0})
-        </button>
-      </div>
-
-      {/* Línea animada */}
-      <div className="absolute bottom-0 left-0 h-[3px] w-full pointer-events-none">
-        <div
-          className="h-full bg-[#9d2449] transition-all duration-300"
-          style={{
-            width: '150px',
-            transform: activeTab === 'prohibidas'
-              ? 'translateX(0px)'
-              : 'translateX(165px)'
-          }}
-        />
-      </div>
-    </div>
-
-    {activeTab === 'prohibidas' && (
-      <GroupedActivities
-        title="ACTIVIDADES PROHIBIDAS"
-        activities={analysis.prohibitedActivities}
-        icon={<Icons.XCircle className="h-4 w-4" />}
-        headerClass="text-red-900 bg-red-50"
-        bgClass="bg-white"
-      />
-    )}
-
-    {activeTab === 'permitidas' && (
-      <GroupedActivities
-        title="ACTIVIDADES PERMITIDAS"
-        activities={analysis.allowedActivities}
-        icon={<Icons.CheckCircle className="h-4 w-4" />}
-        headerClass="text-green-900 bg-green-50"
-        bgClass="bg-white"
-      />
-    )}
-  </div>
-)}
-            </>
-        )}
-
-
-            <LegalDisclaimer />
-
-            <div className="border-t pt-2">
-                <details>
-                    <summary className="text-xs font-bold text-gray-500 cursor-pointer flex justify-between">
-                        PREGUNTAS FRECUENTES{' '}
-                        <Icons.ChevronDown className="h-4 w-4" />
-                    </summary>
-                    <div className="mt-2 space-y-2">
-                        {FAQ_ITEMS.map((f, i) => (
-                            <div
-                                key={i}
-                                className="text-[10px] bg-gray-50 p-2 rounded"
-                            >
-                                <strong>{f.q}</strong>
-                                <p>{f.a}</p>
-                            </div>
-                        ))}
-                    </div>
-                </details>
-            </div>
-        </div>
-    );
+    if (!analysis) return null;
+   
 };
 
 /* ------------------------------------------------ */
@@ -3186,32 +2967,98 @@ const App = () => {
     return (
         <div className="flex flex-col h-full relative overflow-hidden bg-gray-100">
             {/* MODAL DE AYUDA MÓVIL */}
-            {isHelpOpen && (
-                <div className="fixed inset-0 bg-black/40 z-[5000] flex items-center justify-center md:hidden">
-                    <div className="bg-white w-[85%] max-w-sm p-5 rounded-xl shadow-xl text-gray-700">
-                        <h2 className="text-sm font-bold text-gray-900 mb-2">
-                            ¿Cómo funciona este visor?
-                        </h2>
+           {isHelpOpen && (
+  <div
+    className="fixed inset-0 bg-black/50 z-[6000] md:hidden flex items-center justify-center p-4"
+    onClick={() => setIsHelpOpen(false)}
+  >
+    <div
+      className="bg-white w-full max-w-sm rounded-2xl shadow-2xl text-gray-700 overflow-hidden"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="px-6 pt-6 pb-4 text-center">
+        <img
+          src="./logo-sedema.png"
+          alt="SEDEMA"
+          className="h-12 w-auto mx-auto mb-3"
+        />
+        <h2 className="text-[15px] font-extrabold text-gray-900 leading-snug">
+          Evita fraudes: verifica si un predio está en Suelo de Conservación o en un Área Natural Protegida
+        </h2>
+        <p className="text-[12px] text-gray-600 mt-1">
+          Visor de Consulta Ciudadana — SEDEMA
+        </p>
+      </div>
 
-                        <ul className="text-[12px] space-y-1.5 mb-4">
-                            <li>• Busca una <strong>dirección</strong> o pega <strong>coordenadas</strong>.</li>
-                            <li>• Toca el <strong>mapa</strong> para seleccionar el punto.</li>
-                            <li>• Identifica si es <strong>SU</strong> (Urbano) o <strong>SC</strong> (Conservación).</li>
-                            <li>• Consulta la <strong>zonificación PGOEDF</strong>.</li>
-                            <li>• Revisa actividades <strong>permitidas / prohibidas</strong>.</li>
-                            <li>• Exporta la <strong>ficha PDF</strong> o comparte el enlace.</li>
-                        </ul>
+      <div className="px-6 pb-6">
+        <p className="text-[12px] font-bold text-gray-800 mb-3">
+          ¿Cómo usar esta herramienta?
+        </p>
 
-                        <button
-                            onClick={() => setIsHelpOpen(false)}
-                            className="w-full bg-[#9d2449] text-white py-2 rounded-lg text-xs font-bold active:scale-95"
-                        >
-                            Entendido
-                        </button>
-                    </div>
-                </div>
-            )}
+        <div className="space-y-3 text-[12px]">
+          <div className="flex items-start gap-3">
+            <Icons.Search className="h-5 w-5 text-[#9d2449] mt-0.5" strokeWidth="2.8" />
+            <div className="leading-snug">
+              <span className="font-semibold text-gray-900">Buscar por texto:</span>{' '}
+              escribe una dirección o pega coordenadas (en cualquier formato).
+            </div>
+          </div>
 
+          <div className="flex items-start gap-3">
+            <Icons.MapPin className="h-5 w-5 text-[#9d2449] mt-0.5" strokeWidth="2.8" />
+            <div className="leading-snug">
+              <span className="font-semibold text-gray-900">Seleccionar en el mapa:</span>{' '}
+              toca el mapa para fijar el punto.
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <Icons.Navigation className="h-5 w-5 text-[#9d2449] mt-0.5" strokeWidth="2.8" />
+            <div className="leading-snug">
+              <span className="font-semibold text-gray-900">Mi ubicación:</span>{' '}
+              usa el botón de ubicación si estás en el sitio.
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <Icons.Layers className="h-5 w-5 text-[#9d2449] mt-0.5" strokeWidth="2.8" />
+            <div className="leading-snug">
+              <span className="font-semibold text-gray-900">Resultado inmediato:</span>{' '}
+              te indica si es{' '}
+              <span className="inline-flex items-center gap-1 font-semibold">
+                <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#3b82f6]" /> SU
+              </span>{' '}
+              (Urbano) o{' '}
+              <span className="inline-flex items-center gap-1 font-semibold">
+                <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#9d2449]" /> SC
+              </span>{' '}
+              (Conservación).
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <Icons.Pdf className="h-5 w-5 text-[#9d2449] mt-0.5" strokeWidth="2.8" />
+            <div className="leading-snug">
+              <span className="font-semibold text-gray-900">Comparte evidencia:</span>{' '}
+              descarga la ficha PDF o comparte el enlace.
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 text-[11px] text-gray-500 bg-gray-50 border border-gray-200 rounded-lg p-2 leading-snug">
+          Resultado orientativo — No constituye un documento oficial.
+        </div>
+
+        <button
+          onClick={() => setIsHelpOpen(false)}
+          className="mt-4 w-full bg-[#9d2449] text-white py-2.5 rounded-xl text-[12px] font-extrabold active:scale-95 transition"
+        >
+          Entendido
+        </button>
+      </div>
+    </div>
+  </div>
+)}
             {/* Header escritorio */}
             <header className="hidden md:flex h-16 bg-[#9d2449] items-center px-4 justify-between shrink-0 z-[4000] shadow-md relative">
                 <div className="flex items-center gap-3">
