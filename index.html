@@ -2513,11 +2513,12 @@ map.getPane('paneOverlay').style.zIndex = 400;
        
 
     // Base layer inicial
-    const base = window.L.tileLayer(getBaseLayerUrl(activeBaseLayer || 'SATELLITE'), {
-        maxZoom: 19,
-        tileSize: 256,
-        zoomOffset: 0
-    });
+   const base = window.L.tileLayer(getBaseLayerUrl(activeBaseLayer || 'SATELLITE'), {
+  pane: 'paneBase',      // ✅ explícito
+  maxZoom: 19,
+  tileSize: 256,
+  zoomOffset: 0
+});
     base.on('loading', () => setTilesLoading(true));
     base.on('load', () => setTilesLoading(false));
     base.addTo(map);
