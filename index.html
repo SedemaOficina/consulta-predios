@@ -3097,93 +3097,103 @@ const App = () => {
     return (
         <div className="flex flex-col h-full relative overflow-hidden bg-gray-100">
             {/* MODAL DE AYUDA MÓVIL */}
-           {isHelpOpen && (
+        {isHelpOpen && (
   <div
     className="fixed inset-0 bg-black/50 z-[6000] flex items-center justify-center p-4"
     onClick={() => setIsHelpOpen(false)}
   >
-   <div className="px-6 pt-6 pb-6 text-gray-700">
+    <div
+      className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="px-6 pt-6 pb-6 text-gray-700">
 
-  {/* NIVEL 1 */}
-  <div className="text-center mb-2">
-    <div className="text-[#9d2449] text-[13px] font-extrabold tracking-widest uppercase">
-      Evita fraudes
-    </div>
-  </div>
+        {/* NIVEL 1 */}
+        <div className="text-center mb-2">
+          <div className="text-[#9d2449] text-[13px] font-extrabold tracking-widest uppercase">
+            Evita fraudes
+          </div>
+        </div>
 
-  {/* NIVEL 2 */}
-  <h2 className="text-center text-[15px] font-semibold text-gray-900 leading-snug mb-4">
-    Verifica si un predio está en Suelo de Conservación o en un Área Natural Protegida
-  </h2>
+        {/* NIVEL 2 */}
+        <h2 className="text-center text-[15px] font-semibold text-gray-900 leading-snug mb-4">
+          Verifica si un predio está en Suelo de Conservación o en un Área Natural Protegida
+        </h2>
 
-  {/* NIVEL 3 */}
-  <div className="text-[13px] font-bold text-gray-800 mb-3">
-    ¿Cómo usar esta herramienta?
-  </div>
+        {/* NIVEL 3 */}
+        <div className="text-[13px] font-bold text-gray-800 mb-3">
+          ¿Cómo usar esta herramienta?
+        </div>
 
-  {/* PASOS */}
-  <div className="space-y-3 text-[13px]">
-    <div className="flex items-start gap-3">
-      <Icons.Search className="h-5 w-5 text-[#9d2449]" strokeWidth="2.8" />
-      <div>
-        <strong>Buscar por texto:</strong> escribe una dirección o pega coordenadas (en cualquier formato).
+        {/* PASOS */}
+        <div className="space-y-3 text-[13px]">
+          <div className="flex items-start gap-3">
+            <Icons.Search className="h-5 w-5 text-[#9d2449]" strokeWidth="2.8" />
+            <div>
+              <strong>Buscar por texto:</strong> escribe una dirección o pega coordenadas (en cualquier formato).
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <Icons.MapPin className="h-5 w-5 text-[#9d2449]" strokeWidth="2.8" />
+            <div>
+              <strong>Seleccionar en el mapa:</strong> toca el mapa para fijar el punto.
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <Icons.Navigation className="h-5 w-5 text-[#9d2449]" strokeWidth="2.8" />
+            <div>
+              <strong>Mi ubicación:</strong> usa el botón de ubicación si estás en el sitio.
+            </div>
+          </div>
+        </div>
+
+        {/* RESULTADO INMEDIATO */}
+        <div className="mt-4">
+          <div className="font-bold text-[13px] text-gray-900 mb-1">
+            Resultado inmediato
+          </div>
+
+          <div className="text-[13px] text-gray-700 flex items-center gap-3">
+            <span className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]" />
+              SU (Urbano)
+            </span>
+
+            <span className="flex items-center gap-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#9d2449]" />
+              SC (Conservación)
+            </span>
+          </div>
+        </div>
+
+        {/* COMPARTIR */}
+        <div className="mt-5 text-center text-[13px] flex justify-center gap-2 items-center">
+          <Icons.Share className="h-5 w-5 text-[#9d2449]" strokeWidth="2.8" />
+          <span>
+            <strong>Comparte evidencia:</strong> descarga la ficha PDF o comparte el enlace.
+          </span>
+        </div>
+
+        {/* NOTA */}
+        <div className="mt-5 text-[11px] text-gray-500 bg-gray-50 border border-gray-200 rounded-lg p-2 text-center">
+          Resultado orientativo — No constituye un documento oficial.
+        </div>
+
+        {/* BOTÓN */}
+        <button
+          onClick={() => setIsHelpOpen(false)}
+          className="mt-4 w-full bg-[#9d2449] text-white py-2.5 rounded-xl text-[13px] font-extrabold active:scale-95 transition"
+        >
+          Entendido
+        </button>
+
       </div>
     </div>
-
-    <div className="flex items-start gap-3">
-      <Icons.MapPin className="h-5 w-5 text-[#9d2449]" strokeWidth="2.8" />
-      <div>
-        <strong>Seleccionar en el mapa:</strong> toca el mapa para fijar el punto.
-      </div>
-    </div>
-
-    <div className="flex items-start gap-3">
-      <Icons.Navigation className="h-5 w-5 text-[#9d2449]" strokeWidth="2.8" />
-      <div>
-        <strong>Mi ubicación:</strong> usa el botón de ubicación si estás en el sitio.
-      </div>
-    </div>
   </div>
+)}
 
-  {/* RESULTADO INMEDIATO */}
-  <div className="mt-4">
-    <div className="font-bold text-[13px] text-gray-900 mb-1">
-      Resultado inmediato
-    </div>
-
-    <div className="text-[13px] text-gray-700 flex items-center gap-3">
-      <span className="flex items-center gap-1">
-        <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]" />
-        SU (Urbano)
-      </span>
-      <span className="flex items-center gap-1">
-        <span className="w-2.5 h-2.5 rounded-full bg-[#9d2449]" />
-        SC (Conservación)
-      </span>
-    </div>
-  </div>
-
-  {/* COMPARTIR */}
-  <div className="mt-5 text-center text-[13px] flex justify-center gap-2 items-center">
-    <Icons.Share className="h-5 w-5 text-[#9d2449]" strokeWidth="2.8" />
-    <span>
-      <strong>Comparte evidencia:</strong> descarga la ficha PDF o comparte el enlace.
-    </span>
-  </div>
-
-  {/* NOTA */}
-  <div className="mt-5 text-[11px] text-gray-500 bg-gray-50 border border-gray-200 rounded-lg p-2 text-center">
-    Resultado orientativo — No constituye un documento oficial.
-  </div>
-
-  {/* BOTÓN */}
-  <button
-    onClick={() => setIsHelpOpen(false)}
-    className="mt-4 w-full bg-[#9d2449] text-white py-2.5 rounded-xl text-[13px] font-extrabold active:scale-95 transition"
-  >
-    Entendido
-  </button>
-</div>
 
 /* ------------------------------------------------ */
 /* 10. RENDER */
