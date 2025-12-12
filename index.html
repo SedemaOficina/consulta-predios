@@ -1522,76 +1522,205 @@ const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
 /* ------------------------------------------------ */
 
 const ResultsContent = ({ analysis }) => {
-    const [activeTab, setActiveTab] = useState('prohibidas');
-    const [showDetails, setShowDetails] = useState(true);
-    const [mapImage, setMapImage] = useState(null);   // <-- NUEVO
+  const [activeTab, setActiveTab] = useState('prohibidas');
+  const [showDetails, setShowDetails] = useState(true);
+  const [mapImage, setMapImage] = useState(null);
+  const pdfRef = useRef(null);
 
-    const pdfRef = useRef(null);
+  const handleExportPDF = async () => {
+    if (!analysis || !pdfRef.current) return;
 
-// NUEVO: función para generar y descargar el PDF (multi-página)
-    const handleExportPDF = async () => {
-        if (!analysis || !pdfRef.current) return;
+    const { jsPDF } = window.jspdf;
 
-        const { jsPDF } = window.jspdf;
+    if (typeof html2canvas === 'undefined') {
+      alert('No se encontró html2canvas. Verifica que el script esté cargado.');
+      return;
+    }
 
-        if (typeof html2canvas === 'undefined') {
-            alert('No se encontró html2canvas. Verifica que el script esté cargado.');
-            return;
-        }
-
-        // 1) CAPTURA DEL MAPA LEAFLET VISIBLE
-        try {
-            const mapElement = document.getElementById('main-map');
-            if (mapElement) {
-                const mapCanvas = await html2canvas(mapElement, {
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: '#ffffff'
-                });
-                const mapDataUrl = mapCanvas.toDataURL('image/png');
-                setMapImage(mapDataUrl);
-
-                // Dejar que React re-renderice PdfFicha con la imagen
-                await new Promise(resolve => setTimeout(resolve, 50));
-            }
-        } catch (e) {
-            console.warn('No se pudo capturar el mapa para el PDF:', e);
-        }
-
-        // 2) CAPTURA DE LA FICHA COMPLETA (CON MAPA INCRUSTADO)
-        const element = pdfRef.current;
-        const canvas = await html2canvas(element, {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: '#ffffff'
+    try {
+      const mapElement = document.getElementById('main-map');
+      if (mapElement) {
+        const mapCanvas = await html2canvas(mapElement, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff'
         });
+        const mapDataUrl = mapCanvas.toDataURL('image/png');
+        setMapImage(mapDataUrl);
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+    } catch (e) {
+      console.warn('No se pudo capturar el mapa para el PDF:', e);
+    }
 
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
+    const element = pdfRef.current;
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    });
 
-        const imgProps = pdf.getImageProperties(imgData);
-        const imgWidth = pdfWidth;
-        const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
 
-        // 3) LÓGICA MULTI-PÁGINA + NUMERACIÓN
-        const totalPages = Math.ceil(imgHeight / pdfHeight);
-        let heightLeft = imgHeight;
-        let position = 0;
-        let pageNumber = 1;
+    const imgProps = pdf.getImageProperties(imgData);
+    const imgWidth = pdfWidth;
+    const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
 
-        const addPageWithNumber = () => {
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-            pdf.setFontSize(8);
-            pdf.setTextColor(120, 120, 120);
-            pdf.text(
-                `Página ${pageNumber} de ${totalPages}`,
-                pdfWidth / 2,
-                pdfHeight - 5,
-                { align: 'center' }
-            );
-        };
+    const totalPages = Math.ceil(imgHeight / pdfHeight);
+    let heightLeft = imgHeight;
+    let position = 0;
+    let pageNumber = 1;
+
+    const addPageWithNumber = () => {
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      pdf.setFontSize(8);
+      pdf.setTextColor(120, 120, 120);
+      pdf.text(
+        `Página ${pageNumber} de ${totalPages}`,
+        pdfWidth / 2,
+        pdfHeight - 5,
+        { align: 'center' }
+      );
+    };
+
+    addPageWithNumber();
+    heightLeft -= pdfHeight;
+
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pageNumber += 1;
+      addPageWithNumber();
+      heightLeft -= pdfHeight;
+    }
+
+    const nombreArchivo = `ficha-${(analysis.alcaldia || 'CDMX')
+      .replace(/\s+/g, '_')
+      .toUpperCase()}-${new Date().toISOString().slice(0, 10)}.pdf`;
+
+    pdf.save(nombreArchivo);
+  };
+
+  useEffect(() => {
+    window.__sedemaExportPDF = handleExportPDF;
+    return () => { delete window.__sedemaExportPDF; };
+  }, [analysis]);
+
+  // ✅ Cuando NO hay análisis: ya no mostramos tarjeta (para que el modal sea lo único)
+  if (!analysis) return null;
+
+  return (
+    <div className="space-y-4 animate-in pb-2">
+      {/* PLANTILLA OCULTA PARA PDF */}
+      <div style={{ position: 'absolute', left: '-99999px', top: 0 }}>
+        <PdfFicha analysis={analysis} mapImage={mapImage} ref={pdfRef} />
+      </div>
+
+      {/* RESUMEN + ESTADO */}
+      <LocationSummary analysis={analysis} onExportPDF={handleExportPDF} />
+      <StatusMessage analysis={analysis} />
+
+      {analysis.zoningName === 'Cargando detalles...' && (
+        <div className="p-2 bg-yellow-50 text-yellow-800 text-[10px] rounded border border-yellow-200">
+          Cargando detalles de zonificación y actividades. La ficha se actualizará automáticamente.
+        </div>
+      )}
+
+      {analysis.status === 'CONSERVATION_SOIL' &&
+        !analysis.isANP &&
+        (analysis.isPDU || analysis.noActivitiesCatalog) && (
+          <div className="p-2 bg-blue-50 text-blue-800 text-[10px] rounded border border-blue-200">
+            Esta ubicación se rige por un Programa de Desarrollo Urbano (PDU).
+            La sección de actividades del Programa General de Ordenamiento Ecológico del Distrito Federal (PGOEDF 2000) no aplica en este caso.
+          </div>
+        )}
+
+      {/* ACTIVIDADES: solo para Suelo de Conservación (no ANP) */}
+      {analysis.status === 'CONSERVATION_SOIL' &&
+        !analysis.isANP &&
+        !analysis.isPDU &&
+        !analysis.noActivitiesCatalog && (
+          <>
+            <div className="flex items-center justify-between mt-2">
+              <div className="text-[11px] font-semibold text-gray-600">
+                Detalle de actividades según zonificación PGOEDF 2000
+              </div>
+
+              <button
+                onClick={() => setShowDetails(v => !v)}
+                className="text-[10px] text-[#9d2449] hover:underline"
+              >
+                {showDetails ? 'Ocultar detalle' : 'Ver detalle'}
+              </button>
+            </div>
+
+            {showDetails && (
+              <div className="mt-2">
+                <div className="relative w-full border-b border-gray-200 mb-4">
+                  <div className="flex justify-start space-x-6 px-1">
+                    <button
+                      onClick={() => setActiveTab('prohibidas')}
+                      className={`pb-2 text-[14px] font-semibold transition ${
+                        activeTab === 'prohibidas' ? 'text-[#9d2449]' : 'text-gray-500'
+                      }`}
+                    >
+                      Prohibidas ({analysis.prohibitedActivities?.length || 0})
+                    </button>
+
+                    <button
+                      onClick={() => setActiveTab('permitidas')}
+                      className={`pb-2 text-[14px] font-semibold transition ${
+                        activeTab === 'permitidas' ? 'text-[#027a35]' : 'text-gray-500'
+                      }`}
+                    >
+                      Permitidas ({analysis.allowedActivities?.length || 0})
+                    </button>
+                  </div>
+
+                  <div className="absolute bottom-0 left-0 h-[3px] w-full pointer-events-none">
+                    <div
+                      className="h-full bg-[#9d2449] transition-all duration-300"
+                      style={{
+                        width: '150px',
+                        transform: activeTab === 'prohibidas'
+                          ? 'translateX(0px)'
+                          : 'translateX(165px)'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {activeTab === 'prohibidas' && (
+                  <GroupedActivities
+                    title="ACTIVIDADES PROHIBIDAS"
+                    activities={analysis.prohibitedActivities}
+                    icon={<Icons.XCircle className="h-4 w-4" />}
+                    headerClass="text-red-900 bg-red-50"
+                    bgClass="bg-white"
+                  />
+                )}
+
+                {activeTab === 'permitidas' && (
+                  <GroupedActivities
+                    title="ACTIVIDADES PERMITIDAS"
+                    activities={analysis.allowedActivities}
+                    icon={<Icons.CheckCircle className="h-4 w-4" />}
+                    headerClass="text-green-900 bg-green-50"
+                    bgClass="bg-white"
+                  />
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+      <LegalDisclaimer />
+    </div>
+  );
+};
 
         // Primera página
         addPageWithNumber();
