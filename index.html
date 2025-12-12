@@ -549,48 +549,56 @@ const analyzeLocation = async (c) => {
     r.status = 'CONSERVATION_SOIL';
     r.isRestricted = true;
 
-    if (dataCache.zoning) {
-        const z = findFeature(c, dataCache.zoning);
-        else if (dataCache.rules) {
-    const all = [];
-    const pro = [];
+   if (dataCache.zoning) {
+    const z = findFeature(c, dataCache.zoning);
 
-    // 1) Detectar PDU / Poblados Rurales por nombre (robusto)
-    const zn = (r.zoningName || '').toString().toUpperCase();
-    r.isPDU = zn.includes('PDU') || zn.includes('POBLAD'); // "POBLADOS RURALES", etc.
+    if (z) {
+        r.zoningKey = (z.properties.CLAVE || '').toString().trim().toUpperCase();
+        r.zoningName = z.properties.PGOEDF || z.properties.UGA || r.zoningKey;
 
-    // 2) Detectar si el CSV NO trae columna para esa clave (evita 0/0)
-    const hasColumn =
-        dataCache.rules.length > 0 &&
-        Object.prototype.hasOwnProperty.call(dataCache.rules[0], r.zoningKey);
+        if (r.zoningKey === 'ANP') {
+            r.isANP = true;
+        } else if (dataCache.rules) {
+            const all = [];
+            const pro = [];
 
-    if (!hasColumn) {
-        r.noActivitiesCatalog = true; // <- bandera para ocultar UI
-    } else {
-        dataCache.rules.forEach(row => {
-            const val = (row[r.zoningKey] || '').trim().toUpperCase();
-            if (!val) return;
+            // 1) Detectar PDU / Poblados Rurales por nombre
+            const zn = (r.zoningName || '').toString().toUpperCase();
+            r.isPDU = zn.includes('PDU') || zn.includes('POBLAD');
 
-            const act = {
-                sector: (row['Sector'] || row['ector'] || '').trim(),
-                general: (row['Actividad general'] || row['Act_general'] || '').trim(),
-                specific: (row['Actividad específica'] || row['Actividad especifica'] || '').trim()
-            };
+            // 2) Detectar si el CSV NO trae columna para esa clave
+            const hasColumn =
+                dataCache.rules.length > 0 &&
+                Object.prototype.hasOwnProperty.call(dataCache.rules[0], r.zoningKey);
 
-            if (val === 'A') all.push(act);
-            else if (val === 'P') pro.push(act);
-        });
+            if (!hasColumn) {
+                r.noActivitiesCatalog = true;
+            } else {
+                dataCache.rules.forEach(row => {
+                    const val = (row[r.zoningKey] || '').trim().toUpperCase();
+                    if (!val) return;
 
-        r.allowedActivities = all;
-        r.prohibitedActivities = pro;
-    }
-} else {
-            r.zoningName = "Sin zonificación específica";
-            r.zoningKey = "SC";
+                    const act = {
+                        sector: (row['Sector'] || row['ector'] || '').trim(),
+                        general: (row['Actividad general'] || row['Act_general'] || '').trim(),
+                        specific: (row['Actividad específica'] || row['Actividad especifica'] || '').trim()
+                    };
+
+                    if (val === 'A') all.push(act);
+                    else if (val === 'P') pro.push(act);
+                });
+
+                r.allowedActivities = all;
+                r.prohibitedActivities = pro;
+            }
         }
     } else {
-        r.zoningName = "Cargando detalles...";
+        r.zoningName = "Sin zonificación específica";
+        r.zoningKey = "SC";
     }
+} else {
+    r.zoningName = "Cargando detalles...";
+}
 
     return r;
 };
@@ -1406,8 +1414,8 @@ const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
             )}
 
             {/* 3 y 4. ACTIVIDADES SOLO PARA SUELO DE CONSERVACIÓN (DETALLE / EXTRACTO) */}
-            {isSC && !isANP && (
-                <>
+           {isSC && !isANP && !analysis.isPDU && !analysis.noActivitiesCatalog && (
+  <>
                     {/* 3. DETALLE DE ACTIVIDADES PROHIBIDAS (EXTRACTO) */}
                     <section style={{ marginBottom: '8px' }}>
                         <h2 style={{ fontSize: '11px', fontWeight: 700, marginBottom: '4px', color: '#b91c1c' }}>
@@ -1717,57 +1725,67 @@ const ResultsContent = ({ analysis }) => {
             </button>
         </div>
 
-        {showDetails && (
-            <div className="mt-2">
-                {/* Tabs Prohibidas / Permitidas */}
+    {showDetails && (
+  <div className="mt-2">
+    {/* Tabs de actividades */}
+    <div className="relative w-full border-b border-gray-200 mb-4">
+      <div className="flex justify-start space-x-6 px-1">
+        {/* TAB PROHIBIDAS */}
         <button
-            onClick={() => setActiveTab('permitidas')}
-            className={`pb-2 text-[14px] font-semibold transition ${
-                activeTab === 'permitidas'
-                    ? 'text-[#027a35]'
-                    : 'text-gray-500'
-            }`}
+          onClick={() => setActiveTab('prohibidas')}
+          className={`pb-2 text-[14px] font-semibold transition ${
+            activeTab === 'prohibidas' ? 'text-[#9d2449]' : 'text-gray-500'
+          }`}
         >
-            Permitidas ({analysis.allowedActivities?.length || 0})
+          Prohibidas ({analysis.prohibitedActivities?.length || 0})
         </button>
-    </div>
 
-    {/* Línea animada */}
-    <div className="absolute bottom-0 left-0 h-[3px] w-full pointer-events-none">
+        {/* TAB PERMITIDAS */}
+        <button
+          onClick={() => setActiveTab('permitidas')}
+          className={`pb-2 text-[14px] font-semibold transition ${
+            activeTab === 'permitidas' ? 'text-[#027a35]' : 'text-gray-500'
+          }`}
+        >
+          Permitidas ({analysis.allowedActivities?.length || 0})
+        </button>
+      </div>
+
+      {/* Línea animada */}
+      <div className="absolute bottom-0 left-0 h-[3px] w-full pointer-events-none">
         <div
-            className="h-full bg-[#9d2449] transition-all duration-300"
-            style={{
-                width: '150px',
-                transform:
-                    activeTab === 'prohibidas'
-                        ? 'translateX(0px)'
-                        : 'translateX(165px)' // ajusta si cambian tus labels
-            }}
-        ></div>
+          className="h-full bg-[#9d2449] transition-all duration-300"
+          style={{
+            width: '150px',
+            transform: activeTab === 'prohibidas'
+              ? 'translateX(0px)'
+              : 'translateX(165px)'
+          }}
+        />
+      </div>
     </div>
-</div>
 
-                        {activeTab === 'prohibidas' && (
-                            <GroupedActivities
-                                title="ACTIVIDADES PROHIBIDAS"
-                                activities={analysis.prohibitedActivities}
-                                icon={<Icons.XCircle className="h-4 w-4" />}
-                                headerClass="text-red-900 bg-red-50"
-                                bgClass="bg-white"
-                            />
-                        )}
+    {activeTab === 'prohibidas' && (
+      <GroupedActivities
+        title="ACTIVIDADES PROHIBIDAS"
+        activities={analysis.prohibitedActivities}
+        icon={<Icons.XCircle className="h-4 w-4" />}
+        headerClass="text-red-900 bg-red-50"
+        bgClass="bg-white"
+      />
+    )}
 
-                        {activeTab === 'permitidas' && (
-                            <GroupedActivities
-                                title="ACTIVIDADES PERMITIDAS"
-                                activities={analysis.allowedActivities}
-                                icon={<Icons.CheckCircle className="h-4 w-4" />}
-                                headerClass="text-green-900 bg-green-50"
-                                bgClass="bg-white"
-                            />
-                        )}
-                    </div>
-                )}
+    {activeTab === 'permitidas' && (
+      <GroupedActivities
+        title="ACTIVIDADES PERMITIDAS"
+        activities={analysis.allowedActivities}
+        icon={<Icons.CheckCircle className="h-4 w-4" />}
+        headerClass="text-green-900 bg-green-50"
+        bgClass="bg-white"
+      />
+    )}
+  </div>
+)}
             </>
         )}
 
