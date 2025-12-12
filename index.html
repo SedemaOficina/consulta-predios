@@ -1727,32 +1727,6 @@ const ResultsContent = ({ analysis }) => {
   );
 };
 
-        // Primera página
-        addPageWithNumber();
-        heightLeft -= pdfHeight;
-
-        // Páginas siguientes (si las hay)
-        while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pageNumber += 1;
-            addPageWithNumber();
-            heightLeft -= pdfHeight;
-        }
-        const nombreArchivo = `ficha-${(analysis.alcaldia || 'CDMX')
-            .replace(/\s+/g, '_')
-            .toUpperCase()}-${new Date().toISOString().slice(0, 10)}.pdf`;
-
-        pdf.save(nombreArchivo);
-    };
-// Hacer disponible la exportación desde otros componentes (modo móvil)
-    useEffect(() => {
-        window.__sedemaExportPDF = handleExportPDF;
-    }, [analysis]);
-
-    if (!analysis) return null;
-   
-};
 
 /* ------------------------------------------------ */
 /* 7. INTERFAZ: BÚSQUEDA, CONTROLES, SIDEBAR */
