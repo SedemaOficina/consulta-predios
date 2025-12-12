@@ -3113,8 +3113,20 @@ const [visibleZoningCats, setVisibleZoningCats] = useState(() => {
   </span>
 </div>
 
-              {/* COMPARTIR */}
-              <div className="mt-5 text-center text-[13px] flex justify-center gap-2 items-center">
+{/* RESULTADO INMEDIATO */}
+<div className="mt-4">
+  <div className="font-bold text-[13px] text-gray-900 mb-1">
+    Resultado inmediato
+  </div>
+
+  <div className="text-[13px] text-gray-700 flex items-center gap-4">
+    ...
+  </div>
+</div>   {/* ← ESTE ES EL QUE FALTABA */}
+
+{/* COMPARTIR */}
+<div className="mt-5 text-center text-[13px] flex justify-center gap-2 items-center">
+
                 <Icons.Share className="h-5 w-5 text-[#9d2449]" strokeWidth="2.8" />
                 <span>
                   <strong>Comparte evidencia:</strong> descarga la ficha PDF o comparte el enlace.
