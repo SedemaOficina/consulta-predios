@@ -431,30 +431,40 @@ let dataCache = {
     rules: null
 };
 
-const isPointInPolygon = (p, f) => {
-    const { lat, lng } = p;
-    const { type, coordinates } = f.geometry;
+const isPointInPolygon = (point, feature) => {
+  const x = point.lng; // GeoJSON: X = longitud
+  const y = point.lat; // GeoJSON: Y = latitud
 
-    const c = (r) => {
-        let inside = false;
-        for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
-            const xi = r[i][0], yi = r[i][1];
-            const xj = r[j][0], yj = r[j][1];
-            if (((yi > lat) !== (yj > lat)) &&
-                (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi)) {
-                inside = !inside;
-            }
-        }
-        return inside;
-    };
+  const { type, coordinates } = feature.geometry;
 
-    if (type === 'Polygon') return c(coordinates[0]);
-    if (type === 'MultiPolygon') {
-        for (const poly of coordinates) {
-            if (c(poly[0])) return true;
-        }
+  const pointInRing = (ring) => {
+    let inside = false;
+
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const xi = ring[i][0]; // lng
+      const yi = ring[i][1]; // lat
+      const xj = ring[j][0]; // lng
+      const yj = ring[j][1]; // lat
+
+      const intersect =
+        yi > y !== yj > y &&
+        x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+
+      if (intersect) inside = !inside;
     }
-    return false;
+
+    return inside;
+  };
+
+  if (type === 'Polygon') {
+    return pointInRing(coordinates[0]);
+  }
+
+  if (type === 'MultiPolygon') {
+    return coordinates.some(poly => pointInRing(poly[0]));
+  }
+
+  return false;
 };
 
 const findFeature = (p, c) => {
@@ -2431,11 +2441,13 @@ const ToggleSwitch = ({ checked, onChange }) => (
 /* ------------------------------------------------ */
 
 const MapViewer = ({
-    location,
-    onLocationSelect,
-    analysisStatus,
-    visibleLayers,
-    setVisibleLayers,
+  location,
+  onLocationSelect,
+  analysisStatus,
+  visibleMapLayers,
+  setVisibleMapLayers,
+  visibleZoningCats,
+  setVisibleZoningCats,
     isLegendOpen,
     setIsLegendOpen,
     extraDataLoaded,
@@ -2449,18 +2461,26 @@ const MapViewer = ({
     const [tilesLoading, setTilesLoading] = useState(true);
 
     const toggleLayer = (key, nextValue) => {
-        setVisibleLayers(prev => ({
-            ...prev,
-            [key]: typeof nextValue === 'boolean' ? nextValue : !prev[key]
-        }));
-    };
+  setVisibleMapLayers(prev => ({
+    ...prev,
+    [key]: typeof nextValue === 'boolean' ? nextValue : !prev[key]
+  }));
+};
 
-    const toggleZoningGroup = () => {
-        const enabled = !visibleLayers.zoning;
-        const update = { zoning: enabled };
-        Object.keys(ZONING_CAT_INFO).forEach(k => (update[k] = enabled));
-        setVisibleLayers(prev => ({ ...prev, ...update }));
-    };
+   const toggleZoningGroup = () => {
+  const enabled = !visibleMapLayers.zoning;
+
+  setVisibleMapLayers(prev => ({
+    ...prev,
+    zoning: enabled
+  }));
+
+  setVisibleZoningCats(prev => {
+    const next = {};
+    Object.keys(ZONING_CAT_INFO).forEach(k => (next[k] = enabled));
+    return next;
+  });
+};
 
    useEffect(() => {
     if (!mapRef.current || mapInstance.current || !window.L) return;
@@ -2639,22 +2659,21 @@ useEffect(() => {
     useEffect(() => {
         if (!mapInstance.current) return;
 
-       ['sc', 'alcaldias', 'edomex', 'morelos', 'zoning'].forEach(k => {
-    const layer = layersRef.current[k];
-    if (!layer) return;
+      ['sc', 'alcaldias', 'edomex', 'morelos', 'zoning'].forEach(k => {
+  const layer = layersRef.current[k];
+  if (!layer) return;
 
-   if (visibleLayers[k] && !mapInstance.current.hasLayer(layer)) {
-  mapInstance.current.addLayer(layer);
-}
-else if (!visibleLayers[k] && mapInstance.current.hasLayer(layer)) {
-        mapInstance.current.removeLayer(layer);
-    }
+  if (visibleMapLayers[k] && !mapInstance.current.hasLayer(layer)) {
+    mapInstance.current.addLayer(layer);
+  } else if (!visibleMapLayers[k] && mapInstance.current.hasLayer(layer)) {
+    mapInstance.current.removeLayer(layer);
+  }
 });
         // Filtros por categoría dentro de la zonificación
         if (layersRef.current.zoning && mapInstance.current.hasLayer(layersRef.current.zoning)) {
             layersRef.current.zoning.eachLayer(layer => {
                 const key = (layer.feature.properties.CLAVE || '').toString().trim().toUpperCase();
-                const visible = visibleLayers.zoning && (visibleLayers[key] !== false);
+               const visible = visibleMapLayers.zoning && visibleZoningCats[key] !== false;
 
                 if (visible) {
                     const style = getZoningStyle(layer.feature);
@@ -2935,17 +2954,21 @@ const App = () => {
   const [extraDataLoaded, setExtraDataLoaded] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [location, setLocation] = useState(null);
-  const [visibleLayers, setVisibleLayers] = useState(() => {
-    const d = {
-      sc: true,
-      zoning: true,
-      alcaldias: true,
-      edomex: true,
-      morelos: true
-    };
-    Object.keys(ZONING_CAT_INFO).forEach(k => (d[k] = true));
-    return d;
-  });
+  // 🔹 Capas del mapa (Leaflet)
+const [visibleMapLayers, setVisibleMapLayers] = useState({
+  sc: true,
+  zoning: true,
+  alcaldias: true,
+  edomex: true,
+  morelos: true
+});
+
+// 🔹 Categorías internas de zonificación (PGOEDF)
+const [visibleZoningCats, setVisibleZoningCats] = useState(() => {
+  const d = {};
+  Object.keys(ZONING_CAT_INFO).forEach(k => (d[k] = true));
+  return d;
+});
 
   const [isLegendOpen, setIsLegendOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -3187,11 +3210,13 @@ const App = () => {
           />
 
           <MapViewer
-            location={location}
-            onLocationSelect={handleSelect}
-            analysisStatus={analysis?.status}
-            visibleLayers={visibleLayers}
-            setVisibleLayers={setVisibleLayers}
+  location={location}
+  onLocationSelect={handleSelect}
+  analysisStatus={analysis?.status}
+  visibleMapLayers={visibleMapLayers}
+  setVisibleMapLayers={setVisibleMapLayers}
+  visibleZoningCats={visibleZoningCats}
+  setVisibleZoningCats={setVisibleZoningCats}
             isLegendOpen={isLegendOpen}
             setIsLegendOpen={setIsLegendOpen}
             extraDataLoaded={extraDataLoaded}
