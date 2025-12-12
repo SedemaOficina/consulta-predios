@@ -3089,30 +3089,6 @@ const [visibleZoningCats, setVisibleZoningCats] = useState(() => {
                 </div>
               </div>
 
-              {/* RESULTADO INMEDIATO */}
-              <div className="mt-4">
-                <div className="font-bold text-[13px] text-gray-900 mb-1">
-                  Resultado inmediato
-                </div>
-
-             <div className="text-[13px] text-gray-700 flex items-center gap-4">
-  <span className="flex items-center gap-1.5">
-    <Icons.MapPin className="h-4 w-4 text-[#3b82f6]" />
-    <span className="flex items-center gap-1">
-      <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]" />
-      SU (Urbano)
-    </span>
-  </span>
-
-  <span className="flex items-center gap-1.5">
-    <Icons.MapPin className="h-4 w-4 text-[#9d2449]" />
-    <span className="flex items-center gap-1">
-      <span className="w-2.5 h-2.5 rounded-full bg-[#9d2449]" />
-      SC (Conservación)
-    </span>
-  </span>
-</div>
-
 {/* RESULTADO INMEDIATO */}
 <div className="mt-4">
   <div className="font-bold text-[13px] text-gray-900 mb-1">
@@ -3120,36 +3096,44 @@ const [visibleZoningCats, setVisibleZoningCats] = useState(() => {
   </div>
 
   <div className="text-[13px] text-gray-700 flex items-center gap-4">
-    ...
+    <span className="flex items-center gap-1.5">
+      <Icons.MapPin className="h-4 w-4 text-[#3b82f6]" />
+      <span className="flex items-center gap-1">
+        <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]" />
+        SU (Urbano)
+      </span>
+    </span>
+
+    <span className="flex items-center gap-1.5">
+      <Icons.MapPin className="h-4 w-4 text-[#9d2449]" />
+      <span className="flex items-center gap-1">
+        <span className="w-2.5 h-2.5 rounded-full bg-[#9d2449]" />
+        SC (Conservación)
+      </span>
+    </span>
   </div>
-</div>   {/* ← ESTE ES EL QUE FALTABA */}
+</div>
 
 {/* COMPARTIR */}
 <div className="mt-5 text-center text-[13px] flex justify-center gap-2 items-center">
+  <Icons.Share className="h-5 w-5 text-[#9d2449]" strokeWidth="2.8" />
+  <span>
+    <strong>Comparte evidencia:</strong> descarga la ficha PDF o comparte el enlace.
+  </span>
+</div>
 
-                <Icons.Share className="h-5 w-5 text-[#9d2449]" strokeWidth="2.8" />
-                <span>
-                  <strong>Comparte evidencia:</strong> descarga la ficha PDF o comparte el enlace.
-                </span>
-              </div>
+{/* NOTA */}
+<div className="mt-5 text-[11px] text-gray-500 bg-gray-50 border border-gray-200 rounded-lg p-2 text-center">
+  Resultado orientativo — No constituye un documento oficial.
+</div>
 
-              {/* NOTA */}
-              <div className="mt-5 text-[11px] text-gray-500 bg-gray-50 border border-gray-200 rounded-lg p-2 text-center">
-                Resultado orientativo — No constituye un documento oficial.
-              </div>
-
-              {/* BOTÓN */}
-              <button
-                onClick={() => setIsHelpOpen(false)}
-                className="mt-4 w-full bg-[#9d2449] text-white py-2.5 rounded-xl text-[13px] font-extrabold active:scale-95 transition"
-              >
-                Entendido
-              </button>
-
-            </div>
-          </div>
-        </div>
-      )}
+{/* BOTÓN */}
+<button
+  onClick={() => setIsHelpOpen(false)}
+  className="mt-4 w-full bg-[#9d2449] text-white py-2.5 rounded-xl text-[13px] font-extrabold active:scale-95 transition"
+>
+  Entendido
+</button>
 
       {/* Header escritorio */}
       <header className="hidden md:flex h-16 bg-[#9d2449] items-center px-4 justify-between shrink-0 z-[4000] shadow-md relative">
