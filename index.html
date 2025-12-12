@@ -2846,9 +2846,14 @@ useEffect(() => {
                                     </span>
                                 </div>
                                 <ToggleSwitch
-                                    checked={visibleZoningCats[k]}
-                                    onChange={() => toggleLayer(k)}
-                                />
+  checked={visibleZoningCats[k]}
+  onChange={() =>
+    setVisibleZoningCats(prev => ({
+      ...prev,
+      [k]: !prev[k]
+    }))
+  }
+/>
                             </div>
                         ))}
 
@@ -2870,7 +2875,7 @@ useEffect(() => {
                                 </span>
                             </div>
                             <ToggleSwitch
-                                checked={visibleLayers.sc}
+                                checked={visibleMapLayers.sc}
                                 onChange={() => toggleLayer('sc')}
                             />
                         </div>
