@@ -3105,19 +3105,37 @@ const [activeBaseLayer, setActiveBaseLayer] = useState('SATELLITE');
     useEffect(() => {
         loadCoreData().then(() => {
             setLoading(false);
-
+// Abrir ayuda automáticamente en móvil al cargar
+if (window.innerWidth < 768) {
+    setIsHelpOpen(true);
+}
             const params = new URLSearchParams(window.location.search);
             const lat = parseFloat(params.get('lat'));
             const lng = parseFloat(params.get('lng'));
 
-            if (!isNaN(lat) && !isNaN(lng)) {
-                handleSelect({ lat, lng });
-            }
+           useEffect(() => {
+    loadCoreData().then(() => {
+        setLoading(false);
 
-            loadExtraData().then(() => setExtraDataLoaded(true));
-        });
-    }, []);
+        const params = new URLSearchParams(window.location.search);
+        const lat = parseFloat(params.get('lat'));
+        const lng = parseFloat(params.get('lng'));
 
+        const hasCoords = !isNaN(lat) && !isNaN(lng);
+
+        // Modal de ayuda SOLO en móvil y SOLO si NO hay coords en la URL
+        if (window.innerWidth < 768 && !hasCoords) {
+            setIsHelpOpen(true);
+        }
+
+        // Si hay coords en la URL, ejecutar consulta directa
+        if (hasCoords) {
+            handleSelect({ lat, lng });
+        }
+
+        loadExtraData().then(() => setExtraDataLoaded(true));
+    });
+}, []);
     const handleSelect = async (c) => {
         setLocation(c);
         const res = await analyzeLocation(c);
@@ -3266,12 +3284,14 @@ const [activeBaseLayer, setActiveBaseLayer] = useState('SATELLITE');
     activeBaseLayer={activeBaseLayer}
     setActiveBaseLayer={setActiveBaseLayer}
 />
-                    <BottomSheetMobile
-                        analysis={analysis}
-                        onLocationSelect={handleSelect}
-                        onReset={handleReset}
-                        onClose={handleReset}
-                    />
+                   {analysis && (
+  <BottomSheetMobile
+    analysis={analysis}
+    onLocationSelect={handleSelect}
+    onReset={handleReset}
+    onClose={handleReset}
+  />
+)}
                 </div>
             </div>
         </div>
