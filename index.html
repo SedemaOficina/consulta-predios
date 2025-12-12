@@ -2933,28 +2933,29 @@ const App = () => {
         );
     };
 
-    useEffect(() => {
-        loadCoreData().then(() => {
-            setLoading(false);
+   useEffect(() => {
+  loadCoreData().then(() => {
+    setLoading(false);
 
-            const params = new URLSearchParams(window.location.search);
-            const lat = parseFloat(params.get('lat'));
-            const lng = parseFloat(params.get('lng'));
+    const params = new URLSearchParams(window.location.search);
+    const lat = parseFloat(params.get("lat"));
+    const lng = parseFloat(params.get("lng"));
+    const hasCoords = !isNaN(lat) && !isNaN(lng);
 
-            const hasCoords = !isNaN(lat) && !isNaN(lng);
+    // ✅ Modal en DESKTOP y MÓVIL (solo si NO viene consulta por URL)
+    if (!hasCoords) {
+      setIsHelpOpen(true);
+    }
 
-            // Modal solo en móvil y solo si NO viene consulta por URL
-            if (window.innerWidth < 768 && !hasCoords) {
-                setIsHelpOpen(true);
-            }
+    // ✅ Si viene consulta por URL, ejecutar directo
+    if (hasCoords) {
+      handleSelect({ lat, lng });
+    }
 
-            if (hasCoords) {
-                handleSelect({ lat, lng });
-            }
+    loadExtraData().then(() => setExtraDataLoaded(true));
+  });
+}, []);
 
-            loadExtraData().then(() => setExtraDataLoaded(true));
-        });
-    }, []);
 
     if (loading) {
         return (
@@ -2969,7 +2970,7 @@ const App = () => {
             {/* MODAL DE AYUDA MÓVIL */}
            {isHelpOpen && (
   <div
-    className="fixed inset-0 bg-black/50 z-[6000] md:hidden flex items-center justify-center p-4"
+    className="fixed inset-0 bg-black/50 z-[6000] flex items-center justify-center p-4"
     onClick={() => setIsHelpOpen(false)}
   >
     <div
@@ -2985,7 +2986,10 @@ const App = () => {
         <h2 className="text-[15px] font-extrabold text-gray-900 leading-snug">
           Evita fraudes: verifica si un predio está en Suelo de Conservación o en un Área Natural Protegida
         </h2>
-             </div>
+        <p className="text-[12px] text-gray-600 mt-1">
+          Visor de Consulta Ciudadana — SEDEMA
+        </p>
+      </div>
 
       <div className="px-6 pb-6">
         <p className="text-[12px] font-bold text-gray-800 mb-3">
@@ -2996,7 +3000,7 @@ const App = () => {
           <div className="flex items-start gap-3">
             <Icons.Search className="h-5 w-5 text-[#9d2449] mt-0.5" strokeWidth="2.8" />
             <div className="leading-snug">
-              <span className="font-semibold text-gray-900">Buscar por texto:</span>{' '}
+              <span className="font-semibold text-gray-900">Buscar por texto:</span>{" "}
               escribe una dirección o pega coordenadas (en cualquier formato).
             </div>
           </div>
@@ -3004,7 +3008,7 @@ const App = () => {
           <div className="flex items-start gap-3">
             <Icons.MapPin className="h-5 w-5 text-[#9d2449] mt-0.5" strokeWidth="2.8" />
             <div className="leading-snug">
-              <span className="font-semibold text-gray-900">Seleccionar en el mapa:</span>{' '}
+              <span className="font-semibold text-gray-900">Seleccionar en el mapa:</span>{" "}
               toca el mapa para fijar el punto.
             </div>
           </div>
@@ -3012,7 +3016,7 @@ const App = () => {
           <div className="flex items-start gap-3">
             <Icons.Navigation className="h-5 w-5 text-[#9d2449] mt-0.5" strokeWidth="2.8" />
             <div className="leading-snug">
-              <span className="font-semibold text-gray-900">Mi ubicación:</span>{' '}
+              <span className="font-semibold text-gray-900">Mi ubicación:</span>{" "}
               usa el botón de ubicación si estás en el sitio.
             </div>
           </div>
@@ -3020,15 +3024,15 @@ const App = () => {
           <div className="flex items-start gap-3">
             <Icons.Layers className="h-5 w-5 text-[#9d2449] mt-0.5" strokeWidth="2.8" />
             <div className="leading-snug">
-              <span className="font-semibold text-gray-900">Resultado inmediato:</span>{' '}
-              te indica si es{' '}
+              <span className="font-semibold text-gray-900">Resultado inmediato:</span>{" "}
+              te indica si es{" "}
               <span className="inline-flex items-center gap-1 font-semibold">
                 <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#3b82f6]" /> SU
-              </span>{' '}
-              (Urbano) o{' '}
+              </span>{" "}
+              (Urbano) o{" "}
               <span className="inline-flex items-center gap-1 font-semibold">
                 <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#9d2449]" /> SC
-              </span>{' '}
+              </span>{" "}
               (Conservación).
             </div>
           </div>
@@ -3036,7 +3040,7 @@ const App = () => {
           <div className="flex items-start gap-3">
             <Icons.Pdf className="h-5 w-5 text-[#9d2449] mt-0.5" strokeWidth="2.8" />
             <div className="leading-snug">
-              <span className="font-semibold text-gray-900">Comparte evidencia:</span>{' '}
+              <span className="font-semibold text-gray-900">Comparte evidencia:</span>{" "}
               descarga la ficha PDF o comparte el enlace.
             </div>
           </div>
@@ -3078,13 +3082,13 @@ const App = () => {
                         <div className="font-bold">{CONTACT_INFO.phone}</div>
                         <div>{CONTACT_INFO.hours}</div>
                     </div>
-                    <button
-                        onClick={() => alert('Para usar el visor: 1) Busca una dirección o usa "Mi ubicación". 2) Haz clic en el mapa. 3) Revisa la zonificación y las actividades permitidas o restringidas.')}
-                        className="w-7 h-7 flex items-center justify-center rounded-full bg-white/10 border border-white/40 text-white text-xs font-bold hover:bg-white/20 active:scale-95 transition"
-                        title="Ayuda rápida"
-                    >
-                        ?
-                    </button>
+                  <button
+  onClick={() => setIsHelpOpen(true)}
+  className="w-7 h-7 flex items-center justify-center rounded-full bg-white/10 border border-white/40 text-white text-xs font-bold hover:bg-white/20 active:scale-95 transition"
+  title="Ayuda"
+>
+  ?
+</button>
                 </div>
             </header>
 
