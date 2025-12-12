@@ -84,3 +84,33 @@ html { -webkit-text-size-adjust: 100%; }
   .mobile-upscale .text-xs { font-size: 14px !important; }
   .mobile-upscale .text-sm { font-size: 16px !important; }
 }
+
+/* ============================
+   FIX LEGIBILIDAD iOS (BottomSheet)
+   ============================ */
+html { -webkit-text-size-adjust: 100%; }
+
+@media (max-width: 768px) {
+  /* Subimos tipografía SOLO dentro del bottomsheet */
+  .mobile-upscale {
+    font-size: 14px;         /* base legible */
+    line-height: 1.35;
+  }
+
+  /* Forzamos herencia aunque existan text-[10px], text-xs, etc. */
+  .mobile-upscale :is(p,span,div,li,button,summary,a,strong,em,label,td,th) {
+    font-size: inherit !important;
+    line-height: inherit !important;
+  }
+
+  /* No agrandamos íconos exageradamente */
+  .mobile-upscale svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  /* Ajuste fino para badges/píldoras */
+  .mobile-upscale .rounded-full {
+    font-size: 13px !important;
+  }
+}
