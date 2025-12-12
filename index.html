@@ -2508,8 +2508,7 @@ const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => 
                 </div>
             </div>
 
-            {/* CONTENIDO: siempre usamos ResultsContent; si analysis = null muestra el mensaje de ayuda */}
-           {(sheetState === 'mid' || sheetState === 'full') && (
+    {(sheetState === 'mid' || sheetState === 'full') && (
   <div className="flex-1 overflow-y-auto custom-scrollbar p-4 bg-gray-50/50 mobile-upscale">
     <ResultsContent analysis={analysis} />
   </div>
