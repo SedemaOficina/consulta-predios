@@ -645,179 +645,105 @@ const StatusMessage = ({ analysis }) => {
 /* ------------------------------------------------ */
 /* 6.2 Resumen Ejecutivo */
 /* ------------------------------------------------ */
-
 const LocationSummary = ({ analysis, onExportPDF }) => {
-    const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-    const isUrban = analysis.status === 'URBAN_SOIL';
-    const isSC = analysis.status === 'CONSERVATION_SOIL';
-    const isANP = analysis.isANP;
+  const isUrban = analysis.status === 'URBAN_SOIL';
+  const isSC = analysis.status === 'CONSERVATION_SOIL';
+  const isANP = analysis.isANP;
 
-    const statusLabelBadge =
-        isANP ? 'Área Natural Protegida' :
-        isSC ? 'Suelo de Conservación' :
-        isUrban ? 'Suelo Urbano' :
-        analysis.status === 'OUTSIDE_CDMX' ? 'Fuera de CDMX' :
-        'Sin información';
+  let bandColor = '#e5e7eb';
+  if (isANP) bandColor = '#e9d5ff';
+  else if (isSC) bandColor = '#fecdd3';
+  else if (isUrban) bandColor = '#bfdbfe';
 
-    // Color del badge de tipo de suelo
-    let soilBadgeStyle = {
-        backgroundColor: '#e5e7eb',
-        borderColor: '#e5e7eb',
-        color: '#374151'
-    };
+  const zoningColor = analysis.zoningKey ? getZoningColor(analysis.zoningKey) : '#6b7280';
 
-    if (isSC && !isANP) {
-        soilBadgeStyle = {
-            backgroundColor: LAYER_STYLES.sc.color,
-            borderColor: LAYER_STYLES.sc.color,
-            color: '#ffffff'
-        };
-    } else if (isUrban) {
-        soilBadgeStyle = {
-            backgroundColor: '#3b82f6',
-            borderColor: '#3b82f6',
-            color: '#ffffff'
-        };
-    } else if (isANP) {
-        soilBadgeStyle = {
-            backgroundColor: '#a855f7',
-            borderColor: '#a855f7',
-            color: '#ffffff'
-        };
-    }
+  const copyCoords = () => {
+    navigator.clipboard.writeText(`${analysis.coordinate.lat},${analysis.coordinate.lng}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
-    // Cinta superior
-    let bandColor = '#e5e7eb';
-    if (isANP) bandColor = '#e9d5ff';
-    else if (isSC) bandColor = '#fecdd3';
-    else if (isUrban) bandColor = '#bfdbfe';
+  const showZoningBlock = isSC && !isANP;
 
-    const zoningColor = analysis.zoningKey
-        ? getZoningColor(analysis.zoningKey)
-        : '#6b7280';
+  return (
+    <>
+      <div className="text-[10px] text-gray-500 mb-2 bg-gray-50 p-1 pl-2 rounded border border-gray-200">
+        Resultado orientativo — No constituye un documento oficial.
+      </div>
 
-    const copyCoords = () => {
-        navigator.clipboard.writeText(`${analysis.coordinate.lat},${analysis.coordinate.lng}`);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
+      <div className="bg-white border rounded-lg shadow-sm p-4 mb-4">
+        <div className="h-1 rounded-full mb-3" style={{ backgroundColor: bandColor }} />
 
-    const showZoningBlock = isSC && !isANP; // Sólo SC
+        <div className="mb-2 text-sm leading-snug">
+          <span className="text-[11px] font-semibold text-gray-600">Alcaldía:</span>
+          <span className="font-bold text-gray-900 ml-1">
+            {analysis.alcaldia || 'Ciudad de México'}
+          </span>
+        </div>
 
-       return (
-        <>
-            {/* Etiqueta fija de resultado orientativo */}
-            <div className="text-[10px] text-gray-500 mb-2 bg-gray-50 p-1 pl-2 rounded border border-gray-200">
-                Resultado orientativo — No constituye un documento oficial.
-            </div>
+        {showZoningBlock && (
+          <div className="mb-3">
+            <p className="text-[11px] font-semibold text-gray-600">Zonificación PGOEDF:</p>
 
-            <div className="bg-white border rounded-lg shadow-sm p-4 mb-4">
-
-                {/* CINTA SUPERIOR */}
-                <div
-                    className="h-1 rounded-full mb-3"
-                    style={{ backgroundColor: bandColor }}
-                />
-
-               {/* ALCALDÍA EN UNA SOLA LÍNEA */}
-                <div className="mb-2 text-sm leading-snug">
-                    <span className="text-[11px] font-semibold text-gray-600">
-                        Alcaldía:
-                    </span>
-                    <span className="font-bold text-gray-900 ml-1">
-                        {analysis.alcaldia || 'Ciudad de México'}
-                    </span>
-                </div>
-            
-
-                {/* ZONIFICACIÓN PGOEDF: SOLO SUELO DE CONSERVACIÓN */}
-                {showZoningBlock && (
-                    <div className="mb-3">
-                        <p className="text-[11px] font-semibold text-gray-600">
-                            Zonificación PGOEDF:
-                        </p>
-
-                        {analysis.zoningName ? (
-                            <div className="flex flex-wrap items-center gap-2 mt-1">
-                                {/* Badge sigla */}
-                                {analysis.zoningKey && (
-                                    <span
-                                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm"
-                                        style={{
-                                            backgroundColor: zoningColor,
-                                            borderColor: zoningColor,
-                                            color: '#ffffff'
-                                        }}
-                                    >
-                                        {analysis.zoningKey}
-                                    </span>
-                                )}
-                                {/* Badge nombre completo */}
-                                <span
-                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold text-white max-w-[70%] truncate"
-                                    style={{ backgroundColor: zoningColor, borderColor: zoningColor }}
-                                >
-                                    {analysis.zoningName}
-                                </span>
-                            </div>
-                        ) : (
-                            <span className="text-xs text-gray-500">
-                                Sin información
-                            </span>
-                        )}
-                    </div>
+            {analysis.zoningName ? (
+              <div className="flex flex-wrap items-center gap-2 mt-1">
+                {analysis.zoningKey && (
+                  <span
+                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm"
+                    style={{ backgroundColor: zoningColor, borderColor: zoningColor, color: '#ffffff' }}
+                  >
+                    {analysis.zoningKey}
+                  </span>
                 )}
 
-                {/* LEYENDA NORMATIVA SEGÚN TIPO DE SUELO */}
-                <div className="mb-3 text-[11px] text-gray-700">
-                    {isSC && !isANP && (
-                        <>
-                            Programa General de Ordenamiento Ecológico del Distrito Federal (PGOEDF 2000).
-                        </>
-                    )}
-                    {isUrban && (
-                        <>
-                            Consulte los Programas de Desarrollo Urbano aplicables.
-                        </>
-                    )}
-                </div>
+                <span
+                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold text-white max-w-[70%] truncate"
+                  style={{ backgroundColor: zoningColor, borderColor: zoningColor }}
+                >
+                  {analysis.zoningName}
+                </span>
+              </div>
+            ) : (
+              <span className="text-xs text-gray-500">Sin información</span>
+            )}
+          </div>
+        )}
 
-                {/* COORDENADAS + COPIAR */}
-                <ul className="text-xs space-y-1.5 text-gray-700 border-t pt-2">
-                    <li className="flex items-center gap-2">
-                        <span className="text-gray-400">
-                            <Icons.MapPin className="h-3 w-3" />
-                        </span>
-                        <span className="font-mono">
-                            {analysis.coordinate.lat.toFixed(5)}, {analysis.coordinate.lng.toFixed(5)}
-                        </span>
+        <div className="mb-3 text-[11px] text-gray-700">
+          {isSC && !isANP && <>Programa General de Ordenamiento Ecológico del Distrito Federal (PGOEDF 2000).</>}
+          {isUrban && <>Consulte los Programas de Desarrollo Urbano aplicables.</>}
+        </div>
 
-                        <button
-                            onClick={copyCoords}
-                            className="text-[#9d2449] hover:bg-gray-100 p-1 rounded flex items-center gap-1"
-                        >
-                            <Icons.Copy className="h-3 w-3" />
-                            {copied && (
-                                <span className="text-[9px] text-gray-500">Copiado</span>
-                            )}
-                        </button>
-                    </li>
-                </ul>
+        <ul className="text-xs space-y-1.5 text-gray-700 border-t pt-2">
+          <li className="flex items-center gap-2">
+            <span className="text-gray-400">
+              <Icons.MapPin className="h-3 w-3" />
+            </span>
 
-                {/* ACCIONES RÁPIDAS (SOLO ESCRITORIO) */}
-                <div className="mt-3 hidden md:block">
-                    {analysis && (
-                        <ActionButtonsDesktop
-                            analysis={analysis}
-                            onExportPDF={onExportPDF}
-                        />
-                    )}
-                </div>
-            </div>
-        </>
-    );
+            <span className="font-mono">
+              {analysis.coordinate.lat.toFixed(5)}, {analysis.coordinate.lng.toFixed(5)}
+            </span>
+
+            <button
+              onClick={copyCoords}
+              className="text-[#9d2449] hover:bg-gray-100 p-1 rounded flex items-center gap-1"
+            >
+              <Icons.Copy className="h-3 w-3" />
+              {copied && <span className="text-[9px] text-gray-500">Copiado</span>}
+            </button>
+          </li>
+        </ul>
+
+        <div className="mt-3 hidden md:block">
+          <ActionButtonsDesktop analysis={analysis} onExportPDF={onExportPDF} />
+        </div>
+      </div>
+    </>
+  );
 };
+
 /* ------------------------------------------------ */
 /* 6.3 Actividades agrupadas */
 /* ------------------------------------------------ */
