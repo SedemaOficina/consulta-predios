@@ -2481,6 +2481,16 @@ const MapViewer = ({
 
     window.L.control.zoom({ position: 'topright' }).addTo(map);
     mapInstance.current = map;
+// ✅ PANES (orden estable por zIndex)
+map.createPane('paneBase');
+map.getPane('paneBase').style.zIndex = 300;
+
+map.createPane('paneContext');
+map.getPane('paneContext').style.zIndex = 350;
+
+map.createPane('paneOverlay');
+map.getPane('paneOverlay').style.zIndex = 400;
+       
 
     // Base layer inicial
     const base = window.L.tileLayer(getBaseLayerUrl(activeBaseLayer || 'SATELLITE'), {
@@ -2496,40 +2506,42 @@ const MapViewer = ({
     // Core data desde cache
     const { sc, alcaldias } = dataCache;
 
-    const addCoreLayer = (name, data, style, tooltipField) => {
-        if (!data?.features?.length) return;
-        const layer = window.L.geoJSON(data, {
-            style,
-            interactive: true,
-            onEachFeature: (feature, layerInstance) => {
-                if (tooltipField && feature.properties?.[tooltipField]) {
-                    layerInstance.bindTooltip(feature.properties[tooltipField], {
-                        sticky: true,
-                        className: 'custom-tooltip'
-                    });
-                }
-            }
+   const addCoreLayer = (name, data, style, tooltipField, pane) => {
+  if (!data?.features?.length) return;
+
+  const layer = window.L.geoJSON(data, {
+    pane, // ✅ orden estable por pane/zIndex
+    style,
+    interactive: true,
+    onEachFeature: (feature, layerInstance) => {
+      if (tooltipField && feature.properties?.[tooltipField]) {
+        layerInstance.bindTooltip(feature.properties[tooltipField], {
+          sticky: true,
+          className: 'custom-tooltip'
         });
-        layersRef.current[name] = layer;
-        map.addLayer(layer);
-    };
+      }
+    }
+  });
 
-    addCoreLayer('sc', sc, {
-        color: LAYER_STYLES.sc.color,
-        weight: 1.8,
-        opacity: 0.9,
-        fillColor: LAYER_STYLES.sc.fill,
-        fillOpacity: 0.18,
-        interactive: false
-    }, null);
+  layersRef.current[name] = layer;
+  map.addLayer(layer);
+};
+addCoreLayer('sc', sc, {
+  color: LAYER_STYLES.sc.color,
+  weight: 1.8,
+  opacity: 0.9,
+  fillColor: LAYER_STYLES.sc.fill,
+  fillOpacity: 0.18,
+  interactive: false
+}, null, 'paneBase');
 
-    addCoreLayer('alcaldias', alcaldias, {
-        color: LAYER_STYLES.alcaldias.color,
-        weight: 3,
-        dashArray: '8,4',
-        opacity: 0.9,
-        fillOpacity: 0
-    }, null);
+addCoreLayer('alcaldias', alcaldias, {
+  color: LAYER_STYLES.alcaldias.color,
+  weight: 3,
+  dashArray: '8,4',
+  opacity: 0.9,
+  fillOpacity: 0
+}, null, 'paneContext');
 
     map.on('click', e => onLocationSelect(e.latlng));
 
@@ -2540,65 +2552,73 @@ const MapViewer = ({
         markerRef.current = null;
     };
 }, []);  // 👈 SIN DEPENDENCIAS
-    /* 2) Capas extra: EdoMex, Morelos, Zonificación */
-    useEffect(() => {
-        if (!mapInstance.current || !extraDataLoaded || !window.L) return;
+  /* 2) Capas extra: EdoMex, Morelos, Zonificación */
+useEffect(() => {
+  if (!mapInstance.current || !extraDataLoaded || !window.L) return;
 
-        const { edomex, morelos, zoning } = dataCache;
+  const { edomex, morelos, zoning } = dataCache;
 
-        const addLayer = (name, data, style, tooltipField) => {
-            if (!data?.features?.length) return;
+  const addLayer = (name, data, style, tooltipField, pane) => {
+    if (!data?.features?.length) return;
 
-            const layer = window.L.geoJSON(data, {
-                style,
-                interactive: true,
-                onEachFeature: (feature, layerInstance) => {
-                    if (name === 'zoning') {
-                        layerInstance.on('mouseover', () => {
-                            layerInstance.setStyle({ weight: 2.5 });
-                        });
-                        layerInstance.on('mouseout', () => {
-                            layerInstance.setStyle({ weight: 1.4 });
-                        });
-                    }
-                    if (tooltipField && feature.properties?.[tooltipField]) {
-                        layerInstance.bindTooltip(feature.properties[tooltipField], {
-                            sticky: true,
-                            className: 'custom-tooltip'
-                        });
-                    }
-                }
-            });
-
-            layersRef.current[name] = layer;
-            // También las agregamos al mapa al crearlas (luego los switches solo add/remove)
-            mapInstance.current.addLayer(layer);
-        };
-
-        if (!layersRef.current.edomex) {
-            addLayer('edomex', edomex, {
-                color: LAYER_STYLES.edomex.color,
-                weight: 2,
-                dashArray: '4,4',
-                opacity: 0.9,
-                fillOpacity: 0.1
-            }, 'NOMGEO');
+    const layer = window.L.geoJSON(data, {
+      pane, // ✅ pane fijo
+      style,
+      interactive: true,
+      onEachFeature: (feature, layerInstance) => {
+        if (name === 'zoning') {
+          layerInstance.on('mouseover', () => layerInstance.setStyle({ weight: 2.5 }));
+          layerInstance.on('mouseout', () => layerInstance.setStyle({ weight: 1.4 }));
         }
-
-        if (!layersRef.current.morelos) {
-            addLayer('morelos', morelos, {
-                color: LAYER_STYLES.morelos.color,
-                weight: 2,
-                dashArray: '4,4',
-                opacity: 0.9,
-                fillOpacity: 0.1
-            }, 'NOMGEO');
+        if (tooltipField && feature.properties?.[tooltipField]) {
+          layerInstance.bindTooltip(feature.properties[tooltipField], {
+            sticky: true,
+            className: 'custom-tooltip'
+          });
         }
+      }
+    });
 
-        if (!layersRef.current.zoning && zoning?.features?.length) {
-            addLayer('zoning', zoning, getZoningStyle, 'PGOEDF');
-        }
-    }, [extraDataLoaded]);
+    layersRef.current[name] = layer;
+    mapInstance.current.addLayer(layer);
+  };
+
+  if (!layersRef.current.edomex) {
+    addLayer(
+      'edomex',
+      edomex,
+      {
+        color: LAYER_STYLES.edomex.color,
+        weight: 2,
+        dashArray: '4,4',
+        opacity: 0.9,
+        fillOpacity: 0.1
+      },
+      'NOMGEO',
+      'paneBase'
+    );
+  }
+
+  if (!layersRef.current.morelos) {
+    addLayer(
+      'morelos',
+      morelos,
+      {
+        color: LAYER_STYLES.morelos.color,
+        weight: 2,
+        dashArray: '4,4',
+        opacity: 0.9,
+        fillOpacity: 0.1
+      },
+      'NOMGEO',
+      'paneBase'
+    );
+  }
+
+  if (!layersRef.current.zoning && zoning?.features?.length) {
+    addLayer('zoning', zoning, getZoningStyle, 'PGOEDF', 'paneOverlay');
+  }
+}, [extraDataLoaded]);
 
     /* 3) invalidatesize para sidebar */
     useEffect(() => {
@@ -2623,18 +2643,10 @@ const MapViewer = ({
     const layer = layersRef.current[k];
     if (!layer) return;
 
-    if (visibleLayers[k] && !mapInstance.current.hasLayer(layer)) {
-        mapInstance.current.addLayer(layer);
-
-        // Orden de dibujo:
-        // - ZONIFICACIÓN y ALCALDÍAS siempre adelante
-        // - SC, EdoMex, Morelos al fondo
-        if (k === 'zoning' || k === 'alcaldias') {
-            layer.bringToFront();
-        } else {
-            layer.bringToBack();
-        }
-    } else if (!visibleLayers[k] && mapInstance.current.hasLayer(layer)) {
+   if (visibleLayers[k] && !mapInstance.current.hasLayer(layer)) {
+  mapInstance.current.addLayer(layer);
+}
+else if (!visibleLayers[k] && mapInstance.current.hasLayer(layer)) {
         mapInstance.current.removeLayer(layer);
     }
 });
