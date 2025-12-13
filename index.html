@@ -777,106 +777,100 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
 /* ------------------------------------------------ */
 /* 6.3 Actividades agrupadas */
 /* ------------------------------------------------ */
-
 const GroupedActivities = ({ title, activities, icon, headerClass, bgClass, accentColor }) => {
-    if (!activities || activities.length === 0) return null;
-    const isProhibidas = (title || '').toUpperCase().includes('PROHIBIDAS');
-const isPermitidas = (title || '').toUpperCase().includes('PERMITIDAS');
+  if (!activities || activities.length === 0) return null;
 
-    const groups = {};
-    activities.forEach(a => {
-        if (!groups[a.sector]) groups[a.sector] = {};
-        if (!groups[a.sector][a.general]) groups[a.sector][a.general] = [];
-        groups[a.sector][a.general].push(a.specific);
-    });
+  const isProhibidas = (title || '').toUpperCase().includes('PROHIBIDAS');
+  const isPermitidas = (title || '').toUpperCase().includes('PERMITIDAS');
 
-    return (
-        <details open className={`group rounded-lg border border-gray-200 overflow-hidden mb-3 shadow-sm ${bgClass}`}>
-            <summary className={`flex items-center justify-between px-3 py-2 cursor-pointer ${headerClass}`}>
-                <div className="flex items-center gap-2 font-bold text-xs">
-                    {icon}
-                    <span>
-                        {title}{' '}
-                        <span className="text-[10px] font-normal">
-                            ({activities.length})
+  const groups = {};
+  activities.forEach(a => {
+    if (!groups[a.sector]) groups[a.sector] = {};
+    if (!groups[a.sector][a.general]) groups[a.sector][a.general] = [];
+    groups[a.sector][a.general].push(a.specific);
+  });
+
+  return (
+    <details open className={`group rounded-lg border border-gray-200 overflow-hidden mb-3 shadow-sm ${bgClass}`}>
+      <summary className={`flex items-center justify-between px-3 py-2 cursor-pointer ${headerClass}`}>
+        <div className="flex items-center gap-2 font-bold text-xs">
+          {icon}
+          <span>
+            {title}{' '}
+            <span className="text-[10px] font-normal">
+              ({activities.length})
+            </span>
+          </span>
+        </div>
+        <Icons.ChevronDown className="h-4 w-4 group-open:rotate-180 transition-transform" />
+      </summary>
+
+      <div className="px-3 py-2 bg-white border-t border-gray-100 space-y-3">
+        {Object.entries(groups).map(([sector, generals], i) => {
+          const st = (isProhibidas || isPermitidas)
+            ? {
+                bg: '#f9fafb',
+                border: accentColor || (isProhibidas ? '#b91c1c' : '#15803d'),
+                text: '#374151'
+              }
+            : getSectorStyle(sector);
+
+          return (
+            <div key={i} className="mb-3 rounded overflow-hidden border border-gray-100">
+              <div
+                className="px-3 py-2 font-bold text-[11px] uppercase tracking-wide border-l-4"
+                style={{
+                  backgroundColor: st.bg,
+                  borderLeftColor: st.border,
+                  color: st.text
+                }}
+              >
+                {sector}
+              </div>
+
+              <div className="bg-white">
+                {Object.entries(generals).map(([gen, specifics], j) => (
+                  <details key={j} className="group/inner border-b border-gray-50 last:border-0">
+                    <summary className="px-3 py-2 text-[11px] font-medium text-gray-700 cursor-pointer hover:bg-gray-50 flex justify-between">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{
+                            backgroundColor: (isProhibidas || isPermitidas)
+                              ? (accentColor || (isProhibidas ? '#b91c1c' : '#15803d'))
+                              : st.border
+                          }}
+                        />
+                        <span>{gen}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-gray-400 bg-gray-100 px-1.5 rounded-full">
+                          {specifics.length}
                         </span>
-                    </span>
-                </div>
-                <Icons.ChevronDown className="h-4 w-4 group-open:rotate-180 transition-transform" />
-            </summary>
+                        <Icons.ChevronDown className="h-3 w-3 text-gray-400 group-open/inner:rotate-180 transition-transform" />
+                      </div>
+                    </summary>
 
-            <div className="px-3 py-2 bg-white border-t border-gray-100 space-y-3">
-                {Object.entries(groups).map(([sector, generals], i) => {
-                   const st = isProhibidas
-  ? {
-      bg: '#f9fafb',                 // fondo gris neutro
-      border: accentColor || '#b91c1c', // rojo prohibición
-      text: '#374151'                // texto gris oscuro
-    }
-const st = (isProhibidas || isPermitidas)
-  ? {
-      bg: '#f9fafb',                 // fondo neutro
-      border: accentColor,            // rojo o verde según el bloque
-      text: '#374151'                 // texto gris
-    }
-  : getSectorStyle(sector);
-
-                    return (
-                        <div key={i} className="mb-3 rounded overflow-hidden border border-gray-100">
-                            <div
-                                className="px-3 py-2 font-bold text-[11px] uppercase tracking-wide border-l-4"
-                                style={{
-                                    backgroundColor: st.bg,
-                                    borderLeftColor: st.border,
-                                    color: st.text
-                                }}
-                            >
-                                {sector}
-                            </div>
-
-                            <div className="bg-white">
-                                {Object.entries(generals).map(([gen, specifics], j) => (
-                                    <details key={j} className="group/inner border-b border-gray-50 last:border-0">
-                                        <summary className="px-3 py-2 text-[11px] font-medium text-gray-700 cursor-pointer hover:bg-gray-50 flex justify-between">
-                                            <div className="flex items-center gap-2">
-                                               <span
-  className="w-1.5 h-1.5 rounded-full"
-  style={{
-    backgroundColor: (isProhibidas || isPermitidas)
-      ? accentColor          // 🔴 o 🟢 según el bloque
-      : st.border
-  }}
-></span>
-                                                <span>{gen}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[9px] text-gray-400 bg-gray-100 px-1.5 rounded-full">
-                                                    {specifics.length}
-                                                </span>
-                                                <Icons.ChevronDown className="h-3 w-3 text-gray-400 group-open/inner:rotate-180 transition-transform" />
-                                            </div>
-                                        </summary>
-
-                                        <ul className="bg-gray-50/50 px-4 py-2 space-y-1">
-                                            {specifics.map((spec, k) => (
-                                                <li
-                                                    key={k}
-                                                    className="text-[10px] text-gray-600 pl-4 relative"
-                                                >
-                                                    <span className="absolute left-0 top-1.5 w-1 h-1 bg-gray-300 rounded-full"></span>
-                                                    {spec}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </details>
-                                ))}
-                            </div>
-                        </div>
-                    );
-                })}
+                    <ul className="bg-gray-50/50 px-4 py-2 space-y-1">
+                      {specifics.map((spec, k) => (
+                        <li
+                          key={k}
+                          className="text-[10px] text-gray-600 pl-4 relative"
+                        >
+                          <span className="absolute left-0 top-1.5 w-1 h-1 bg-gray-300 rounded-full"></span>
+                          {spec}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                ))}
+              </div>
             </div>
-        </details>
-    );
+          );
+        })}
+      </div>
+    </details>
+  );
 };
 
 /* ------------------------------------------------ */
@@ -931,13 +925,11 @@ const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
     const zonasParaLeyenda = Object.entries(ZONING_CAT_INFO || {}).slice(0, 8);
 
     // Estilo del badge de tipo de suelo
-    let soilBadgeBg = '#e5e7eb';
-    let soilBadgeColor = '#374151';
-
     if (isSC && !isANP) {
-        soilBadgeBg = LAYER_STYLES.sc.color;
-        soilBadgeColor = '#ffffff';
-    } else if (isUrban) {
+   soilBadgeBg = '#3B7D23'; // verde institucional SC
+    soilBadgeColor = '#ffffff';
+}
+    else if (isUrban) {
         soilBadgeBg = '#3b82f6';
         soilBadgeColor = '#ffffff';
     } else if (isANP) {
@@ -948,13 +940,7 @@ const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
     const zoningColor = analysis.zoningKey
         ? getZoningColor(analysis.zoningKey)
         : '#6b7280';
-
-    // Cinta superior
-    let bandColor = '#e5e7eb';
-    if (isANP) bandColor = '#e9d5ff';
-    else if (isSC) bandColor = '#fecdd3';
-    else if (isUrban) bandColor = '#bfdbfe';
-
+   
     return (
         <div
             ref={ref}
