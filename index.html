@@ -1606,9 +1606,9 @@ const ResultsContent = ({ analysis }) => {
         <PdfFicha analysis={analysis} mapImage={mapImage} ref={pdfRef} />
       </div>
 
-      {/* RESUMEN + ESTADO */}
-    <StatusMessage analysis={analysis} />
- <LocationSummary analysis={analysis} onExportPDF={handleExportPDF} />
+{/* RESUMEN + ESTADO */}
+{analysis?.status !== 'OUTSIDE_CDMX' && <StatusMessage analysis={analysis} />}
+<LocationSummary analysis={analysis} onExportPDF={handleExportPDF} />
 
       {analysis.zoningName === 'Cargando detalles...' && (
         <div className="p-2 bg-yellow-50 text-yellow-800 text-[10px] rounded border border-yellow-200">
@@ -2542,7 +2542,7 @@ const MapViewer = ({
         zoomControl: false,
         minZoom: 9,
         maxZoom: 18,
-        preferCanvas: false,
+        preferCanvas: true,
         maxBounds: bounds,
         maxBoundsViscosity: 0.9
     }).setView(INITIAL_CENTER, INITIAL_ZOOM);
@@ -3108,10 +3108,11 @@ useEffect(() => {
     // ✅ FIX: si el usuario ya seleccionó un punto y luego terminan de cargar zoning/reglas,
 // re-ejecutamos el análisis para actualizar zonificación/actividades.
 useEffect(() => {
+  useEffect(() => {
   if (location && extraDataLoaded) {
     analyzeLocation(location).then(setAnalysis);
   }
-}, [extraDataLoaded]);
+}, [location, extraDataLoaded]);
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center text-[#9d2449]">
