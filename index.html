@@ -372,6 +372,13 @@ const Icons = {
             <line x1="16" y1="6" x2="16" y2="22" />
         </IconBase>
     ),
+
+    MapPinned: (p) => (
+  <IconBase {...p}>
+    <path d="M5 22v-7l-2-2V7a2 2 0 012-2h14a2 2 0 012 2v6l-2 2v7" />
+    <circle cx="12" cy="10" r="3" />
+  </IconBase>
+),
     Copy: (p) => (
         <IconBase {...p}>
             <rect x="9" y="9" width="13" height="13" rx="2" />
@@ -2214,13 +2221,36 @@ const SidebarDesktop = ({ analysis, onLocationSelect, onReset, isOpen, onToggle 
     </div>
   </div>
 </div>
-                    <div className="p-6 space-y-6">
-                        <SearchLogicDesktop
-                            onLocationSelect={onLocationSelect}
-                            onReset={onReset}
-                        />
-                        <ResultsContent analysis={analysis} />
-                    </div>
+                    <div className="p-4 space-y-4">
+
+  <SearchLogicDesktop
+    onLocationSelect={onLocationSelect}
+    onReset={onReset}
+  />
+
+  {/* PLACEHOLDER cuando NO hay análisis */}
+  {!analysis && (
+    <div className="flex flex-col items-center justify-center text-center py-16 px-6 text-gray-400">
+      
+      {/* ÍCONO */}
+      <Icons.MapPinned className="h-12 w-12 mb-4 opacity-40" />
+
+      {/* TEXTO PRINCIPAL */}
+      <div className="text-[13px] font-medium text-gray-500">
+        Selecciona un punto en el mapa
+      </div>
+
+      {/* TEXTO SECUNDARIO */}
+      <div className="text-[11px] text-gray-400 mt-1 max-w-xs">
+        Haz clic en el mapa o escribe una dirección o coordenadas para iniciar la consulta.
+      </div>
+    </div>
+  )}
+
+  {/* RESULTADOS */}
+  {analysis && <ResultsContent analysis={analysis} />}
+
+</div>
                 </>
             )}
         </div>
