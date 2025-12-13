@@ -1671,18 +1671,18 @@ const ResultsContent = ({ analysis }) => {
      </button>
    </div>
 
-   {/* Línea inferior (del color del tab activo) */}
-   <div className="absolute bottom-0 left-0 h-[3px] w-full pointer-events-none">
-     <div
-       className="h-full transition-all duration-300"
-       style={{
-         width: activeTab === 'prohibidas' ? '150px' : '150px',
-         transform: activeTab === 'prohibidas' ? 'translateX(0px)' : 'translateX(165px)',
-         backgroundColor: activeTab === 'prohibidas' ? '#b91c1c' : '#15803d'
-       }}
-     />
-   </div>
- </div>
+<div className="absolute bottom-0 left-0 h-[3px] w-full pointer-events-none">
+  <div className="h-full flex">
+    <div
+      className="flex-1 transition-colors duration-300"
+      style={{ backgroundColor: activeTab === 'prohibidas' ? '#b91c1c' : 'transparent' }}
+    />
+    <div
+      className="flex-1 transition-colors duration-300"
+      style={{ backgroundColor: activeTab === 'permitidas' ? '#15803d' : 'transparent' }}
+    />
+  </div>
+</div>
 
                 {activeTab === 'prohibidas' && (
                   <GroupedActivities
@@ -2303,54 +2303,7 @@ const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => 
             : analysis?.status === 'NO_DATA'
             ? 'No se encontró información disponible para esta zona.'
             : 'Detalle normativo del punto de consulta.';
-
-    // Etiqueta y color del badge de tipo de suelo (para el header)
-    const soilLabel =
-        !analysis
-            ? 'Sin selección'
-            : isANP
-            ? 'Área Natural Protegida'
-            : isSC
-            ? 'Suelo de Conservación'
-            : isUrban
-            ? 'Suelo Urbano'
-            : analysis?.status === 'OUTSIDE_CDMX'
-            ? 'Fuera de CDMX'
-            : 'Sin información';
-
-    let soilBadgeStyle = {
-        backgroundColor: '#e5e7eb',
-        borderColor: '#e5e7eb',
-        color: '#374151'
-    };
-
-    if (isSC && !isANP) {
-        soilBadgeStyle = {
-            backgroundColor: LAYER_STYLES.sc.color,
-            borderColor: LAYER_STYLES.sc.color,
-            color: '#ffffff'
-        };
-    } else if (isUrban) {
-        soilBadgeStyle = {
-            backgroundColor: '#3b82f6',
-            borderColor: '#3b82f6',
-            color: '#ffffff'
-        };
-    } else if (isANP) {
-        soilBadgeStyle = {
-            backgroundColor: '#a855f7',
-            borderColor: '#a855f7',
-            color: '#ffffff'
-        };
-    }
-
-    const zoningColor = analysis?.zoningKey
-        ? getZoningColor(analysis.zoningKey)
-        : '#6b7280';
-
-    const headerTitle = analysis ? 'Resultados de consulta' : 'Visor de Consulta Ciudadana';
-    const headerSubtitle = statusLabel;
-
+   
     return (
         <div
             ref={sheetRef}
