@@ -682,9 +682,19 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
         Resultado orientativo — No constituye un documento oficial.
       </div>
 
-      <div className="bg-white border rounded-lg shadow-sm p-4 mb-4">
-        <div className="h-1 rounded-full mb-3" style={{ backgroundColor: bandColor }} />
-
+    <div className="bg-white border rounded-lg shadow-sm p-4 mb-4">
+{/* Badge tipo de suelo (reemplaza la línea superior) */}
+  <div className="mb-3">
+    <span
+      className="inline-flex items-center px-4 py-1 rounded-lg text-[12px] font-extrabold tracking-widest uppercase"
+      style={{
+        backgroundColor: isSC ? '#3B7D23' : isUrban ? '#3C82F6' : '#6b7280',
+        color: '#ffffff'
+      }}
+   >
+      {isSC ? 'SUELO DE CONSERVACIÓN' : isUrban ? 'SUELO URBANO' : 'RESULTADO'}
+    </span>
+  </div>
         <div className="mb-2 text-sm leading-snug">
           <span className="text-[11px] font-semibold text-gray-600">Alcaldía:</span>
           <span className="font-bold text-gray-900 ml-1">
@@ -695,31 +705,25 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
         {showZoningBlock && (
           <div className="mb-3">
             <p className="text-[11px] font-semibold text-gray-600">Zonificación PGOEDF:</p>
-
-            {analysis.zoningName ? (
-              <div className="flex flex-wrap items-center gap-2 mt-1">
-                {analysis.zoningKey && (
-                  <span
-                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm"
-                    style={{ backgroundColor: zoningColor, borderColor: zoningColor, color: '#ffffff' }}
-                  >
-                    {analysis.zoningKey}
-                  </span>
-                )}
-
-                <span
-                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold text-white max-w-[70%] truncate"
-                  style={{ backgroundColor: zoningColor, borderColor: zoningColor }}
-                >
-                  {analysis.zoningName}
-                </span>
-              </div>
-            ) : (
-              <span className="text-xs text-gray-500">Sin información</span>
-            )}
-          </div>
-        )}
-
+{analysis.zoningName ? (
+      <div className="mt-1">
+       <span
+  className="inline-flex items-center px-3 py-1 rounded-lg text-[11px] font-bold text-white truncate max-w-full uppercase tracking-wide"
+  style={{ backgroundColor: zoningColor }}
+  title={`${analysis.zoningName}${analysis.zoningKey ? ` (${analysis.zoningKey})` : ''}`}
+>
+          {analysis.zoningKey
+            ? `${analysis.zoningName} (${analysis.zoningKey})`
+            : analysis.zoningName}
+        </span>
+      </div>
+   ) : (
+     <span className="text-xs text-gray-500">Sin información</span>
+   )}
+   </div>
+ )}
+           
+      
         <div className="mb-3 text-[11px] text-gray-700">
           {isSC && !isANP && <>Programa General de Ordenamiento Ecológico del Distrito Federal (PGOEDF 2000).</>}
           {isUrban && <>Consulte los Programas de Desarrollo Urbano aplicables.</>}
