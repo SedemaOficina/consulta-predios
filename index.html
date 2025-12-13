@@ -818,13 +818,13 @@ const GroupedActivities = ({ title, activities, icon, headerClass, bgClass, acce
 
       <div className="px-3 py-2 bg-white border-t border-gray-100 space-y-3">
         {Object.entries(groups).map(([sector, generals], i) => {
-          const st = (isProhibidas || isPermitidas)
-            ? {
-                bg: '#f9fafb',
-                border: accentColor || (isProhibidas ? '#b91c1c' : '#15803d'),
-                text: '#374151'
-              }
-            : getSectorStyle(sector);
+           const st = (isProhibidas || isPermitidas)
+   ? {
+       bg: isProhibidas ? '#FEF2F2' : '#F0FDF4',              // ✅ rojo/verde MUY claro
+       border: accentColor || (isProhibidas ? '#b91c1c' : '#15803d'),
+       text: isProhibidas ? '#7f1d1d' : '#14532d'             // ✅ texto acorde, sin confundir
+     }
+   : getSectorStyle(sector);
 
           return (
             <div key={i} className="mb-3 rounded overflow-hidden border border-gray-100">
@@ -1646,39 +1646,43 @@ const ResultsContent = ({ analysis }) => {
 
             {showDetails && (
               <div className="mt-2">
-                <div className="relative w-full border-b border-gray-200 mb-4">
-                  <div className="flex justify-start space-x-6 px-1">
-                    <button
-                      onClick={() => setActiveTab('prohibidas')}
-                      className={`pb-2 text-[14px] font-semibold transition ${
-                        activeTab === 'prohibidas' ? 'text-[#9d2449]' : 'text-gray-500'
-                      }`}
-                    >
-                      Prohibidas ({analysis.prohibitedActivities?.length || 0})
-                    </button>
+               <div className="relative w-full border-b border-gray-200 mb-4">
+   <div className="flex gap-3 px-1">
+     <button
+       onClick={() => setActiveTab('prohibidas')}
+       className={`px-4 py-2 rounded-t-lg text-[13px] font-extrabold transition
+         ${activeTab === 'prohibidas'
+           ? 'bg-[#b91c1c] text-white'
+           : 'bg-transparent text-gray-500 hover:text-[#b91c1c]'}
+       `}
+     >
+       PROHIBIDAS ({analysis.prohibitedActivities?.length || 0})
+     </button>
 
-                    <button
-                      onClick={() => setActiveTab('permitidas')}
-                      className={`pb-2 text-[14px] font-semibold transition ${
-                        activeTab === 'permitidas' ? 'text-[#027a35]' : 'text-gray-500'
-                      }`}
-                    >
-                      Permitidas ({analysis.allowedActivities?.length || 0})
-                    </button>
-                  </div>
+     <button
+       onClick={() => setActiveTab('permitidas')}
+       className={`px-4 py-2 rounded-t-lg text-[13px] font-extrabold transition
+         ${activeTab === 'permitidas'
+           ? 'bg-[#15803d] text-white'
+           : 'bg-transparent text-gray-500 hover:text-[#15803d]'}
+       `}
+     >
+       PERMITIDAS ({analysis.allowedActivities?.length || 0})
+     </button>
+   </div>
 
-                  <div className="absolute bottom-0 left-0 h-[3px] w-full pointer-events-none">
-                    <div
-                      className="h-full bg-[#9d2449] transition-all duration-300"
-                      style={{
-                        width: '150px',
-                        transform: activeTab === 'prohibidas'
-                          ? 'translateX(0px)'
-                          : 'translateX(165px)'
-                      }}
-                    />
-                  </div>
-                </div>
+   {/* Línea inferior (del color del tab activo) */}
+   <div className="absolute bottom-0 left-0 h-[3px] w-full pointer-events-none">
+     <div
+       className="h-full transition-all duration-300"
+       style={{
+         width: activeTab === 'prohibidas' ? '150px' : '150px',
+         transform: activeTab === 'prohibidas' ? 'translateX(0px)' : 'translateX(165px)',
+         backgroundColor: activeTab === 'prohibidas' ? '#b91c1c' : '#15803d'
+       }}
+     />
+   </div>
+ </div>
 
                 {activeTab === 'prohibidas' && (
                   <GroupedActivities
@@ -2538,16 +2542,16 @@ const MapViewer = ({
         [19.9, -98.7]
     );
 
-    const map = window.L.map(mapRef.current, {
+   const map = window.L.map(mapRef.current, {
         zoomControl: false,
+        attributionControl: false, // ✅ apagamos la default (bottom-right)
         minZoom: 9,
         maxZoom: 18,
         preferCanvas: true,
         maxBounds: bounds,
         maxBoundsViscosity: 0.9
     }).setView(INITIAL_CENTER, INITIAL_ZOOM);
-
-    window.L.control.zoom({ position: 'topright' }).addTo(map);
+     window.L.control.attribution({ position: 'topleft', prefix: false }).addTo(map); // ✅ ya no se corta
     mapInstance.current = map;
 // ✅ PANES (orden estable por zIndex)
 map.createPane('paneBase');
@@ -3105,8 +3109,10 @@ useEffect(() => {
     setTimeout(() => window.__sedemaInvalidateMapSize(), 200);
   }
 }, [isSidebarOpen]);
- // ✅ FIX: si el usuario ya seleccionó un punto y luego terminan de cargar zoning/reglas,
-// re-ejecutamos el análisis para actualizar zonificación/actividades.
+
+
+// ✅ FIX: si ya hay un punto seleccionado y terminan de cargar
+// zoning + reglas, se vuelve a analizar correctamente
 useEffect(() => {
   if (location && extraDataLoaded) {
     analyzeLocation(location).then(setAnalysis);
@@ -3115,14 +3121,14 @@ useEffect(() => {
 
 
 
-
     
-    return (
-      <div className="h-screen flex items-center justify-center text-[#9d2449]">
-        <Icons.Loader2 className="animate-spin h-10 w-10" />
-      </div>
-    );
-  }
+ if (loading) {
+  return (
+    <div className="h-screen flex items-center justify-center text-[#9d2449]">
+      <Icons.Loader2 className="animate-spin h-10 w-10" />
+    </div>
+  );
+}  
 
   return (
     <div className="flex flex-col h-full relative overflow-hidden bg-gray-100">
