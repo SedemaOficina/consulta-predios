@@ -2184,7 +2184,7 @@ const ActionButtonsDesktop = ({ analysis, onExportPDF }) => {
 /* ------------------------------------------------ */
 const SidebarDesktop = ({ analysis, onLocationSelect, onReset, isOpen, onToggle }) => (
   <div className="hidden md:flex h-full z-[2000]">
-    {/* Panel principal (se colapsa) */}
+    {/* Panel principal */}
     <div
       id="sidebar-desktop"
       className={`
@@ -2195,12 +2195,14 @@ const SidebarDesktop = ({ analysis, onLocationSelect, onReset, isOpen, onToggle 
         transition-all 
         duration-300 
         ease-out
-        ${isOpen ? 'w-[360px] bg-white border-r border-gray-200 shadow-xl' : 'w-0 bg-transparent border-0 shadow-none'}
+        ${isOpen
+          ? 'w-[360px] bg-white border-r border-gray-200 shadow-xl'
+          : 'w-0 bg-transparent border-0 shadow-none'}
       `}
     >
       {isOpen && (
         <>
-          {/* Header del sidebar */}
+          {/* Header */}
           <div className="p-4 bg-white border-b border-gray-200">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-[#9d2449] text-white flex items-center justify-center">
@@ -2225,7 +2227,7 @@ const SidebarDesktop = ({ analysis, onLocationSelect, onReset, isOpen, onToggle 
               onReset={onReset}
             />
 
-            {/* PLACEHOLDER cuando NO hay análisis */}
+            {/* Placeholder */}
             {!analysis && (
               <div className="flex flex-col items-center justify-center text-center py-16 px-6 text-gray-400">
                 <Icons.MapPinned className="h-12 w-12 mb-4 opacity-40" />
@@ -2240,14 +2242,13 @@ const SidebarDesktop = ({ analysis, onLocationSelect, onReset, isOpen, onToggle 
               </div>
             )}
 
-            {/* RESULTADOS cuando SÍ hay análisis */}
             {analysis && <ResultsContent analysis={analysis} />}
           </div>
         </>
       )}
     </div>
 
-    {/* Botón flotante para colapsar/expandir */}
+    {/* Botón colapsar/expandir */}
     <button
       onClick={onToggle}
       className="
@@ -2274,35 +2275,6 @@ const SidebarDesktop = ({ analysis, onLocationSelect, onReset, isOpen, onToggle 
       </span>
     </button>
   </div>
-);
-
-        {/* Botón flotante para colapsar/expandir */}
-        <button
-            onClick={onToggle}
-            className="
-                absolute
-                top-24
-                transform -translate-x-1/2
-                z-[5000]
-                w-8 h-16
-                bg-[#9d2449]
-                text-white
-                shadow-lg
-                rounded-r-full
-                flex items-center justify-center
-                cursor-pointer
-                hover:bg-[#7d1d3a]
-                active:scale-95
-                transition-all duration-200
-            "
-            style={{ left: isOpen ? 360 : 0 }}  // posición en px para evitar problemas con Tailwind
-            title={isOpen ? 'Ocultar panel' : 'Mostrar panel'}
-        >
-            <span className="text-base font-extrabold">
-                {isOpen ? '«' : '»'}
-            </span>
-        </button>
-    </div>
 );
 
 /* ------------------------------------------------ */
