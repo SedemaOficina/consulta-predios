@@ -1611,104 +1611,95 @@ const ResultsContent = ({ analysis }) => {
 <LocationSummary analysis={analysis} onExportPDF={handleExportPDF} />
 
       {analysis.zoningName === 'Cargando detalles...' && (
-        <div className="p-2 bg-yellow-50 text-yellow-800 text-[10px] rounded border border-yellow-200">
-          Cargando detalles de zonificación y actividades. La ficha se actualizará automáticamente.
+  <div className="p-2 bg-yellow-50 text-yellow-800 text-[10px] rounded border border-yellow-200">
+    Cargando detalles de zonificación y actividades. La ficha se actualizará automáticamente.
+  </div>
+)}
+
+    {analysis.status === 'CONSERVATION_SOIL' &&
+  !analysis.isANP &&
+  !analysis.isPDU &&
+  !analysis.noActivitiesCatalog && (
+    <>
+      <div className="flex items-center justify-between mt-2">
+        <div className="text-[11px] font-semibold text-gray-600">
+          Detalle de actividades según zonificación PGOEDF 2000
         </div>
-      )}
 
-      {analysis.status === 'CONSERVATION_SOIL' &&
-        !analysis.isANP &&
-        (analysis.isPDU || analysis.noActivitiesCatalog) && (
-          <div className="p-2 bg-blue-50 text-blue-800 text-[10px] rounded border border-blue-200">
-            Esta ubicación se rige por un Programa de Desarrollo Urbano (PDU).
-            La sección de actividades del Programa General de Ordenamiento Ecológico del Distrito Federal (PGOEDF 2000) no aplica en este caso.
-          </div>
-        )}
+        <button
+          onClick={() => setShowDetails(v => !v)}
+          className="text-[10px] text-[#9d2449] hover:underline"
+        >
+          {showDetails ? 'Ocultar detalle' : 'Ver detalle'}
+        </button>
+      </div>
 
-      {/* ACTIVIDADES: solo para Suelo de Conservación (no ANP) */}
-      {analysis.status === 'CONSERVATION_SOIL' &&
-        !analysis.isANP &&
-        !analysis.isPDU &&
-        !analysis.noActivitiesCatalog && (
-          <>
-            <div className="flex items-center justify-between mt-2">
-              <div className="text-[11px] font-semibold text-gray-600">
-                Detalle de actividades según zonificación PGOEDF 2000
-              </div>
+      {showDetails && (
+        <div className="mt-2">
+          <div className="relative w-full border-b border-gray-200 mb-4">
+            <div className="flex gap-3 px-1">
+              <button
+                onClick={() => setActiveTab('prohibidas')}
+                className={`px-4 py-2 rounded-t-lg text-[13px] font-extrabold transition
+                  ${activeTab === 'prohibidas'
+                    ? 'bg-[#b91c1c] text-white'
+                    : 'bg-transparent text-gray-500 hover:text-[#b91c1c]'}
+                `}
+              >
+                PROHIBIDAS ({analysis.prohibitedActivities?.length || 0})
+              </button>
 
               <button
-                onClick={() => setShowDetails(v => !v)}
-                className="text-[10px] text-[#9d2449] hover:underline"
+                onClick={() => setActiveTab('permitidas')}
+                className={`px-4 py-2 rounded-t-lg text-[13px] font-extrabold transition
+                  ${activeTab === 'permitidas'
+                    ? 'bg-[#15803d] text-white'
+                    : 'bg-transparent text-gray-500 hover:text-[#15803d]'}
+                `}
               >
-                {showDetails ? 'Ocultar detalle' : 'Ver detalle'}
+                PERMITIDAS ({analysis.allowedActivities?.length || 0})
               </button>
             </div>
 
-            {showDetails && (
-              <div className="mt-2">
-               <div className="relative w-full border-b border-gray-200 mb-4">
-   <div className="flex gap-3 px-1">
-     <button
-       onClick={() => setActiveTab('prohibidas')}
-       className={`px-4 py-2 rounded-t-lg text-[13px] font-extrabold transition
-         ${activeTab === 'prohibidas'
-           ? 'bg-[#b91c1c] text-white'
-           : 'bg-transparent text-gray-500 hover:text-[#b91c1c]'}
-       `}
-     >
-       PROHIBIDAS ({analysis.prohibitedActivities?.length || 0})
-     </button>
-
-     <button
-       onClick={() => setActiveTab('permitidas')}
-       className={`px-4 py-2 rounded-t-lg text-[13px] font-extrabold transition
-         ${activeTab === 'permitidas'
-           ? 'bg-[#15803d] text-white'
-           : 'bg-transparent text-gray-500 hover:text-[#15803d]'}
-       `}
-     >
-       PERMITIDAS ({analysis.allowedActivities?.length || 0})
-     </button>
-   </div>
-
-<div className="absolute bottom-0 left-0 h-[3px] w-full pointer-events-none">
-  <div className="h-full flex">
-    <div
-      className="flex-1 transition-colors duration-300"
-      style={{ backgroundColor: activeTab === 'prohibidas' ? '#b91c1c' : 'transparent' }}
-    />
-    <div
-      className="flex-1 transition-colors duration-300"
-      style={{ backgroundColor: activeTab === 'permitidas' ? '#15803d' : 'transparent' }}
-    />
-  </div>
-</div>
-
-                {activeTab === 'prohibidas' && (
-                  <GroupedActivities
-                    title="ACTIVIDADES PROHIBIDAS"
-                    activities={analysis.prohibitedActivities}
-                    icon={<Icons.XCircle className="h-4 w-4" />}
-                    headerClass="text-red-900 bg-red-50"
-                    bgClass="bg-white"
-                      accentColor="#b91c1c"
-                  />
-                )}
-
-                {activeTab === 'permitidas' && (
-                 <GroupedActivities
-  title="ACTIVIDADES PERMITIDAS"
-  activities={analysis.allowedActivities}
-  icon={<Icons.CheckCircle className="h-4 w-4" />}
-  headerClass="text-green-900 bg-green-50"
-  bgClass="bg-white"
-                     accentColor="#15803d"   // verde institucional / permiso
-/>
-                )}
+            <div className="absolute bottom-0 left-0 h-[3px] w-full pointer-events-none">
+              <div className="h-full flex">
+                <div
+                  className="flex-1 transition-colors duration-300"
+                  style={{ backgroundColor: activeTab === 'prohibidas' ? '#b91c1c' : 'transparent' }}
+                />
+                <div
+                  className="flex-1 transition-colors duration-300"
+                  style={{ backgroundColor: activeTab === 'permitidas' ? '#15803d' : 'transparent' }}
+                />
               </div>
-            )}
-          </>
-        )}
+            </div>
+          </div>
+
+          {activeTab === 'prohibidas' && (
+            <GroupedActivities
+              title="ACTIVIDADES PROHIBIDAS"
+              activities={analysis.prohibitedActivities}
+              icon={<Icons.XCircle className="h-4 w-4" />}
+              headerClass="text-red-900 bg-red-50"
+              bgClass="bg-white"
+              accentColor="#b91c1c"
+            />
+          )}
+
+          {activeTab === 'permitidas' && (
+            <GroupedActivities
+              title="ACTIVIDADES PERMITIDAS"
+              activities={analysis.allowedActivities}
+              icon={<Icons.CheckCircle className="h-4 w-4" />}
+              headerClass="text-green-900 bg-green-50"
+              bgClass="bg-white"
+              accentColor="#15803d"
+            />
+          )}
+        </div>
+      )}
+    </>
+)}
 
       <LegalDisclaimer />
     </div>
@@ -2343,7 +2334,7 @@ const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => 
                                     Visor de Consulta Ciudadana
                                 </h3>
                                 <p className="text-[11px] text-gray-600 line-clamp-2 mt-0.5">
-                                    {headerSubtitle}
+                                    {statusLabel}
                                 </p>
                             </>
                         )}
