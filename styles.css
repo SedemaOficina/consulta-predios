@@ -1,117 +1,51 @@
-:root {
-  --color-guinda: #9d2449;
-  --font: 'Roboto', sans-serif;
+:root{
+  --color-guinda:#9d2449;
+  --font:'Roboto',sans-serif;
 }
 
-/* MUY IMPORTANTE: html y body al 100% */
-html, body {
-  height: 100%;
-  margin: 0;
+/* BASE */
+html,body{height:100%;margin:0;}
+body{
+  font-family:var(--font);
+  color:#54565a;
+  overflow:hidden;
+  background:#f3f4f6;
 }
+#root{height:100%;display:flex;flex-direction:column;}
 
-body {
-  font-family: var(--font);
-  color: #54565a;
-  /* usamos 100% (ya viene de html) en vez de 100vh, es más robusto */
-  overflow: hidden;
-  background: #f3f4f6;
-}
+/* Anim */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.animate-in{animation:fadeIn .3s ease-out forwards}
 
-/* Layout */
-#root {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
+/* Transición suave reutilizable (GLOBAL) */
+.transition-soft{transition:all .2s ease}
 
-/* Animaciones */
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-.animate-in { animation: fadeIn 0.3s ease-out forwards; }
+/* Marcador (GLOBAL) */
+@keyframes drop{0%{transform:translateY(-20px);opacity:0}100%{transform:translateY(0);opacity:1}}
+.marker-pop{animation:drop .25s ease-out}
 
-/* MOBILE SPECIFIC */
-@media (max-width: 768px) {
-    .leaflet-control-zoom { display: none !important; }
-    .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
-    
-    /* Ajustes para el mapa en pantalla completa */
-  #main-map { height: 100vh !important; }
+/* iOS: evita auto-zoom texto */
+html{-webkit-text-size-adjust:100%}
 
-/* Transición suave reutilizable */
-.transition-soft {
-    transition: all 0.2s ease;
-}
+/* MOBILE */
+@media (max-width:768px){
+  .leaflet-control-zoom{display:none!important;}
+  .safe-area-bottom{padding-bottom:env(safe-area-inset-bottom);}
 
-/* Marcador con efecto "drop" al aparecer */
-.marker-pop {
-    animation: drop 0.25s ease-out;
-}
+  /* OJO: esto puede pelear con tu layout si usas bottomsheet.
+     Si ves cortes/renders raros, bórralo. */
+  #main-map{height:100vh!important;}
 
-@keyframes drop {
-    0% {
-        transform: translateY(-20px);
-        opacity: 0;
-    }
-    100% {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-/* =========================================================
-   FIX LECTURA MÓVIL (ROBUSTO): escala tipografías en BottomSheet
-   ========================================================= */
-html { -webkit-text-size-adjust: 100%; }
-
-@media (max-width: 768px) {
-
-  /* Fallback: sube todo el texto dentro del contenedor */
-  .mobile-upscale,
-  .mobile-upscale * {
-    font-size: 15px !important;
-    line-height: 1.35 !important;
+  /* Sube legibilidad SOLO dentro del bottomsheet */
+  .mobile-upscale{font-size:14px;line-height:1.35;}
+  .mobile-upscale :is(p,span,div,li,button,summary,a,strong,em,label,td,th){
+    font-size:inherit!important;
+    line-height:inherit!important;
   }
-
-  /* Ajuste fino para tus utilities con bracket (sin escapes) */
-  .mobile-upscale [class*="text-[9px]"]  { font-size: 13px !important; }
-  .mobile-upscale [class*="text-[10px]"] { font-size: 14px !important; }
-  .mobile-upscale [class*="text-[11px]"] { font-size: 15px !important; }
-  .mobile-upscale [class*="text-[12px]"] { font-size: 16px !important; }
-  .mobile-upscale [class*="text-[14px]"] { font-size: 17px !important; }
-
-  /* Tailwind tokens comunes */
-  .mobile-upscale .text-xs { font-size: 14px !important; }
-  .mobile-upscale .text-sm { font-size: 16px !important; }
+  .mobile-upscale svg{width:18px!important;height:18px!important;}
 }
 
-/* ============================
-   FIX LEGIBILIDAD iOS (BottomSheet)
-   ============================ */
-html { -webkit-text-size-adjust: 100%; }
-
-@media (max-width: 768px) {
-  /* Subimos tipografía SOLO dentro del bottomsheet */
-  .mobile-upscale {
-    font-size: 14px;         /* base legible */
-    line-height: 1.35;
-  }
-
-  /* Forzamos herencia aunque existan text-[10px], text-xs, etc. */
-  .mobile-upscale :is(p,span,div,li,button,summary,a,strong,em,label,td,th) {
-    font-size: inherit !important;
-    line-height: inherit !important;
-  }
-
-  /* No agrandamos íconos exageradamente */
-  .mobile-upscale svg {
-    width: 18px !important;
-    height: 18px !important;
-  }
-
-  /* Ajuste fino para badges/píldoras */
-  .mobile-upscale .rounded-full {
-    font-size: 13px !important;
-  }
-}
-@media (max-width: 767px){
-  .leaflet-top.leaflet-left { top: 70px; } /* baja un poco si choca con buscador */
+/* Ajuste Leaflet top-left (si choca con buscador) */
+@media (max-width:767px){
+  .leaflet-top.leaflet-left{top:70px;}
 }
