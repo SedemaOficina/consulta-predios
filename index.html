@@ -628,10 +628,11 @@ const StatusMessage = ({ analysis }) => {
     if (status === 'OUTSIDE_CDMX')
         return (
             <div className="p-3 bg-gray-100 text-gray-700 text-xs border-l-4 border-gray-400 rounded-r">
-                <strong>Atención:</strong> El punto está fuera de la Ciudad de México
-                {outsideContext ? ` (${outsideContext})` : ''}.
-            </div>
-        );
+             <strong>ATENCIÓN:</strong> EL PUNTO ESTÁ FUERA DE LA CIUDAD DE MÉXICO
+     {outsideContext === 'Edo. Méx' ? ' ESTADO DE MÉXICO' : outsideContext === 'Morelos' ? ' MORELOS' : ''}
+     .   
+                </div>
+  );
 
     if (isANP)
         return (
@@ -927,6 +928,9 @@ const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
     const zonasParaLeyenda = Object.entries(ZONING_CAT_INFO || {}).slice(0, 8);
 
     // Estilo del badge de tipo de suelo
+   let soilBadgeBg = '#e5e7eb';
+let soilBadgeColor = '#374151';
+    
     if (isSC && !isANP) {
    soilBadgeBg = '#3B7D23'; // verde institucional SC
     soilBadgeColor = '#ffffff';
@@ -942,7 +946,12 @@ const PdfFicha = React.forwardRef(({ analysis, mapImage }, ref) => {
     const zoningColor = analysis.zoningKey
         ? getZoningColor(analysis.zoningKey)
         : '#6b7280';
-   
+    
+   let bandColor = '#e5e7eb';
+if (isANP) bandColor = '#e9d5ff';
+else if (isSC) bandColor = '#3B7D23';
+else if (isUrban) bandColor = '#3b82f6';
+    
     return (
         <div
             ref={ref}
