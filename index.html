@@ -329,6 +329,14 @@ const Icons = {
             <circle cx="12" cy="10" r="3" />
         </IconBase>
     ),
+    MapPinned: (p) => (
+        <IconBase {...p}>
+            <path d="M12 17v5" />
+            <path d="M8 21h8" />
+            <path d="M17 9a5 5 0 1 0-10 0c0 4 5 8 5 8s5-4 5-8z" />
+            <circle cx="12" cy="9" r="1.5" />
+        </IconBase>
+    ),
     Navigation: (p) => (
         <IconBase {...p}>
             <polygon points="3 11 22 2 13 21 11 13 3 11" />
@@ -373,12 +381,6 @@ const Icons = {
         </IconBase>
     ),
 
-    MapPinned: (p) => (
-  <IconBase {...p}>
-    <path d="M5 22v-7l-2-2V7a2 2 0 012-2h14a2 2 0 012 2v6l-2 2v7" />
-    <circle cx="12" cy="10" r="3" />
-  </IconBase>
-),
     Copy: (p) => (
         <IconBase {...p}>
             <rect x="9" y="9" width="13" height="13" rx="2" />
@@ -2181,79 +2183,98 @@ const ActionButtonsDesktop = ({ analysis, onExportPDF }) => {
 /* 7.2 Sidebar Desktop */
 /* ------------------------------------------------ */
 const SidebarDesktop = ({ analysis, onLocationSelect, onReset, isOpen, onToggle }) => (
+  <div className="hidden md:flex h-full z-[2000]">
+    {/* Panel principal (se colapsa) */}
     <div
-        className="
-            hidden md:flex 
-            h-full 
-            z-[2000]
-        "
+      id="sidebar-desktop"
+      className={`
+        flex flex-col 
+        h-full 
+        overflow-y-auto 
+        custom-scrollbar 
+        transition-all 
+        duration-300 
+        ease-out
+        ${isOpen ? 'w-[360px] bg-white border-r border-gray-200 shadow-xl' : 'w-0 bg-transparent border-0 shadow-none'}
+      `}
     >
-        {/* Panel principal (se colapsa) */}
-        <div
-            id="sidebar-desktop"
-            className={`
-                flex flex-col 
-                h-full 
-                overflow-y-auto 
-                custom-scrollbar 
-                transition-all 
-                duration-300 
-                ease-out
-               ${isOpen ? 'w-[360px] bg-white border-r border-gray-200 shadow-xl' : 'w-0 bg-transparent border-0 shadow-none'}
+      {isOpen && (
+        <>
+          {/* Header del sidebar */}
+          <div className="p-4 bg-white border-b border-gray-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-[#9d2449] text-white flex items-center justify-center">
+                <Icons.MapIcon className="h-5 w-5" />
+              </div>
 
-            `}
-        >
-            {isOpen && (
-                <>
-                   <div className="p-4 bg-white border-b border-gray-200">
-  <div className="flex items-center gap-3">
-    <div className="w-10 h-10 rounded-lg bg-[#9d2449] text-white flex items-center justify-center">
-      <Icons.MapIcon className="h-5 w-5" />
-    </div>
+              <div className="min-w-0">
+                <h2 className="text-[18px] font-semibold text-gray-900 leading-tight">
+                  Consulta Ciudadana
+                </h2>
+                <div className="text-[12px] text-gray-600 mt-0.5">
+                  Dirección o coordenadas
+                </div>
+              </div>
+            </div>
+          </div>
 
-    <div className="min-w-0">
-      <h2 className="text-[18px] font-semibold text-gray-900 leading-tight">
-        Consulta Ciudadana
-      </h2>
-      <div className="text-[12px] text-gray-600 mt-0.5">
-        Dirección o coordenadas
-      </div>
-    </div>
-  </div>
-</div>
-                    <div className="p-4 space-y-4">
+          {/* Contenido */}
+          <div className="p-4 space-y-4">
+            <SearchLogicDesktop
+              onLocationSelect={onLocationSelect}
+              onReset={onReset}
+            />
 
-  <SearchLogicDesktop
-    onLocationSelect={onLocationSelect}
-    onReset={onReset}
-  />
+            {/* PLACEHOLDER cuando NO hay análisis */}
+            {!analysis && (
+              <div className="flex flex-col items-center justify-center text-center py-16 px-6 text-gray-400">
+                <Icons.MapPinned className="h-12 w-12 mb-4 opacity-40" />
 
-  {/* PLACEHOLDER cuando NO hay análisis */}
-  {!analysis && (
-    <div className="flex flex-col items-center justify-center text-center py-16 px-6 text-gray-400">
-      
-      {/* ÍCONO */}
-      <Icons.MapPinned className="h-12 w-12 mb-4 opacity-40" />
+                <div className="text-[13px] font-medium text-gray-500">
+                  Selecciona un punto en el mapa
+                </div>
 
-      {/* TEXTO PRINCIPAL */}
-      <div className="text-[13px] font-medium text-gray-500">
-        Selecciona un punto en el mapa
-      </div>
-
-      {/* TEXTO SECUNDARIO */}
-      <div className="text-[11px] text-gray-400 mt-1 max-w-xs">
-        Haz clic en el mapa o escribe una dirección o coordenadas para iniciar la consulta.
-      </div>
-    </div>
-  )}
-
-  {/* RESULTADOS */}
-  {analysis && <ResultsContent analysis={analysis} />}
-
-</div>
-                </>
+                <div className="text-[11px] text-gray-400 mt-1 max-w-xs">
+                  Haz clic en el mapa o escribe una dirección o coordenadas para iniciar la consulta.
+                </div>
+              </div>
             )}
-        </div>
+
+            {/* RESULTADOS cuando SÍ hay análisis */}
+            {analysis && <ResultsContent analysis={analysis} />}
+          </div>
+        </>
+      )}
+    </div>
+
+    {/* Botón flotante para colapsar/expandir */}
+    <button
+      onClick={onToggle}
+      className="
+        absolute
+        top-24
+        transform -translate-x-1/2
+        z-[5000]
+        w-8 h-16
+        bg-[#9d2449]
+        text-white
+        shadow-lg
+        rounded-r-full
+        flex items-center justify-center
+        cursor-pointer
+        hover:bg-[#7d1d3a]
+        active:scale-95
+        transition-all duration-200
+      "
+      style={{ left: isOpen ? 360 : 0 }}
+      title={isOpen ? 'Ocultar panel' : 'Mostrar panel'}
+    >
+      <span className="text-base font-extrabold">
+        {isOpen ? '«' : '»'}
+      </span>
+    </button>
+  </div>
+);
 
         {/* Botón flotante para colapsar/expandir */}
         <button
