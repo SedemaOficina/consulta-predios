@@ -2024,22 +2024,23 @@ const SearchLogicDesktop = ({ onLocationSelect, onReset }) => {
             {/* Campo único: direcciones + coordenadas */}
             <div className="relative shadow-sm">
                 <form onSubmit={handleSubmit} className="flex relative">
-                    <input
-   type="text"
-   placeholder="Dirección o coordenadas (Lat/Lng)…"
+                   <input
+  type="text"
+  placeholder="Dirección o coordenadas (Lat/Lng, DMS)…"
   className="
-  w-full
-  pl-3 pr-12 py-2
-  h-11
-  border border-gray-200
-  rounded-lg
-  text-[14px] text-gray-900
-  placeholder:text-gray-400
-  focus:outline-none
-  focus:border-[#9d2449]"
-   value={query}
-   onChange={handleChange}
- />
+    w-full
+    pl-3 pr-12
+    py-2
+    h-11
+    border border-gray-300
+    rounded-lg
+    text-[14px] text-gray-900
+    placeholder:text-gray-400
+    focus:outline-none focus:ring-2 focus:ring-[#9d2449]/30
+  "
+  value={query}
+  onChange={handleChange}
+/>
                   <button
    type="submit"
    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-500 hover:text-[#9d2449]"
@@ -2079,31 +2080,50 @@ const SearchLogicDesktop = ({ onLocationSelect, onReset }) => {
 
             {/* Botones Mi ubicación / Reset */}
             <div className="flex gap-2">
-                <button
-                    onClick={() =>
-  navigator.geolocation.getCurrentPosition(
-    p => {
-      const coord = { lat: p.coords.latitude, lng: p.coords.longitude };
-      onLocationSelect(coord);
+               <button
+  onClick={() =>
+    navigator.geolocation.getCurrentPosition(
+      p => {
+        const coord = { lat: p.coords.latitude, lng: p.coords.longitude };
+        onLocationSelect(coord);
+        if (window.__sedemaSetSearchInput) {
+          window.__sedemaSetSearchInput(`${coord.lat.toFixed(6)}, ${coord.lng.toFixed(6)}`);
+        }
+      },
+      () => alert("No se pudo obtener tu ubicación. Revisa permisos del navegador.")
+    )
+  }
+  className="
+    flex-1
+    h-11
+    bg-[#9d2449]
+    text-white
+    rounded-lg
+    text-[14px] font-semibold
+    flex items-center justify-center gap-2
+    shadow-sm
+    hover:bg-[#7d1d3a]
+  "
+>
+  <Icons.Navigation className="h-4 w-4" />
+  Mi ubicación
+</button>
 
-      // Limpia y escribe coords en el input desktop
-      if (window.__sedemaSetSearchInput) {
-        window.__sedemaSetSearchInput(`${coord.lat.toFixed(6)}, ${coord.lng.toFixed(6)}`);
-      }
-    },
-    () => alert("No se pudo obtener tu ubicación. Revisa permisos del navegador.")
-  )
-}
-                    className="flex-1 py-2 bg-[#9d2449] text-white rounded text-sm font-medium flex items-center justify-center gap-1 shadow-sm"
-                >
-                    <Icons.Navigation className="h-3 w-3" /> Mi Ubicación
-                </button>
-                <button
-                    onClick={handleResetAll}
-                    className="px-3 py-2 bg-white border rounded text-gray-600 shadow-sm"
-                >
-                    <Icons.RotateCcw className="h-4 w-4" />
-                </button>
+<button
+  onClick={handleResetAll}
+  className="
+    w-11 h-11
+    bg-white
+    border border-gray-300
+    rounded-lg
+    text-gray-500
+    shadow-sm
+    hover:bg-gray-50
+    flex items-center justify-center
+  "
+>
+  <Icons.RotateCcw className="h-4 w-4" />
+</button>
             </div>
         </div>
     );
@@ -2179,21 +2199,22 @@ const SidebarDesktop = ({ analysis, onLocationSelect, onReset, isOpen, onToggle 
             {isOpen && (
                 <>
                    <div className="p-4 bg-white border-b border-gray-200">
-  <div className="flex items-center gap-2">
-    <div className="w-9 h-9 rounded-lg bg-[#9d2449] text-white flex items-center justify-center">
+  <div className="flex items-center gap-3">
+    <div className="w-10 h-10 rounded-lg bg-[#9d2449] text-white flex items-center justify-center">
       <Icons.MapIcon className="h-5 w-5" />
     </div>
-    <div>
+
+    <div className="min-w-0">
       <h2 className="text-[18px] font-semibold text-gray-900 leading-tight">
         Consulta Ciudadana
       </h2>
-      <div className="text-[11px] text-gray-500">
+      <div className="text-[12px] text-gray-600 mt-0.5">
         Dirección o coordenadas
       </div>
     </div>
   </div>
 </div>
-                    <div className="p-4 space-y-4">
+                    <div className="p-6 space-y-6">
                         <SearchLogicDesktop
                             onLocationSelect={onLocationSelect}
                             onReset={onReset}
