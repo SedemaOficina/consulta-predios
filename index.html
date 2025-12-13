@@ -685,6 +685,8 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
 
     <div className="bg-white border rounded-lg shadow-sm p-4 mb-4">
 {/* Badge tipo de suelo (reemplaza la línea superior) */}
+
+{!isOutside && (
   <div className="mb-3">
     <span
       className="inline-flex items-center px-4 py-1 rounded-lg text-[12px] font-extrabold tracking-widest uppercase"
@@ -692,14 +694,19 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
         backgroundColor: isSC ? '#3B7D23' : isUrban ? '#3C82F6' : '#6b7280',
         color: '#ffffff'
       }}
-   >
-      {isSC ? 'SUELO DE CONSERVACIÓN' : isUrban ? 'SUELO URBANO' : 'RESULTADO'}
+    >
+      {isSC ? 'SUELO DE CONSERVACIÓN' : 'SUELO URBANO'}
     </span>
   </div>
-       {isOutside ? (
+)}
+        
+      {isOutside ? (
   <div className="mb-2 p-3 bg-gray-100 text-gray-700 text-xs border-l-4 border-gray-400 rounded-r">
-    <strong>Atención:</strong> El punto está fuera de la Ciudad de México
-    {analysis.outsideContext ? ` (${analysis.outsideContext})` : ''}.
+    <strong>ATENCIÓN:</strong> EL PUNTO ESTÁ FUERA DE LA CIUDAD DE MÉXICO
+    {analysis.outsideContext
+      ? ` ${analysis.outsideContext === 'Edo. Méx' ? 'ESTADO DE MÉXICO' : 'MORELOS'}`
+      : ''}
+    .
   </div>
 ) : (
   <div className="mb-2 text-sm leading-snug">
@@ -1593,7 +1600,7 @@ const ResultsContent = ({ analysis }) => {
 
       {/* RESUMEN + ESTADO */}
       <LocationSummary analysis={analysis} onExportPDF={handleExportPDF} />
-      <StatusMessage analysis={analysis} />
+     {analysis?.status !== 'OUTSIDE_CDMX' && <StatusMessage analysis={analysis} />}
 
       {analysis.zoningName === 'Cargando detalles...' && (
         <div className="p-2 bg-yellow-50 text-yellow-800 text-[10px] rounded border border-yellow-200">
