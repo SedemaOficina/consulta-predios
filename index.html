@@ -774,6 +774,7 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
 const GroupedActivities = ({ title, activities, icon, headerClass, bgClass, accentColor }) => {
     if (!activities || activities.length === 0) return null;
     const isProhibidas = (title || '').toUpperCase().includes('PROHIBIDAS');
+const isPermitidas = (title || '').toUpperCase().includes('PERMITIDAS');
 
     const groups = {};
     activities.forEach(a => {
@@ -805,6 +806,12 @@ const GroupedActivities = ({ title, activities, icon, headerClass, bgClass, acce
       border: accentColor || '#b91c1c', // rojo prohibición
       text: '#374151'                // texto gris oscuro
     }
+const st = (isProhibidas || isPermitidas)
+  ? {
+      bg: '#f9fafb',                 // fondo neutro
+      border: accentColor,            // rojo o verde según el bloque
+      text: '#374151'                 // texto gris
+    }
   : getSectorStyle(sector);
 
                     return (
@@ -825,12 +832,12 @@ const GroupedActivities = ({ title, activities, icon, headerClass, bgClass, acce
                                     <details key={j} className="group/inner border-b border-gray-50 last:border-0">
                                         <summary className="px-3 py-2 text-[11px] font-medium text-gray-700 cursor-pointer hover:bg-gray-50 flex justify-between">
                                             <div className="flex items-center gap-2">
-                                                <span
+                                               <span
   className="w-1.5 h-1.5 rounded-full"
   style={{
-    backgroundColor: isProhibidas
-      ? (accentColor || '#b91c1c')   // 🔴 rojo si es PROHIBIDAS
-      : st.border                    // color normal si es PERMITIDAS
+    backgroundColor: (isProhibidas || isPermitidas)
+      ? accentColor          // 🔴 o 🟢 según el bloque
+      : st.border
   }}
 ></span>
                                                 <span>{gen}</span>
@@ -1670,13 +1677,14 @@ const ResultsContent = ({ analysis }) => {
                 )}
 
                 {activeTab === 'permitidas' && (
-                  <GroupedActivities
-                    title="ACTIVIDADES PERMITIDAS"
-                    activities={analysis.allowedActivities}
-                    icon={<Icons.CheckCircle className="h-4 w-4" />}
-                    headerClass="text-green-900 bg-green-50"
-                    bgClass="bg-white"
-                  />
+                 <GroupedActivities
+  title="ACTIVIDADES PERMITIDAS"
+  activities={analysis.allowedActivities}
+  icon={<Icons.CheckCircle className="h-4 w-4" />}
+  headerClass="text-green-900 bg-green-50"
+  bgClass="bg-white"
+                     accentColor="#15803d"   // verde institucional / permiso
+/>
                 )}
               </div>
             )}
