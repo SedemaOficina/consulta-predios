@@ -3105,15 +3105,18 @@ useEffect(() => {
     setTimeout(() => window.__sedemaInvalidateMapSize(), 200);
   }
 }, [isSidebarOpen]);
-    // ✅ FIX: si el usuario ya seleccionó un punto y luego terminan de cargar zoning/reglas,
+ // ✅ FIX: si el usuario ya seleccionó un punto y luego terminan de cargar zoning/reglas,
 // re-ejecutamos el análisis para actualizar zonificación/actividades.
 useEffect(() => {
-  useEffect(() => {
   if (location && extraDataLoaded) {
     analyzeLocation(location).then(setAnalysis);
   }
 }, [location, extraDataLoaded]);
-  if (loading) {
+
+
+
+
+    
     return (
       <div className="h-screen flex items-center justify-center text-[#9d2449]">
         <Icons.Loader2 className="animate-spin h-10 w-10" />
