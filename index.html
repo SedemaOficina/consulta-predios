@@ -2027,7 +2027,16 @@ const SearchLogicDesktop = ({ onLocationSelect, onReset }) => {
                     <input
    type="text"
    placeholder="Dirección o coordenadas (Lat/Lng)…"
-   className="w-full pl-3 pr-12 py-2 border rounded text-sm focus:outline-none h-11 leading-[1.2] overflow-hidden text-ellipsis whitespace-nowrap"
+  className="
+  w-full
+  pl-3 pr-12 py-2
+  h-11
+  border border-gray-200
+  rounded-lg
+  text-[14px] text-gray-900
+  placeholder:text-gray-400
+  focus:outline-none
+  focus:border-[#9d2449]"
    value={query}
    onChange={handleChange}
  />
@@ -2170,7 +2179,9 @@ const SidebarDesktop = ({ analysis, onLocationSelect, onReset, isOpen, onToggle 
                 <>
                     <div className="p-4 bg-[#9d2449] text-white flex items-center gap-2">
                         <Icons.MapIcon className="h-5 w-5" />
-                        <h2 className="font-bold text-sm">Consulta Ciudadana</h2>
+                       <h2 className="text-[18px] font-semibold leading-tight">
+  Consulta Ciudadana
+</h2>
                     </div>
                     <div className="p-4 space-y-4">
                         <SearchLogicDesktop
@@ -2333,7 +2344,7 @@ const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => 
                                 <h3 className="font-bold text-gray-900 text-sm truncate">
                                     Visor de Consulta Ciudadana
                                 </h3>
-                                <p className="text-[11px] text-gray-600 line-clamp-2 mt-0.5">
+                                <p className="text-[18px] text-gray-900 line-clamp-2 mt-0.5">
                                     {statusLabel}
                                 </p>
                             </>
