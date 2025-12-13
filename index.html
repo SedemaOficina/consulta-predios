@@ -660,6 +660,7 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
   const isUrban = analysis.status === 'URBAN_SOIL';
   const isSC = analysis.status === 'CONSERVATION_SOIL';
   const isANP = analysis.isANP;
+    const isOutside = analysis.status === 'OUTSIDE_CDMX';
 
   let bandColor = '#e5e7eb';
   if (isANP) bandColor = '#e9d5ff';
@@ -695,12 +696,19 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
       {isSC ? 'SUELO DE CONSERVACIÓN' : isUrban ? 'SUELO URBANO' : 'RESULTADO'}
     </span>
   </div>
-        <div className="mb-2 text-sm leading-snug">
-          <span className="text-[11px] font-semibold text-gray-600">Alcaldía:</span>
-          <span className="font-bold text-gray-900 ml-1">
-            {analysis.alcaldia || 'Ciudad de México'}
-          </span>
-        </div>
+       {isOutside ? (
+  <div className="mb-2 p-3 bg-gray-100 text-gray-700 text-xs border-l-4 border-gray-400 rounded-r">
+    <strong>Atención:</strong> El punto está fuera de la Ciudad de México
+    {analysis.outsideContext ? ` (${analysis.outsideContext})` : ''}.
+  </div>
+) : (
+  <div className="mb-2 text-sm leading-snug">
+    <span className="text-[11px] font-semibold text-gray-600">Alcaldía:</span>
+    <span className="font-bold text-gray-900 ml-1">
+      {analysis.alcaldia || 'Ciudad de México'}
+    </span>
+  </div>
+)}
 
         {showZoningBlock && (
           <div className="mb-3">
@@ -723,11 +731,13 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
    </div>
  )}
            
-      
-        <div className="mb-3 text-[11px] text-gray-700">
-          {isSC && !isANP && <>Programa General de Ordenamiento Ecológico del Distrito Federal (PGOEDF 2000).</>}
-          {isUrban && <>Consulte los Programas de Desarrollo Urbano aplicables.</>}
-        </div>
+      {!isOutside && (
+  <div className="mb-3 text-[11px] text-gray-700">
+    {isSC && !isANP && <>Programa General de Ordenamiento Ecológico del Distrito Federal (PGOEDF 2000).</>}
+    {isUrban && <>Consulte los Programas de Desarrollo Urbano aplicables.</>}
+  </div>
+)}
+     
 
         <ul className="text-xs space-y-1.5 text-gray-700 border-t pt-2">
           <li className="flex items-center gap-2">
