@@ -761,8 +761,9 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
 /* 6.3 Actividades agrupadas */
 /* ------------------------------------------------ */
 
-const GroupedActivities = ({ title, activities, icon, headerClass, bgClass }) => {
+const GroupedActivities = ({ title, activities, icon, headerClass, bgClass, accentColor }) => {
     if (!activities || activities.length === 0) return null;
+    const isProhibidas = (title || '').toUpperCase().includes('PROHIBIDAS');
 
     const groups = {};
     activities.forEach(a => {
@@ -788,7 +789,13 @@ const GroupedActivities = ({ title, activities, icon, headerClass, bgClass }) =>
 
             <div className="px-3 py-2 bg-white border-t border-gray-100 space-y-3">
                 {Object.entries(groups).map(([sector, generals], i) => {
-                    const st = getSectorStyle(sector);
+                   const st = isProhibidas
+  ? {
+      bg: '#f9fafb',                 // fondo gris neutro
+      border: accentColor || '#b91c1c', // rojo prohibición
+      text: '#374151'                // texto gris oscuro
+    }
+  : getSectorStyle(sector);
 
                     return (
                         <div key={i} className="mb-3 rounded overflow-hidden border border-gray-100">
@@ -809,9 +816,13 @@ const GroupedActivities = ({ title, activities, icon, headerClass, bgClass }) =>
                                         <summary className="px-3 py-2 text-[11px] font-medium text-gray-700 cursor-pointer hover:bg-gray-50 flex justify-between">
                                             <div className="flex items-center gap-2">
                                                 <span
-                                                    className="w-1.5 h-1.5 rounded-full"
-                                                    style={{ backgroundColor: st.border }}
-                                                ></span>
+  className="w-1.5 h-1.5 rounded-full"
+  style={{
+    backgroundColor: isProhibidas
+      ? (accentColor || '#b91c1c')   // 🔴 rojo si es PROHIBIDAS
+      : st.border                    // color normal si es PERMITIDAS
+  }}
+></span>
                                                 <span>{gen}</span>
                                             </div>
                                             <div className="flex items-center gap-2">
@@ -1644,6 +1655,7 @@ const ResultsContent = ({ analysis }) => {
                     icon={<Icons.XCircle className="h-4 w-4" />}
                     headerClass="text-red-900 bg-red-50"
                     bgClass="bg-white"
+                      accentColor="#b91c1c"
                   />
                 )}
 
