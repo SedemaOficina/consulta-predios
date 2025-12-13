@@ -2565,6 +2565,15 @@ addCoreLayer('alcaldias', alcaldias, {
 
     map.on('click', e => onLocationSelect(e.latlng));
 
+       // ✅ FIX: Leaflet a veces calcula mal el tamaño al primer render (modal/sidebar/flex)
+   setTimeout(() => {
+     try { map.invalidateSize(); } catch (e) {}
+   }, 150);
+  setTimeout(() => {
+    try { map.invalidateSize(); } catch (e) {}
+   }, 600);
+   
+
     return () => {
         map.remove();
         mapInstance.current = null;
@@ -3025,6 +3034,21 @@ const App = () => {
     });
   }, []);
 
+// ✅ FIX: cuando se abre/cierra el modal, Leaflet necesita recalcular tamaño
+useEffect(() => {
+  if (window.__sedemaInvalidateMapSize) {
+    setTimeout(() => window.__sedemaInvalidateMapSize(), 120);
+    setTimeout(() => window.__sedemaInvalidateMapSize(), 600);
+  }
+}, [isHelpOpen]);
+
+// ✅ FIX extra: cuando colapsas/expandes sidebar también
+useEffect(() => {
+  if (window.__sedemaInvalidateMapSize) {
+    setTimeout(() => window.__sedemaInvalidateMapSize(), 200);
+  }
+}, [isSidebarOpen]);
+    
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center text-[#9d2449]">
