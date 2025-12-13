@@ -679,9 +679,11 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
 
   return (
     <>
-      <div className="text-[10px] text-gray-500 mb-2 bg-gray-50 p-1 pl-2 rounded border border-gray-200">
-        Resultado orientativo — No constituye un documento oficial.
-      </div>
+    {!isOutside && (
+  <div className="text-[10px] text-gray-500 mb-2 bg-gray-50 p-1 pl-2 rounded border border-gray-200">
+    Resultado orientativo — No constituye un documento oficial.
+  </div>
+)}
 
     <div className="bg-white border rounded-lg shadow-sm p-4 mb-4">
 {/* Badge tipo de suelo (reemplaza la línea superior) */}
