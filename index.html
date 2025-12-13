@@ -54,8 +54,8 @@ const ZONING_CAT_INFO = {
     
 const LAYER_STYLES = {
     sc: { 
-        color: '#9d2449',        // borde guinda
-        fill: '#9d2449',         // color de relleno guinda
+   color: '#3B7D23',
+   fill: '#3B7D23',
         label: 'Suelo de Conservación'
     },
     alcaldias: { color: '#FFFFFF', border: '#555', label: 'Límite Alcaldías' },
@@ -663,10 +663,7 @@ const LocationSummary = ({ analysis, onExportPDF }) => {
   const isANP = analysis.isANP;
     const isOutside = analysis.status === 'OUTSIDE_CDMX';
 
-  let bandColor = '#e5e7eb';
-  if (isANP) bandColor = '#e9d5ff';
-  else if (isSC) bandColor = '#fecdd3';
-  else if (isUrban) bandColor = '#bfdbfe';
+ 
 
   const zoningColor = analysis.zoningKey ? getZoningColor(analysis.zoningKey) : '#6b7280';
 
@@ -2363,7 +2360,7 @@ const BottomSheetMobile = ({ analysis, onLocationSelect, onReset, onClose }) => 
 
             <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                        {analysis ? (
+                        {analysis && analysis.status !== 'OUTSIDE_CDMX' ? (
                             // MODO CON RESULTADOS: solo título guinda
                             <h3 className="font-bold text-sm text-[#9d2449]">
                                 Resultado de consulta
