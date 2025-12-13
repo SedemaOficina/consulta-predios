@@ -112,3 +112,6 @@ html { -webkit-text-size-adjust: 100%; }
     font-size: 13px !important;
   }
 }
+@media (max-width: 767px){
+  .leaflet-top.leaflet-left { top: 70px; } /* baja un poco si choca con buscador */
+}
